@@ -18,6 +18,7 @@ Full clone of Classplus DIY (classplusapp.com/diy) — React 18 + TypeScript (Vi
 | 7 | Chat (polling 3s, conversations, unread badge) | ✅ | Phase-07-Execution.md |
 | 8 | Campaigns (create, publish mock, audience resolution) | ✅ | Phase-08-Execution.md |
 | 9 | Analytics + Polish (Recharts, helmet, events tracking) | ✅ | Phase-09-Execution.md |
+| 10 | Test Portal + Free Material (MCQ tests, auto-scoring, free content, landing section) | ✅ | Phase-10-Execution.md |
 
 ## Test Cases Status
 | Module | TC | Status |
@@ -32,6 +33,8 @@ Full clone of Classplus DIY (classplusapp.com/diy) — React 18 + TypeScript (Vi
 | Chat | TC-8.1 | ✅ API verified |
 | Campaigns | TC-9.1 | ✅ API verified |
 | Analytics | TC-10.1 | ✅ API verified |
+| Test Portal | TC-11.1–11.4 | ✅ PASS (API + browser E2E) |
+| Free Material | TC-12.1–12.3 | ✅ PASS (API + browser E2E) |
 | Non-functional | TC-N.1–N.2 | ✅ Partial (build < 2MB, security headers) |
 
 ## Tech Stack

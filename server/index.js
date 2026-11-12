@@ -13,6 +13,8 @@ const { router: batchesRouter } = require('./routes/batches');
 const { router: chatRouter } = require('./routes/chat');
 const { router: campaignsRouter } = require('./routes/campaigns');
 const { router: analyticsRouter } = require('./routes/analytics');
+const { router: testsRouter } = require('./routes/tests');
+const { router: freeMaterialRouter } = require('./routes/freeMaterial');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -33,13 +35,17 @@ app.use((req, res, next) => {
 app.get('/health', (req, res) => res.json({ status: 'success', data: { ok: true, ts: Date.now() }, message: 'Server healthy' }));
 
 // ---------- routes ----------
+// NOTE: freeMaterialRouter ko landingPages se PEHLE mount karna zaroori hai —
+// warna landingPages ka /lp/api/:slug wildcard /lp/api/free-materials ko swallow kar leta hai.
 app.use('/', authRouter);
+app.use('/', freeMaterialRouter);
 app.use('/', landingPagesRouter);
 app.use('/', coursesRouter);
 app.use('/', batchesRouter);
 app.use('/', chatRouter);
 app.use('/', campaignsRouter);
 app.use('/', analyticsRouter);
+app.use('/', testsRouter);
 
 // ---------- 404 + error ----------
 app.use((req, res) => res.status(404).json({ status: 'error', data: null, message: 'Not found' }));

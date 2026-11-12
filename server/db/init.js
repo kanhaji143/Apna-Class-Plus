@@ -110,6 +110,17 @@ CREATE TABLE IF NOT EXISTS batch_students (
   UNIQUE(batch_id, student_id)
 );
 
+CREATE TABLE IF NOT EXISTS courses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  price REAL DEFAULT 0,
+  currency TEXT DEFAULT 'INR',
+  description TEXT,
+  status TEXT DEFAULT 'active',                -- active | archived
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS contents (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   course_id INTEGER NOT NULL,
@@ -150,6 +161,53 @@ CREATE TABLE IF NOT EXISTS events (
   page_id INTEGER,
   user_id INTEGER,
   meta TEXT,                                   -- JSON
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS tests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id INTEGER NOT NULL,
+  course_id INTEGER,
+  title TEXT NOT NULL,
+  description TEXT,
+  duration_min INTEGER DEFAULT 30,
+  status TEXT DEFAULT 'draft',                 -- draft | published
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS test_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  test_id INTEGER NOT NULL,
+  question TEXT NOT NULL,
+  option_a TEXT,
+  option_b TEXT,
+  option_c TEXT,
+  option_d TEXT,
+  correct TEXT NOT NULL,                       -- a | b | c | d
+  marks INTEGER DEFAULT 1,
+  sort_order INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS test_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  test_id INTEGER NOT NULL,
+  student_name TEXT,
+  student_phone TEXT,
+  answers_json TEXT,                           -- {qid: 'a'}
+  score INTEGER DEFAULT 0,
+  total INTEGER DEFAULT 0,
+  submitted_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS free_materials (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id INTEGER NOT NULL,
+  type TEXT DEFAULT 'pdf',                     -- video | pdf | youtube
+  title TEXT NOT NULL,
+  url TEXT,
+  description TEXT,
+  status TEXT DEFAULT 'published',             -- draft | published
+  sort_order INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
 );
 

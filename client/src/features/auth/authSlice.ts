@@ -13,6 +13,7 @@ interface AuthState {
   status: 'idle' | 'otp-sent' | 'loading' | 'authenticated' | 'error';
   error: string | null;
   devOtp: string | null;
+  booted: boolean; // bootstrap (refresh-token auto-login) attempt complete hua?
 }
 
 // ---------- original DIY flow: generateOtp → verifyOtp → user/login ----------
@@ -47,7 +48,7 @@ export const bootstrap = createAsyncThunk('auth/bootstrap', async (_, { dispatch
   return user;
 });
 
-const initialState: AuthState = { user: null, status: 'idle', error: null, devOtp: null };
+const initialState: AuthState = { user: null, status: 'idle', error: null, devOtp: null, booted: false };
 
 const authSlice = createSlice({
   name: 'auth',
@@ -64,8 +65,11 @@ const authSlice = createSlice({
       setAccessToken(null);
     },
   },
-  extraReducers: (b) => {
-    b.addCase(sendOtp.pending, (s) => { s.status = 'loading'; s.error = null; s.devOtp = null; })
+    extraReducers: (b) => {
+    b.addCase(bootstrap.pending, (s) => { s.status = 'loading'; }) // direct URL load pe Protected redirect race fix
+      .addCase(bootstrap.fulfilled, (s) => { s.booted = true; })
+      .addCase(bootstrap.rejected, (s) => { s.status = 'idle'; s.booted = true; })
+      .addCase(sendOtp.pending, (s) => { s.status = 'loading'; s.error = null; s.devOtp = null; })
       .addCase(sendOtp.fulfilled, (s, a) => {
         s.status = 'otp-sent';
         s.devOtp = (a.payload as any)?.devOtp ?? null;

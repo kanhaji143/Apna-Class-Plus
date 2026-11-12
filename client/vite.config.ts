@@ -13,7 +13,8 @@ export default defineConfig({
       '/v1': 'http://localhost:4000',
       '/v2': 'http://localhost:4000',
       '/v3': 'http://localhost:4000',
-      '/lp': 'http://localhost:4000',
+      '/lp/api': 'http://localhost:4000',
+      '/public/test': 'http://localhost:4000',
     },
   },
 });

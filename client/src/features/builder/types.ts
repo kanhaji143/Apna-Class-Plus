@@ -2,7 +2,7 @@
 
 export type SectionType =
   | 'HERO' | 'BANNER_STRIP' | 'FEATURES' | 'TESTIMONIALS'
-  | 'PRICING' | 'FAQ' | 'VIDEO' | 'FOOTER';
+  | 'PRICING' | 'FAQ' | 'VIDEO' | 'FOOTER' | 'FREE_MATERIAL';
 
 export interface BaseSection {
   id: string;
@@ -33,6 +33,7 @@ export const SECTION_LIBRARY: { type: SectionType; label: string; icon: string }
   { type: 'PRICING', label: 'Pricing', icon: '💰' },
   { type: 'FAQ', label: 'FAQ', icon: '❓' },
   { type: 'VIDEO', label: 'Video', icon: '🎬' },
+  { type: 'FREE_MATERIAL', label: 'Free Material', icon: '🎁' },
   { type: 'FOOTER', label: 'Footer', icon: '📞' },
 ];
 
@@ -66,6 +67,11 @@ export function defaultSection(type: SectionType): BaseSection {
       ] } };
     case 'VIDEO':
       return { id, type, props: { url: 'https://www.youtube.com/embed/dQw4w9WgXcQ', title: 'Demo lecture' } };
+    case 'FREE_MATERIAL':
+      // items sirf fallback hain — public render pe live /lp/api/free-materials fetch hota hai
+      return { id, type, props: { heading: 'Free Study Material', items: [
+        { title: 'Class 10 Maths Formula Sheet', url: '' },
+      ] } };
     case 'FOOTER':
       return { id, type, props: { contact: '📞 98XXXXXXXX', links: [{ text: 'About Us', url: '#' }, { text: 'Courses', url: '#' }], social: [{ text: 'Instagram', url: '#' }] } };
   }

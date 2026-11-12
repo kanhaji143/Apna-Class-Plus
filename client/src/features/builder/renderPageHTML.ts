@@ -4,7 +4,7 @@ import type { BaseSection, Theme } from './types';
 
 const esc = (s: unknown) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string));
 
-function sectionHTML(s: BaseSection, t: Theme): string {
+function sectionHTML(s: BaseSection, t: Theme, slug: string): string {
   const p = s.props || {};
   const primary = t.colors.primary;
   const radius = t.radius;
@@ -65,6 +65,32 @@ function sectionHTML(s: BaseSection, t: Theme): string {
         <h2>${esc(p.title)}</h2>
         <iframe src="${esc(p.url)}" style="width:100%;max-width:720px;aspect-ratio:16/9;border:0;border-radius:${radius}px" allowfullscreen title="${esc(p.title)}"></iframe>
       </section>`;
+    case 'FREE_MATERIAL': {
+      // Static fallback items render hote hain; public page pe live list fetch hoke replace ho jati hai
+      const staticItems = (p.items || []).map((i: any) => `<div style="border:1px solid #eee;border-radius:${radius}px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <span style="font-weight:700">📄 ${esc(i.title)}</span>
+          ${i.url ? `<a href="${esc(i.url)}" target="_blank" style="color:${primary};font-weight:800;text-decoration:none">Get</a>` : ''}
+        </div>`).join('');
+      return `<section id="free-material" style="padding:48px 20px;background:${t.colors.bg}">
+        <h2 style="text-align:center;margin:0 0 20px">${esc(p.heading || 'Free Study Material')}</h2>
+        <div id="fm-list" style="display:flex;flex-direction:column;gap:10px;max-width:640px;margin:0 auto">${staticItems}</div>
+        <script>
+          (function(){
+            var wrap = document.getElementById('fm-list');
+            fetch('/lp/api/free-materials?slug=${slug}').then(function(r){return r.json()}).then(function(j){
+              if (j.status!=='success' || !j.data.items || !j.data.items.length) return;
+              wrap.innerHTML = j.data.items.map(function(m){
+                var icon = m.type==='pdf' ? '📄' : (m.type==='youtube' ? '▶️' : '🎬');
+                return '<div style="border:1px solid #eee;border-radius:${radius}px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px">'
+                  + '<span style="font-weight:700">' + icon + ' ' + m.title.replace(/[&<>"]/g,'') + '</span>'
+                  + (m.url ? '<a href="' + m.url + '" target="_blank" style="color:${primary};font-weight:800;text-decoration:none">Get</a>' : '')
+                  + '</div>';
+              }).join('');
+            }).catch(function(){});
+          })();
+        </script>
+      </section>`;
+    }
     case 'FOOTER':
       return `<footer style="background:#222;color:#aaa;padding:32px 20px;text-align:center">
         <p style="margin:0 0 8px">${esc(p.contact)}</p>
@@ -108,7 +134,7 @@ export function renderPageHTML(sections: BaseSection[], theme: Theme, slug: stri
     <title>Landing Page</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;900&display=swap" rel="stylesheet">
     </head><body style="margin:0;font-family:'${esc(theme.font)}',sans-serif;background:${theme.colors.bg}">
-    ${sections.map((s) => sectionHTML(s, theme)).join('\n')}
+    ${sections.map((s) => sectionHTML(s, theme, slug)).join('\n')}
     ${leadForm}
     </body></html>`;
 }

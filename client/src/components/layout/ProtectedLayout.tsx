@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import {
   Box, Drawer, List, ListItemButton, ListItemText, Typography, AppBar, Toolbar,
-  Button, Divider, Tooltip, Paper,
+  Button, Divider, Tooltip, Paper, Chip,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { get } from '../../api/client';
@@ -41,14 +41,25 @@ export default function ProtectedLayout() {
         <Divider />
         <List sx={{ flex: 1 }}>
           {tabs.map((t) => (
-            <ListItemButton key={t.slug + t.order} onClick={() => go(t.slug)} sx={{ borderRadius: 2, mx: 1 }}>
-              <ListItemText
-                primary={t.title}
-                primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }}
-                secondary={t.subMenu?.map((s) => s.title).join(' · ')}
-                secondaryTypographyProps={{ fontSize: 11, noWrap: true }}
-              />
-            </ListItemButton>
+            <Fragment key={t.slug + t.order}>
+              <ListItemButton onClick={() => go(t.slug)} sx={{ borderRadius: 2, mx: 1 }}>
+                <ListItemText
+                  primary={t.title}
+                  primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }}
+                  secondary={t.subMenu?.map((s) => s.title).join(' · ')}
+                  secondaryTypographyProps={{ fontSize: 11, noWrap: true }}
+                />
+              </ListItemButton>
+              {t.subMenu && t.subMenu.length > 0 && (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, px: 2, pb: 1 }}>
+                  {t.subMenu.map((s) => (
+                    <Chip key={s.slug} label={s.title} size="small"
+                      sx={{ cursor: 'pointer', fontSize: 11 }}
+                      onClick={() => navigate('/' + s.slug)} />
+                  ))}
+                </Box>
+              )}
+            </Fragment>
           ))}
         </List>
       </Drawer>

@@ -172,6 +172,42 @@
 
 ---
 
+## Module 11: Test Portal (R3.11) — Content > Test Portal
+
+### TC-11.1 Test create + questions
+- **Steps:** Test Portal → Create Test (title, duration) → MCQ questions add (4 options + correct + marks)
+- **Expected:** Test draft save ho, questions list mein dikhen, `/v3/tests` API se verify ho.
+
+### TC-11.2 Publish guard
+- **Steps:** Bina question wale test pe Publish dabao
+- **Expected:** Error aaye — "Publish se pehle kam se kam 1 question add karo"; question add karne ke baad publish succeed.
+
+### TC-11.3 Public test — answers hidden
+- **Steps:** `/public/test/:id` kholo (bina login)
+- **Expected:** Published test dikhe; `correct` field response mein **na ho** (security); draft test 404 de.
+
+### TC-11.4 Test submit + auto-score
+- **Steps:** Public test fill karo (1 sahi, 1 galat) → submit
+- **Expected:** Score = sahi questions ke marks ka sum; `test_attempts` mein record save; teacher Results tab mein attempt dikhe.
+
+---
+
+## Module 12: Free Material (R3.12) — Content > Free Material
+
+### TC-12.1 Free material CRUD
+- **Steps:** Free Material page → Add (pdf/youtube) → edit → draft toggle → delete
+- **Expected:** `/v3/free-materials` CRUD saare kaam karein; status chip update ho.
+
+### TC-12.2 Public free material page
+- **Steps:** `/free/:teacherId` kholo (bina login)
+- **Expected:** Teacher ke published materials dikhen; **draft items hidden** rahen; `Get` link se resource khule.
+
+### TC-12.3 Landing page section (live fetch)
+- **Steps:** Builder mein "Free Material" section add karo → publish → public `/lp-preview/:slug` kholo
+- **Expected:** Section live `/lp/api/free-materials?slug=` se items fetch kare; `/lp/api/:slug` landing page API unaffected rahe.
+
+---
+
 ## Non-functional (R4)
 
 ### TC-N.1 Performance
