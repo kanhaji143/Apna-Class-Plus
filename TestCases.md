@@ -252,6 +252,42 @@
 
 ---
 
+## Module 15: Bilingual Questions (R3.15) — Phase 12
+
+### TC-15.1 Bilingual question save
+- **Steps:** Editor mein Hindi + English dono text wala question add karo
+- **Expected:** Dono languages DB mein save ho.
+
+### TC-15.2 Language dropdown (player)
+- **Steps:** Published test player mein "View in English / हिंदी" dropdown se switch karo
+- **Expected:** English default; Hindi select karne pe question + options + explanation Hindi mein dikhe (agar available); warna English fallback.
+
+### TC-15.3 Public API bilingual fields
+- **Steps:** `/public/test/:id` check karo
+- **Expected:** `_hi` fields (question_hi, option_*_hi, explanation_hi) bhi mile — answers ab bhi hidden.
+
+---
+
+## Module 16: Palette Colors + Bulk Import (R3.16) — Phase 12
+
+### TC-16.1 Palette 4-status color coding
+- **Steps:** Player mein kuch questions attempt karo, kuch 🚩 mark karo
+- **Expected:** 🟩 Attempted · ⬜ Unattempted · 🟧 Marked for Review (solid orange) · 🟪 Answered+Marked (purple) + legend box.
+
+### TC-16.2 Bulk import — MCQ
+- **Steps:** Editor "Bulk Import" mein docx-format text paste karo (multiple_choice + correct/incorrect tags)
+- **Expected:** Parse preview sahi (options + correct + marks + solution); import ke baad questions list mein dikhe.
+
+### TC-16.3 Bulk import — true_false / integer / fill_ups
+- **Steps:** mixed types wala text paste karo
+- **Expected:** true_false → correct a/b; integer → objective (accepted answer); fill_ups → objective (comma answers); solution → explanation; marks map ho.
+
+### TC-16.4 Bulk import — bilingual paste
+- **Steps:** Hindi + English block wala question paste karo
+- **Expected:** Devanagari text `question_hi` mein, English `question` mein auto-split.
+
+---
+
 ## Non-functional (R4)
 
 ### TC-N.1 Performance

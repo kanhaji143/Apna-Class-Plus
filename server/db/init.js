@@ -247,6 +247,13 @@ function migrate() {
   addCol('test_questions', 'type', "TEXT DEFAULT 'mcq'");
   addCol('test_questions', 'accepted_answers', 'TEXT');
   addCol('test_questions', 'explanation', 'TEXT');
+  // Phase 12: bilingual
+  addCol('test_questions', 'question_hi', 'TEXT');
+  addCol('test_questions', 'option_a_hi', 'TEXT');
+  addCol('test_questions', 'option_b_hi', 'TEXT');
+  addCol('test_questions', 'option_c_hi', 'TEXT');
+  addCol('test_questions', 'option_d_hi', 'TEXT');
+  addCol('test_questions', 'explanation_hi', 'TEXT');
   addCol('test_attempts', 'time_json', 'TEXT');
   addCol('test_attempts', 'manual_json', 'TEXT');
   addCol('test_attempts', 'graded', 'INTEGER DEFAULT 0');

@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import {
   Box, Button, Card, CardContent, Typography, Radio, RadioGroup, FormControlLabel,
   FormControl, LinearProgress, TextField, Chip, Tabs, Tab, IconButton, Tooltip,
-  Rating, Dialog, DialogTitle, DialogContent, DialogActions,
+  Rating, Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem,
 } from '@mui/material';
 import CalculatorIcon from '@mui/icons-material/Calculate';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -17,12 +17,14 @@ import axios from 'axios';
  * 4 question types: mcq | truefalse | objective | subjective
  */
 interface PubQuestion {
-  id: number; section_id: number | null; type: string; question: string;
-  option_a: string | null; option_b: string | null; option_c: string | null; option_d: string | null; marks: number;
+  id: number; section_id: number | null; type: string; question: string; question_hi?: string | null;
+  option_a: string | null; option_b: string | null; option_c: string | null; option_d: string | null;
+  option_a_hi?: string | null; option_b_hi?: string | null; option_c_hi?: string | null; option_d_hi?: string | null;
+  marks: number;
 }
 interface Section { id: number; name: string; }
 interface Review { type: string; given: string | null; correct: string | null; ok: boolean | null; marks: number; note?: string; }
-interface Solution { correct: string | string[] | null; explanation: string | null; }
+interface Solution { correct: string | string[] | null; explanation: string | null; questionHi?: string | null; explanationHi?: string | null; optionsHi?: Record<string, string | null>; }
 
 const OPTS = ['a', 'b', 'c', 'd'] as const;
 const tfText = (o: string) => (o === 'a' ? 'True' : 'False');
@@ -51,7 +53,12 @@ export default function TestTakePage() {
   const [rated, setRated] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [lang, setLang] = useState<'en' | 'hi'>('en'); // English default (user choice)
   const qRef = useRef<number | null>(null);
+
+  // bilingual text helper — lang=hi pe Hindi field, warna English (fallback English)
+  const L = (en: string | null | undefined, hi: string | null | undefined): string =>
+    (lang === 'hi' && hi ? hi : en) || '';
 
   useEffect(() => {
     axios.get(`/public/test/${id}`)
@@ -107,13 +114,23 @@ export default function TestTakePage() {
 
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
-  // palette status
+  // palette status — Classplus 4-state color coding
+  // 🟩 Attempted · 🟪 Attempted+Marked · 🟧 Marked for Review · ⬜ Not attempted
   const qStatus = (q: PubQuestion) => {
     const answered = !!answers[q.id];
     const isMarked = marked.has(q.id);
     const isCurrent = questions[idx]?.id === q.id;
-    return { answered, isMarked, isCurrent };
+    const bgcolor = answered && isMarked ? '#6C5CE7' : answered ? '#00B894' : isMarked ? '#FDCB6E' : '#fff';
+    const color = (answered || (isMarked && answered)) ? '#fff' : '#333';
+    const border = isCurrent ? '2px solid #1976d2' : '1px solid #ccc';
+    return { answered, isMarked, isCurrent, bgcolor, color, border };
   };
+  const LEGEND = [
+    { bg: '#00B894', label: 'Attempted' },
+    { bg: '#6C5CE7', label: 'Attempted & Marked' },
+    { bg: '#FDCB6E', label: 'Marked for Review' },
+    { bg: '#fff', label: 'Not Attempted' },
+  ];
 
   // section filtering
   const curSection = sections.length ? sections[secTab] : null;
@@ -168,7 +185,7 @@ export default function TestTakePage() {
           <Box sx={{ display: 'flex', gap: 1, my: 2, flexWrap: 'wrap' }}>
             {[
               { label: 'Correct', val: questions.filter((q) => result.review[q.id]?.ok === true).length, color: 'success' },
-              { label: 'Incorrect', val: questions.filter((q) => result.review[q.id]?.ok === false).length, color: 'error' },
+              { label: 'Incorrect', val: questions.filter((q) => result.review[q.id]?.ok === false && result.review[q.id]?.given).length, color: 'error' },
               { label: 'Unattempted', val: questions.filter((q) => !result.review[q.id]?.given).length, color: 'default' },
               { label: 'Pending Grade', val: questions.filter((q) => result.review[q.id]?.type === 'subjective').length, color: 'warning' },
             ].map((c) => (
@@ -185,7 +202,7 @@ export default function TestTakePage() {
                 <CardContent sx={{ py: 1.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography variant="body2" fontWeight={700} sx={{ flexGrow: 1 }}>
-                      {i + 1}. {q.question} <Chip size="small" label={q.type} sx={{ ml: 1 }} />
+                      {i + 1}. {L(q.question, q.question_hi)} <Chip size="small" label={q.type} sx={{ ml: 1 }} />
                     </Typography>
                     {times[q.id] != null && (
                       <Tooltip title="Aapka time vs average">
@@ -200,7 +217,7 @@ export default function TestTakePage() {
                   </Typography>
                   {sol && (
                     <Typography variant="caption" color="info.main" sx={{ display: 'block', mt: 0.5 }}>
-                      💡 {sol.explanation || 'Koi explanation nahi'}{sol.correct ? ` · Answer: ${Array.isArray(sol.correct) ? sol.correct.join(', ') : q.type === 'truefalse' ? tfText(String(sol.correct)) : String(sol.correct).toUpperCase()}` : ''}
+                      💡 {L(sol.explanation, sol.explanationHi) || 'Koi explanation nahi'}{sol.correct ? ` · Answer: ${Array.isArray(sol.correct) ? sol.correct.join(', ') : q.type === 'truefalse' ? tfText(String(sol.correct)) : String(sol.correct).toUpperCase()}` : ''}
                     </Typography>
                   )}
                   <Button size="small" startIcon={<VisibilityIcon />} onClick={() => viewSolution(q.id)} sx={{ mt: 0.5 }}>
@@ -260,12 +277,19 @@ export default function TestTakePage() {
                 return (
                   <Box key={pq.id} onClick={() => { setShowSummary(false); const sIdx = curSection ? visibleQs.indexOf(pq) : i; if (sIdx >= 0) setIdx(Math.max(sIdx, 0)); }}
                     sx={{ width: 34, height: 34, display: 'grid', placeItems: 'center', borderRadius: 1, cursor: 'pointer', fontWeight: 800, fontSize: 12,
-                      bgcolor: st.answered ? '#00B894' : '#fff', color: st.answered ? '#fff' : '#333',
-                      border: st.isMarked ? '2px solid #FDCB6E' : '1px solid #ccc' }}>
+                      bgcolor: st.bgcolor, color: st.color, border: st.border }}>
                     {i + 1}
                   </Box>
                 );
               })}
+            </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
+              {LEGEND.map((l) => (
+                <Box key={l.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Box sx={{ width: 12, height: 12, borderRadius: 0.5, bgcolor: l.bg, border: '1px solid #ccc' }} />
+                  <Typography variant="caption">{l.label}</Typography>
+                </Box>
+              ))}
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>⏱ Baaki time: {fmt(Math.max(secondsLeft, 0))}</Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -289,6 +313,14 @@ export default function TestTakePage() {
           <Card elevation={2} sx={{ mb: 2, position: 'sticky', top: 8, zIndex: 5 }}>
             <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5, flexWrap: 'wrap' }}>
               <Typography fontWeight={800} sx={{ flexGrow: 1 }}>{test.title}</Typography>
+              {/* View in language (Classplus pattern) — English default */}
+              <FormControl size="small" sx={{ minWidth: 150 }}>
+                <Select value={lang} onChange={(e) => setLang(e.target.value as 'en' | 'hi')}
+                  sx={{ fontSize: 13, fontWeight: 700 }}>
+                  <MenuItem value="en">🌐 View in English</MenuItem>
+                  <MenuItem value="hi">🌐 हिंदी में देखें</MenuItem>
+                </Select>
+              </FormControl>
               {test.reattempt_mode ? <Chip size="small" label="🔄 Re-attempt: ON" color="info" /> : null}
               <Tooltip title="Calculator"><IconButton onClick={() => setCalcOpen(true)}><CalculatorIcon /></IconButton></Tooltip>
               <Chip label={`⏱ ${fmt(Math.max(secondsLeft, 0))}`} color={secondsLeft < 60 ? 'error' : 'primary'} />
@@ -322,7 +354,7 @@ export default function TestTakePage() {
                     </Button>
                   ) : null}
                 </Box>
-                <Typography variant="body1" fontWeight={700}>{q.question}</Typography>
+                <Typography variant="body1" fontWeight={700}>{L(q.question, q.question_hi)}</Typography>
                 {solutions[q.id] && (() => {
                   const solQ = solutions[q.id];
                   const ansTxt = solQ.correct == null ? '' : Array.isArray(solQ.correct)
@@ -331,7 +363,7 @@ export default function TestTakePage() {
                   return (
                     <Box sx={{ mt: 1, p: 1, bgcolor: 'info.lighter', borderRadius: 1 }}>
                       <Typography variant="caption" color="info.dark">
-                        💡 {solQ.explanation || 'Koi explanation nahi'}{ansTxt ? ` · Answer: ${ansTxt}` : ''}
+                        💡 {L(solQ.explanation, solQ.explanationHi) || 'Koi explanation nahi'}{ansTxt ? ` · Answer: ${ansTxt}` : ''}
                       </Typography>
                     </Box>
                   );
@@ -343,7 +375,7 @@ export default function TestTakePage() {
                     <RadioGroup value={answers[q.id] || ''} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}>
                       {(q.type === 'truefalse' ? ['a', 'b'] : OPTS).filter((o) => q[`option_${o}` as keyof PubQuestion]).map((o) => (
                         <FormControlLabel key={o} value={o} control={<Radio size="small" />}
-                          label={`(${o}) ${q.type === 'truefalse' ? tfText(o) : q[`option_${o}` as keyof PubQuestion]}`} />
+                          label={`(${o}) ${q.type === 'truefalse' ? tfText(o) : L(q[`option_${o}` as keyof PubQuestion] as string, q[`option_${o}_hi` as keyof PubQuestion] as string)}`} />
                       ))}
                     </RadioGroup>
                   </FormControl>
@@ -351,13 +383,13 @@ export default function TestTakePage() {
 
                 {/* Objective */}
                 {q.type === 'objective' && (
-                  <TextField fullWidth label="Aapka jawab (short answer)" value={answers[q.id] || ''}
+                  <TextField fullWidth label={lang === 'hi' ? 'आपका उत्तर (लघु उत्तर)' : 'Aapka jawab (short answer)'} value={answers[q.id] || ''}
                     onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} sx={{ mt: 1.5 }} />
                 )}
 
                 {/* Subjective */}
                 {q.type === 'subjective' && (
-                  <TextField fullWidth multiline minRows={4} label="Vistrit jawab likhein (long answer)"
+                  <TextField fullWidth multiline minRows={4} label={lang === 'hi' ? 'विस्तृत उत्तर लिखें (long answer)' : 'Vistrit jawab likhein (long answer)'}
                     value={answers[q.id] || ''} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} sx={{ mt: 1.5 }} />
                 )}
               </CardContent>
@@ -375,7 +407,7 @@ export default function TestTakePage() {
         </Box>
 
         {/* Right: question palette (Classplus pattern) */}
-        <Box sx={{ display: { xs: 'none', md: 'block' }, width: 200, position: 'sticky', top: 8 }}>
+        <Box sx={{ display: { xs: 'none', sm: 'block' }, width: 200, position: 'sticky', top: 8 }}>
           <Card elevation={2}>
             <CardContent>
               <Typography variant="caption" fontWeight={800} color="text.secondary">QUESTIONS</Typography>
@@ -391,17 +423,20 @@ export default function TestTakePage() {
                       }
                     }}
                       sx={{ width: 34, height: 34, display: 'grid', placeItems: 'center', borderRadius: 1, cursor: 'pointer', fontWeight: 800, fontSize: 12,
-                        bgcolor: st.answered ? '#00B894' : '#fff', color: st.answered ? '#fff' : '#333',
-                        border: st.isCurrent ? '2px solid #6C5CE7' : st.isMarked ? '2px solid #FDCB6E' : '1px solid #ccc' }}>
+                        bgcolor: st.bgcolor, color: st.color, border: st.border }}>
                       {i + 1}
                     </Box>
                   );
                 })}
               </Box>
+              {/* legend (Classplus pattern) */}
               <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                <Typography variant="caption">🟩 Answered ({answeredCount})</Typography>
-                <Typography variant="caption">🚩 Marked ({markedCount})</Typography>
-                <Typography variant="caption">⬜ Unanswered ({questions.length - answeredCount})</Typography>
+                {LEGEND.map((l) => (
+                  <Box key={l.label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 14, height: 14, borderRadius: 0.5, bgcolor: l.bg, border: '1px solid #ccc' }} />
+                    <Typography variant="caption">{l.label}</Typography>
+                  </Box>
+                ))}
               </Box>
             </CardContent>
           </Card>

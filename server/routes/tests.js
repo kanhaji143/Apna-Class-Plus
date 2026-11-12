@@ -107,9 +107,41 @@ router.delete('/v3/tests/:id/sections/:sid', auth, (req, res) => {
 // ---------- POST /v3/tests/:id/questions (type-aware) ----------
 router.post('/v3/tests/:id/questions', auth, (req, res) => {
   if (!ownsTest(req.params.id, req.user.id)) return res.status(404).json(fail('Test not found'));
-  const { question, type, optionA, optionB, optionC, optionD, correct, marks, explanation, sectionId, acceptedAnswers } = req.body || {};
+  const parsed = insertQuestion(req.params.id, req.body || {});
+  if (parsed.error) return res.status(400).json(fail(parsed.error));
+  return res.json(ok(parsed.row, 'Question added'));
+});
+
+// ---------- POST /v3/tests/:id/import-parse (bulk paste — docx format parse preview, no insert) ----------
+// Format (docx export jaisa): Question / Type / Option (+correct|incorrect) / Answer / Solution / Marks
+// Token apni line pe ya "Token: value" — dono chalega. Bilingual: Devanagari line -> _hi field.
+router.post('/v3/tests/:id/import-parse', auth, (req, res) => {
+  if (!ownsTest(req.params.id, req.user.id)) return res.status(404).json(fail('Test not found'));
+  const { text } = req.body || {};
+  if (!text) return res.status(400).json(fail('text required'));
+  const parsed = parseBulkText(String(text));
+  return res.json(ok(parsed, `${parsed.length} questions parsed`));
+});
+
+// ---------- POST /v3/tests/:id/import (bulk insert parsed questions) ----------
+router.post('/v3/tests/:id/import', auth, (req, res) => {
+  if (!ownsTest(req.params.id, req.user.id)) return res.status(404).json(fail('Test not found'));
+  const { questions } = req.body || {};
+  if (!Array.isArray(questions) || !questions.length) return res.status(400).json(fail('questions array required'));
+  const inserted = [];
+  for (const q of questions) {
+    const r = insertQuestion(req.params.id, q);
+    if (!r.error) inserted.push(r.row.id);
+  }
+  return res.json(ok({ inserted: inserted.length }, 'Bulk import done'));
+});
+
+// ---------- shared: insert question (single + bulk dono use karte hain) ----------
+function insertQuestion(testId, body) {
+  const { question, type, optionA, optionB, optionC, optionD, correct, marks, explanation, sectionId, acceptedAnswers,
+    questionHi, optionAHi, optionBHi, optionCHi, optionDHi, explanationHi } = body;
   const qType = TYPES.includes(type) ? type : 'mcq';
-  if (!question) return res.status(400).json(fail('question required'));
+  if (!question) return { error: 'question required' };
 
   let finalOptions = { a: optionA, b: optionB, c: optionC, d: optionD };
   let finalCorrect = correct ? String(correct).toLowerCase() : '';
@@ -117,14 +149,14 @@ router.post('/v3/tests/:id/questions', auth, (req, res) => {
 
   if (qType === 'truefalse') {
     // True/False: options auto-set, correct = 'a' (True) | 'b' (False)
-    finalOptions = { a: 'True', b: 'False', c: null, d: null };
-    if (!['a', 'b'].includes(finalCorrect)) return res.status(400).json(fail('truefalse ke liye correct = a (True) ya b (False)'));
+    finalOptions = { a: 'True', b: 'False' };
+    if (!['a', 'b'].includes(finalCorrect)) return { error: 'truefalse ke liye correct = a (True) ya b (False)' };
   } else if (qType === 'mcq') {
-    if (!finalOptions.a || !finalOptions.b) return res.status(400).json(fail('MCQ mein kam se kam optionA + optionB chahiye'));
-    if (!['a', 'b', 'c', 'd'].includes(finalCorrect)) return res.status(400).json(fail('correct must be a|b|c|d'));
+    if (!finalOptions.a || !finalOptions.b) return { error: 'MCQ mein kam se kam optionA + optionB chahiye' };
+    if (!['a', 'b', 'c', 'd'].includes(finalCorrect)) return { error: 'correct must be a|b|c|d' };
   } else if (qType === 'objective') {
     const list = Array.isArray(acceptedAnswers) ? acceptedAnswers.filter((x) => String(x).trim()) : (acceptedAnswers ? [String(acceptedAnswers)] : []);
-    if (!list.length) return res.status(400).json(fail('objective ke liye acceptedAnswers (array) chahiye'));
+    if (!list.length) return { error: 'objective ke liye acceptedAnswers (array) chahiye' };
     acceptedJson = JSON.stringify(list);
     finalOptions = { a: null, b: null, c: null, d: null };
     finalCorrect = ''; // auto-match se score hota hai
@@ -133,15 +165,107 @@ router.post('/v3/tests/:id/questions', auth, (req, res) => {
     finalCorrect = ''; // teacher grading
   }
 
-  const maxOrder = db.prepare('SELECT COALESCE(MAX(sort_order),0) AS m FROM test_questions WHERE test_id=?').get(req.params.id).m;
+  const maxOrder = db.prepare('SELECT COALESCE(MAX(sort_order),0) AS m FROM test_questions WHERE test_id=?').get(testId).m;
   const r = db.prepare(`INSERT INTO test_questions
-    (test_id, section_id, type, question, option_a, option_b, option_c, option_d, correct, accepted_answers, explanation, marks, sort_order)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-    .run(req.params.id, sectionId || null, qType, question,
+    (test_id, section_id, type, question, option_a, option_b, option_c, option_d, correct, accepted_answers, explanation, marks, sort_order,
+     question_hi, option_a_hi, option_b_hi, option_c_hi, option_d_hi, explanation_hi)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(testId, sectionId || null, qType, question,
       finalOptions.a || null, finalOptions.b || null, finalOptions.c || null, finalOptions.d || null,
-      finalCorrect, acceptedJson, explanation || null, marks || 1, maxOrder + 1);
-  return res.json(ok(db.prepare('SELECT * FROM test_questions WHERE id=?').get(r.lastInsertRowid), 'Question added'));
-});
+      finalCorrect, acceptedJson, explanation || null, marks || 1, maxOrder + 1,
+      questionHi || null, optionAHi || null, optionBHi || null, optionCHi || null, optionDHi || null, explanationHi || null);
+  return { row: db.prepare('SELECT * FROM test_questions WHERE id=?').get(r.lastInsertRowid) };
+}
+
+// ---------- bulk text parser (docx format) ----------
+const hasHindi = (s) => /[\u0900-\u097F]/.test(s);
+function parseBulkText(text) {
+  const lines = String(text).split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length);
+  // tokens: apni line pe aaye ya "Token: value"
+  const TOKENS = ['question', 'type', 'option', 'answer', 'solution', 'marks'];
+  const items = []; // [{token, value, lang}] sequence
+  for (const line of lines) {
+    const m = line.match(/^([A-Za-z_]+)\s*:\s*(.*)$/);
+    if (m && TOKENS.includes(m[1].toLowerCase())) {
+      items.push({ token: m[1].toLowerCase(), value: m[2], inline: true });
+      continue;
+    }
+    if (TOKENS.includes(line.toLowerCase())) { items.push({ token: line.toLowerCase(), value: '', inline: false }); continue; }
+    // value line (option text / correct tag / answer content / free text)
+    items.push({ token: null, value: line });
+  }
+  // group into questions
+  const questions = [];
+  let cur = null; let lastToken = null; let expecting = null; let curOption = null;
+  const flush = () => { if (cur && (cur.question || (cur._qLines && cur._qLines.length))) questions.push(cur); cur = null; };
+  const startQ = () => { flush(); cur = { options: [], optionTags: [], extraOptions: [] }; lastToken = null; expecting = null; curOption = null; };
+  for (const it of items) {
+    if (!cur && !it.token) continue; // question se pehle ka garbage skip
+    if (it.token === 'question') { startQ(); cur.question = it.value || null; cur._qLines = []; if (it.value) cur._qLines.push(it.value); lastToken = 'question'; continue; }
+    if (!cur) continue;
+    if (it.token === 'type') { cur.type = (it.value || '').toLowerCase().trim(); lastToken = 'type'; continue; }
+    if (it.token === 'option') { curOption = { text: it.value || '', hi: hasHindi(it.value || '') }; if (curOption.text) cur.options.push(curOption); lastToken = 'option'; continue; }
+    if (it.token === 'answer') { cur.answer = it.value || ''; lastToken = 'answer'; continue; }
+    if (it.token === 'solution') { cur.solution = it.value || null; cur._solLines = it.value ? [it.value] : []; lastToken = 'solution'; continue; }
+    if (it.token === 'marks') { cur.marks = parseInt(it.value, 10) || undefined; lastToken = 'marks'; continue; }
+    // token-null value lines — context ke hisaab se
+    const v = it.value;
+    if (lastToken === 'question') {
+      cur._qLines.push(v);
+    } else if (lastToken === 'type') {
+      cur.type = v.toLowerCase().trim();
+    } else if (lastToken === 'option') {
+      if (/^(correct|incorrect)$/i.test(v)) { if (curOption) curOption.tag = v.toLowerCase(); }
+      else if (curOption && !curOption.text) { curOption.text = v; curOption.hi = hasHindi(v); cur.options.push(curOption); }
+      else { curOption = { text: v, hi: hasHindi(v) }; cur.options.push(curOption); }
+    } else if (lastToken === 'answer') {
+      cur.answer = (cur.answer ? cur.answer + ' ' : '') + v;
+    } else if (lastToken === 'solution') {
+      cur._solLines.push(v);
+    } else if (lastToken === 'marks') {
+      cur.marks = parseInt(v, 10) || cur.marks;
+    }
+  }
+  flush();
+
+  // map to insert bodies
+  const out = [];
+  for (const q of questions) {
+    const type = ['multiple_choice', 'true_false', 'integer', 'fill_ups', 'mcq', 'truefalse', 'objective'].includes(q.type) ? q.type : 'multiple_choice';
+    const qEnLines = (q._qLines || []).filter((l) => !hasHindi(l));
+    const qHiLines = (q._qLines || []).filter((l) => hasHindi(l));
+    const body = {
+      type: type === 'multiple_choice' || type === 'mcq' ? 'mcq'
+        : type === 'true_false' || type === 'truefalse' ? 'truefalse'
+        : type === 'integer' || type === 'fill_ups' ? 'objective' : 'mcq',
+      question: qEnLines.join('\n') || qHiLines.join('\n') || q.question || '',
+      questionHi: qHiLines.join('\n') || undefined,
+      explanation: (q._solLines || []).filter((l) => !hasHindi(l)).join('\n') || undefined,
+      explanationHi: (q._solLines || []).filter((l) => hasHindi(l)).join('\n') || undefined,
+      marks: q.marks || 1,
+    };
+    if (body.type === 'mcq') {
+      const opts = (q.options || []).filter((o) => o.text);
+      const letters = ['a', 'b', 'c', 'd'];
+      opts.slice(0, 4).forEach((o, i) => {
+        body[`option${letters[i].toUpperCase()}`] = o.hi ? undefined : o.text;
+        body[`option${letters[i].toUpperCase()}Hi`] = o.hi ? o.text : undefined;
+      });
+      const ci = opts.findIndex((o) => o.tag === 'correct');
+      body.correct = ci >= 0 ? letters[Math.min(ci, 3)] : 'a';
+    } else if (body.type === 'truefalse') {
+      body.correct = /^f/i.test(String(q.answer || '').trim()) ? 'b' : 'a';
+    } else { // objective
+      // answer ya pehla option (comma separated), range() wala ignore
+      let raw = String(q.answer || '').trim();
+      if (!raw && (q.options || []).length) raw = q.options[0].text;
+      const list = raw.split(',').map((s) => s.trim()).filter((s) => s && !/^range\(/i.test(s));
+      body.acceptedAnswers = list.length ? list : [raw];
+    }
+    out.push(body);
+  }
+  return out;
+}
 
 // ---------- DELETE /v3/tests/:id/questions/:qid ----------
 router.delete('/v3/tests/:id/questions/:qid', auth, (req, res) => {
@@ -183,7 +307,8 @@ router.get('/public/test/:id', (req, res) => {
   if (!t || t.status !== 'published') return res.status(404).json(fail('Test not available'));
   const sections = db.prepare('SELECT * FROM test_sections WHERE test_id=? ORDER BY sort_order, id').all(req.params.id);
   const questions = db.prepare(`
-    SELECT id, section_id, type, question, option_a, option_b, option_c, option_d, marks
+    SELECT id, section_id, type, question, option_a, option_b, option_c, option_d, marks,
+           question_hi, option_a_hi, option_b_hi, option_c_hi, option_d_hi, explanation_hi
     FROM test_questions WHERE test_id=? ORDER BY sort_order, id
   `).all(req.params.id); // correct/accepted/explanation intentionally NOT sent
   return res.json(ok({ test: t, sections, questions }, 'Test fetched'));
@@ -236,12 +361,14 @@ router.post('/public/test/:id/submit', (req, res) => {
 router.get('/public/test/:id/solution/:qid', (req, res) => {
   const t = db.prepare("SELECT id FROM tests WHERE id=? AND status='published'").get(req.params.id);
   if (!t) return res.status(404).json(fail('Test not available'));
-  const q = db.prepare('SELECT type, question, option_a, option_b, option_c, option_d, correct, accepted_answers, explanation FROM test_questions WHERE id=? AND test_id=?')
+  const q = db.prepare('SELECT type, question, option_a, option_b, option_c, option_d, correct, accepted_answers, explanation, question_hi, option_a_hi, option_b_hi, option_c_hi, option_d_hi, explanation_hi FROM test_questions WHERE id=? AND test_id=?')
     .get(req.params.qid, req.params.id);
   if (!q) return res.status(404).json(fail('Question not found'));
   return res.json(ok({
     type: q.type, question: q.question,
     options: { a: q.option_a, b: q.option_b, c: q.option_c, d: q.option_d },
+    optionsHi: { a: q.option_a_hi, b: q.option_b_hi, c: q.option_c_hi, d: q.option_d_hi },
+    questionHi: q.question_hi || null, explanationHi: q.explanation_hi || null,
     correct: q.type === 'objective' ? JSON.parse(q.accepted_answers || '[]') : q.correct || null,
     explanation: q.explanation || null,
   }, 'Solution fetched'));

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Button, Card, CardContent, Typography, TextField, Dialog, DialogTitle, DialogContent,
   DialogActions, MenuItem, Select, FormControl, InputLabel, Chip, IconButton, Tabs, Tab,
-  Switch, FormControlLabel, Divider,
+  Switch, FormControlLabel,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
@@ -14,7 +14,7 @@ import GradeIcon from '@mui/icons-material/Grade';
 import { get, post, del, put } from '../../api/client';
 
 interface Question {
-  id: number; section_id: number | null; type: string; question: string;
+  id: number; section_id: number | null; type: string; question: string; question_hi?: string | null;
   option_a: string | null; option_b: string | null; option_c: string | null; option_d: string | null;
   correct: string; accepted_answers: string | null; explanation: string | null;
   marks: number; sort_order: number;
@@ -39,7 +39,7 @@ const Q_TYPES = [
 const typeIcon = (t: string) => Q_TYPES.find((x) => x.value === t)?.icon ?? '❓';
 const OPTS = ['a', 'b', 'c', 'd'] as const;
 
-const blankForm = { type: 'mcq', question: '', a: '', b: '', c: '', d: '', correct: 'a', marks: 1, explanation: '', sectionId: '', accepted: '' };
+const blankForm = { type: 'mcq', question: '', a: '', b: '', c: '', d: '', correct: 'a', marks: 1, explanation: '', sectionId: '', accepted: '', qHi: '', aHi: '', bHi: '', cHi: '', dHi: '', explHi: '' };
 
 export default function TestEditorPage() {
   const { id } = useParams();
@@ -56,6 +56,11 @@ export default function TestEditorPage() {
   const [sectionOpen, setSectionOpen] = useState(false);
   const [sectionName, setSectionName] = useState('');
   const [grading, setGrading] = useState<Record<number, Record<number, number>>>({}); // attemptId -> qid -> marks
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkPreview, setBulkPreview] = useState<any[] | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [qLang, setQLang] = useState(0); // 0=English, 1=Hindi (dialog tabs)
 
   const load = () => {
     get<{ test: Test; sections: Section[]; questions: Question[]; attempts: Attempt[] }>(`/v3/tests/${id}/full`)
@@ -73,10 +78,13 @@ export default function TestEditorPage() {
         question: form.question, type: form.type, marks: form.marks,
         explanation: form.explanation || undefined,
         sectionId: form.sectionId ? Number(form.sectionId) : undefined,
+        questionHi: form.qHi || undefined, explanationHi: form.explHi || undefined,
       };
       if (form.type === 'mcq') {
         body.optionA = form.a; body.optionB = form.b; body.optionC = form.c || undefined; body.optionD = form.d || undefined;
         body.correct = form.correct;
+        if (form.aHi) body.optionAHi = form.aHi; if (form.bHi) body.optionBHi = form.bHi;
+        if (form.cHi) body.optionCHi = form.cHi; if (form.dHi) body.optionDHi = form.dHi;
       } else if (form.type === 'truefalse') {
         body.correct = form.correct; // 'a' (True) | 'b' (False)
       } else if (form.type === 'objective') {
@@ -132,6 +140,28 @@ export default function TestEditorPage() {
       await post(`/v3/attempts/${att.id}/grade`, { scores });
       load();
     } catch (e: any) { alert(e?.response?.data?.message || 'Grading fail'); }
+  };
+
+  // ---------- Bulk import (docx format paste) ----------
+  const bulkParse = async () => {
+    if (!bulkText.trim()) return;
+    setBulkBusy(true);
+    try {
+      const r = await post<any[]>(`/v3/tests/${id}/import-parse`, { text: bulkText });
+      setBulkPreview(r);
+    } catch (e: any) { alert(e?.response?.data?.message || 'Parse fail hua'); }
+    finally { setBulkBusy(false); }
+  };
+  const bulkImport = async () => {
+    if (!bulkPreview?.length) return;
+    setBulkBusy(true);
+    try {
+      const r = await post<{ inserted: number }>(`/v3/tests/${id}/import`, { questions: bulkPreview });
+      alert(`${r.inserted} questions import ho gaye!`);
+      setBulkOpen(false); setBulkText(''); setBulkPreview(null);
+      load();
+    } catch (e: any) { alert(e?.response?.data?.message || 'Import fail hua'); }
+    finally { setBulkBusy(false); }
   };
 
   const sectionNameOf = (sid: number | null) => sections.find((s) => s.id === sid)?.name || '—';
@@ -210,6 +240,7 @@ export default function TestEditorPage() {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Typography variant="subtitle1" fontWeight={800} sx={{ flexGrow: 1 }}>Questions</Typography>
+                  <Button size="small" sx={{ mr: 1 }} onClick={() => { setBulkPreview(null); setBulkOpen(true); }}>Bulk Import</Button>
                   <Button size="small" variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Add Question</Button>
                 </Box>
                 {questions.length === 0 && <Typography color="text.secondary">Koi question nahi — publish se pehle add karo.</Typography>}
@@ -224,6 +255,7 @@ export default function TestEditorPage() {
                         {q.type === 'objective' && `Accepted: ${q.accepted_answers}`}
                         {q.type === 'subjective' && '(teacher grading)'}
                         {q.section_id ? ` · 📁 ${sectionNameOf(q.section_id)}` : ''}
+                        {q.question_hi ? ' · 🌐 हिंदी' : ''}
                       </Typography>
                       {q.explanation && <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>💡 {q.explanation}</Typography>}
                     </Box>
@@ -303,46 +335,78 @@ export default function TestEditorPage() {
               </Select>
             </FormControl>
           )}
-          <TextField label="Question" multiline rows={2} value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} fullWidth />
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={qLang} onChange={(_, v: number) => setQLang(v)}>
+              <Tab label="English" /><Tab label="हिंदी" />
+            </Tabs>
+          </Box>
 
-          {form.type === 'mcq' && (<>
-            {(['a', 'b', 'c', 'd'] as const).map((o) => (
-              <TextField key={o} label={`Option (${o})${o === 'c' || o === 'd' ? ' — optional' : ''}`}
-                value={form[o]} onChange={(e) => setForm({ ...form, [o]: e.target.value })} fullWidth />
-            ))}
-            <FormControl sx={{ width: 140 }}>
-              <InputLabel>Correct</InputLabel>
-              <Select label="Correct" value={form.correct} onChange={(e) => setForm({ ...form, correct: e.target.value })}>
-                {OPTS.map((o) => <MenuItem key={o} value={o}>{o.toUpperCase()}</MenuItem>)}
-              </Select>
-            </FormControl>
+          {qLang === 0 ? (<>
+            <TextField label="Question" multiline rows={2} value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} fullWidth />
+
+            {form.type === 'mcq' && (<>
+              {(['a', 'b', 'c', 'd'] as const).map((o) => (
+                <TextField key={o} label={`Option (${o})${o === 'c' || o === 'd' ? ' — optional' : ''}`}
+                  value={form[o]} onChange={(e) => setForm({ ...form, [o]: e.target.value })} fullWidth />
+              ))}
+              <FormControl sx={{ width: 140 }}>
+                <InputLabel>Correct</InputLabel>
+                <Select label="Correct" value={form.correct} onChange={(e) => setForm({ ...form, correct: e.target.value })}>
+                  {OPTS.map((o) => <MenuItem key={o} value={o}>{o.toUpperCase()}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </>)}
+
+            {form.type === 'truefalse' && (
+              <FormControl sx={{ width: 180 }}>
+                <InputLabel>Correct Answer</InputLabel>
+                <Select label="Correct Answer" value={form.correct} onChange={(e) => setForm({ ...form, correct: e.target.value })}>
+                  <MenuItem value="a">True</MenuItem>
+                  <MenuItem value="b">False</MenuItem>
+                </Select>
+              </FormControl>
+            )}
+
+            {form.type === 'objective' && (
+              <TextField label="Accepted answers (comma separated)" placeholder="h2o, H2O, water"
+                value={form.accepted} onChange={(e) => setForm({ ...form, accepted: e.target.value })}
+                helperText="Case-insensitive exact match. Multiple valid answers allowed." fullWidth />
+            )}
+
+            {form.type === 'subjective' && (
+              <Typography variant="caption" color="text.secondary">
+                📝 Subjective: student long text likhega, score aap "Results & Grading" tab mein manually denge.
+              </Typography>
+            )}
+
+            <TextField label="Explanation (View Solution ke liye)" multiline rows={2}
+              value={form.explanation} onChange={(e) => setForm({ ...form, explanation: e.target.value })} fullWidth />
+          </>) : (<>
+            <TextField label="प्रश्न (Hindi)" multiline rows={2} value={form.qHi}
+              onChange={(e) => setForm({ ...form, qHi: e.target.value })} fullWidth
+              helperText="Khali chhoda toh English text hi dikhega (fallback)" />
+
+            {form.type === 'mcq' && (<>
+              {(['a', 'b', 'c', 'd'] as const).map((o, i) => (
+                <TextField key={o} label={`विकल्प (${o})${i > 1 ? ' — optional' : ''}`}
+                  value={form[`${o}Hi` as 'aHi']} onChange={(e) => setForm({ ...form, [`${o}Hi`]: e.target.value })} fullWidth />
+              ))}
+            </>)}
+
+            {form.type === 'truefalse' && (
+              <Typography variant="caption" color="text.secondary">True/False विकल्प अपने आप सेट हो जाते हैं — Hindi text ki zaroorat nahi.</Typography>
+            )}
+            {form.type === 'objective' && (
+              <Typography variant="caption" color="text.secondary">Objective answers (numbers/words) language-neutral hote hain — Hindi version optional.</Typography>
+            )}
+            {form.type === 'subjective' && (
+              <Typography variant="caption" color="text.secondary">Subjective question ka Hindi version upar likhein.</Typography>
+            )}
+
+            <TextField label="समाधान / Explanation (Hindi)" multiline rows={2} value={form.explHi}
+              onChange={(e) => setForm({ ...form, explHi: e.target.value })} fullWidth />
           </>)}
 
-          {form.type === 'truefalse' && (
-            <FormControl sx={{ width: 180 }}>
-              <InputLabel>Correct Answer</InputLabel>
-              <Select label="Correct Answer" value={form.correct} onChange={(e) => setForm({ ...form, correct: e.target.value })}>
-                <MenuItem value="a">True</MenuItem>
-                <MenuItem value="b">False</MenuItem>
-              </Select>
-            </FormControl>
-          )}
-
-          {form.type === 'objective' && (
-            <TextField label="Accepted answers (comma separated)" placeholder="h2o, H2O, water"
-              value={form.accepted} onChange={(e) => setForm({ ...form, accepted: e.target.value })}
-              helperText="Case-insensitive exact match. Multiple valid answers allowed." fullWidth />
-          )}
-
-          {form.type === 'subjective' && (
-            <Typography variant="caption" color="text.secondary">
-              📝 Subjective: student long text likhega, score aap "Results & Grading" tab mein manually denge.
-            </Typography>
-          )}
-
-          <Divider />
-          <TextField label="Explanation (View Solution ke liye)" multiline rows={2}
-            value={form.explanation} onChange={(e) => setForm({ ...form, explanation: e.target.value })} fullWidth />
           <TextField label="Marks" type="number" value={form.marks} sx={{ width: 140 }}
             onChange={(e) => setForm({ ...form, marks: Number(e.target.value) })} />
         </DialogContent>
@@ -363,6 +427,50 @@ export default function TestEditorPage() {
         <DialogActions>
           <Button onClick={() => setSectionOpen(false)}>Cancel</Button>
           <Button variant="contained" disabled={!sectionName.trim()} onClick={addSection}>Create</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Bulk import dialog (docx format paste) */}
+      <Dialog open={bulkOpen} onClose={() => setBulkOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>📥 Bulk Import — docx format paste karo</DialogTitle>
+        <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Typography variant="caption" color="text.secondary">
+            Format: <code>Question / Type (multiple_choice, true_false, integer, fill_ups) / Option + correct|incorrect / Answer / Solution / Marks</code> —
+            har token apni line pe. Hindi (Devanagari) lines auto-split ho kar Hindi field mein jaati hain.
+          </Typography>
+          <TextField label="Questions text (paste here)" multiline rows={12} value={bulkText}
+            onChange={(e) => setBulkText(e.target.value)}
+            placeholder={'Question\nWhat is 2+2?\nType\nmultiple_choice\nOption\n3\nincorrect\nOption\n4\ncorrect\nSolution\nbasic addition\nMarks\n1'}
+            sx={{ '& textarea': { fontFamily: 'monospace', fontSize: 13 } }} />
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="outlined" disabled={!bulkText.trim() || bulkBusy} onClick={bulkParse}>
+              {bulkBusy ? 'Parsing…' : 'Parse Preview'}
+            </Button>
+            <Button variant="contained" color="success" disabled={!bulkPreview?.length || bulkBusy} onClick={bulkImport}>
+              {bulkBusy ? 'Importing…' : `Import ${bulkPreview?.length ?? 0} Questions`}
+            </Button>
+          </Box>
+          {bulkPreview && (
+            <Box sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
+              <Typography variant="caption" fontWeight={800}>Preview — {bulkPreview.length} questions parsed:</Typography>
+              {bulkPreview.map((q, i) => (
+                <Box key={i} sx={{ p: 0.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <Typography variant="caption" sx={{ display: 'block' }}>
+                    <b>{i + 1}. [{q.type}{q.marks ? ` · ${q.marks}m` : ''}]</b> {String(q.question || '').slice(0, 80)}
+                    {q.questionHi ? ' · हिंदी ✓' : ''}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {q.correct ? `correct=${q.correct}` : ''}{q.acceptedAnswers ? `accepted=[${q.acceptedAnswers.join(', ')}]` : ''}
+                    {q.optionA ? ` · opts: ${[q.optionA, q.optionB, q.optionC, q.optionD].filter(Boolean).join(' | ')}` : ''}
+                    {q.explanation ? ` · 💡 ${String(q.explanation).slice(0, 50)}` : ''}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBulkOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>
