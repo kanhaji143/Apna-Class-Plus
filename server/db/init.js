@@ -178,13 +178,24 @@ CREATE TABLE IF NOT EXISTS tests (
 CREATE TABLE IF NOT EXISTS test_questions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   test_id INTEGER NOT NULL,
+  section_id INTEGER,
+  type TEXT DEFAULT 'mcq',                     -- mcq | truefalse | objective | subjective
   question TEXT NOT NULL,
   option_a TEXT,
   option_b TEXT,
   option_c TEXT,
   option_d TEXT,
-  correct TEXT NOT NULL,                       -- a | b | c | d
+  correct TEXT NOT NULL,                       -- a | b | c | d (subjective: '' )
+  accepted_answers TEXT,                       -- objective: JSON array of valid answers
+  explanation TEXT,                            -- View Solution
   marks INTEGER DEFAULT 1,
+  sort_order INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS test_sections (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  test_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
   sort_order INTEGER DEFAULT 0
 );
 
@@ -193,7 +204,11 @@ CREATE TABLE IF NOT EXISTS test_attempts (
   test_id INTEGER NOT NULL,
   student_name TEXT,
   student_phone TEXT,
-  answers_json TEXT,                           -- {qid: 'a'}
+  answers_json TEXT,                           -- {qid: 'a'} | {qid: 'text...'}
+  time_json TEXT,                              -- {qid: seconds} per-question time
+  manual_json TEXT,                            -- subjective grades {qid: marks}
+  graded INTEGER DEFAULT 0,                    -- subjective graded?
+  rated INTEGER DEFAULT 0,                     -- rate-the-test stars (0 = not rated)
   score INTEGER DEFAULT 0,
   total INTEGER DEFAULT 0,
   submitted_at TEXT DEFAULT (datetime('now'))
@@ -216,6 +231,28 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT
 );
 `);
+
+// ---------- migrations (existing DB files ke liye — CREATE TABLE IF NOT EXISTS purani table ko update nahi karta) ----------
+function migrate() {
+  const hasCol = (table, name) =>
+    db.prepare(`SELECT COUNT(*) AS c FROM pragma_table_info(${table}) WHERE name=?`).get(name).c > 0;
+  const addCol = (tbl, name, def) => {
+    if (!hasCol(`'${tbl}'`, name)) {
+      db.prepare(`ALTER TABLE ${tbl} ADD COLUMN ${name} ${def}`).run();
+      console.log(`[migrate] ${tbl}.${name} added`);
+    }
+  };
+  addCol('tests', 'reattempt_mode', 'INTEGER DEFAULT 0');
+  addCol('test_questions', 'section_id', 'INTEGER');
+  addCol('test_questions', 'type', "TEXT DEFAULT 'mcq'");
+  addCol('test_questions', 'accepted_answers', 'TEXT');
+  addCol('test_questions', 'explanation', 'TEXT');
+  addCol('test_attempts', 'time_json', 'TEXT');
+  addCol('test_attempts', 'manual_json', 'TEXT');
+  addCol('test_attempts', 'graded', 'INTEGER DEFAULT 0');
+  addCol('test_attempts', 'rated', 'INTEGER DEFAULT 0');
+}
+migrate();
 
 // ---------- seed ----------
 function seed() {

@@ -208,6 +208,50 @@
 
 ---
 
+## Module 13: Question Types + Grading (R3.13) — Phase 11
+
+### TC-13.1 True/False question
+- **Steps:** Editor mein True/False question add karo (correct = True ya False)
+- **Expected:** Options auto-set ho (True/False), auto-scoring sahi chale.
+
+### TC-13.2 Objective (short answer)
+- **Steps:** Objective question add karo accepted answers "h2o, H2O" ke saath; student "H2O" submit kare, phir "h20"
+- **Expected:** "H2O" sahi count ho (case-insensitive exact match); "h20" galat.
+
+### TC-13.3 Subjective + teacher grading
+- **Steps:** Subjective question add karo → student text jawab de submit kare → teacher "Results & Grading" tab mein marks de (4/5)
+- **Expected:** Submit pe score auto parts ka ho + "grading pending" dikhe; grading ke baad final score = auto + manual; attempt `graded` ho jaye.
+
+### TC-13.4 Public API answers hidden (sab types)
+- **Steps:** `/public/test/:id` check karo — mcq/tf/objective/subjective sab types ke saath
+- **Expected:** `correct`, `accepted_answers`, `explanation` response mein na ho.
+
+---
+
+## Module 14: Test Player Upgrade (R3.14) — Phase 11
+
+### TC-14.1 Sections + question palette
+- **Steps:** Test mein section banao, questions usme daalo, public test kholo
+- **Expected:** Section tab dikhe, right side palette (1..N boxes) color-coded ho (answered=green, current=highlight, marked=amber border).
+
+### TC-14.2 Per-question time + speed indicator
+- **Steps:** Test de — har question pe ruko
+- **Expected:** "You: 00:xx · Avg: 00:xx" chip update ho; result review mein speed indicator (Superfast/On Time/Slow) dikhe.
+
+### TC-14.3 View Solution + Re-attempt mode
+- **Steps:** Editor mein Re-attempt mode ON karke publish karo; player mein question pe "View Solution" dabao
+- **Expected:** Explanation + answer dikhe; Re-attempt: ON chip player mein dikhe.
+
+### TC-14.4 Summary screen + Mark for review
+- **Steps:** Kuch questions answer karo, kuch 🚩 mark karo → "Summary / Submit" dabao
+- **Expected:** Counts (answered/unanswered/marked) + mini palette + "Submit Anyway" option.
+
+### TC-14.5 Calculator + Rate the Test
+- **Steps:** Player mein calculator icon dabao; test submit karke stars do
+- **Expected:** Calculator modal expressions evaluate kare; rating save ho (`rated` attempt mein), result pe stars dikhen.
+
+---
+
 ## Non-functional (R4)
 
 ### TC-N.1 Performance

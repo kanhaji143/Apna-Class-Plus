@@ -2,52 +2,89 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Button, Card, CardContent, Typography, TextField, Dialog, DialogTitle, DialogContent,
-  DialogActions, MenuItem, Select, FormControl, InputLabel, Chip, IconButton,
+  DialogActions, MenuItem, Select, FormControl, InputLabel, Chip, IconButton, Tabs, Tab,
+  Switch, FormControlLabel, Divider,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import FolderIcon from '@mui/icons-material/Folder';
+import GradeIcon from '@mui/icons-material/Grade';
 import { get, post, del, put } from '../../api/client';
 
 interface Question {
-  id: number; question: string; option_a: string | null; option_b: string | null;
-  option_c: string | null; option_d: string | null; correct: string; marks: number;
+  id: number; section_id: number | null; type: string; question: string;
+  option_a: string | null; option_b: string | null; option_c: string | null; option_d: string | null;
+  correct: string; accepted_answers: string | null; explanation: string | null;
+  marks: number; sort_order: number;
 }
-interface Attempt { id: number; student_name: string | null; student_phone: string | null; score: number; total: number; submitted_at: string; }
-interface Test { id: number; title: string; description: string | null; duration_min: number; status: string; }
+interface Section { id: number; name: string; sort_order: number; }
+interface Attempt {
+  id: number; student_name: string | null; student_phone: string | null;
+  answers: Record<string, string>; manual: Record<string, number>; time: Record<string, number>;
+  score: number; total: number; graded: number; rated: number; submitted_at: string;
+}
+interface Test {
+  id: number; title: string; description: string | null; duration_min: number;
+  status: string; reattempt_mode: number;
+}
 
+const Q_TYPES = [
+  { value: 'mcq', label: 'MCQ (single correct)', icon: '🔘' },
+  { value: 'truefalse', label: 'True / False', icon: '✅' },
+  { value: 'objective', label: 'Objective (short answer)', icon: '✏️' },
+  { value: 'subjective', label: 'Subjective (long answer)', icon: '📝' },
+];
+const typeIcon = (t: string) => Q_TYPES.find((x) => x.value === t)?.icon ?? '❓';
 const OPTS = ['a', 'b', 'c', 'd'] as const;
+
+const blankForm = { type: 'mcq', question: '', a: '', b: '', c: '', d: '', correct: 'a', marks: 1, explanation: '', sectionId: '', accepted: '' };
 
 export default function TestEditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [test, setTest] = useState<Test | null>(null);
+  const [sections, setSections] = useState<Section[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState(0); // 0=Questions, 1=Results/Grading
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ question: '', a: '', b: '', c: '', d: '', correct: 'a', marks: 1 });
+  const [form, setForm] = useState(blankForm);
+  const [sectionOpen, setSectionOpen] = useState(false);
+  const [sectionName, setSectionName] = useState('');
+  const [grading, setGrading] = useState<Record<number, Record<number, number>>>({}); // attemptId -> qid -> marks
 
   const load = () => {
-    get<{ test: Test; questions: Question[]; attempts: Attempt[] }>(`/v3/tests/${id}/full`)
-      .then((d) => { setTest(d.test); setQuestions(d.questions); setAttempts(d.attempts); })
+    get<{ test: Test; sections: Section[]; questions: Question[]; attempts: Attempt[] }>(`/v3/tests/${id}/full`)
+      .then((d) => { setTest(d.test); setSections(d.sections); setQuestions(d.questions); setAttempts(d.attempts); })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
   useEffect(load, [id]);
 
   const addQuestion = async () => {
-    if (!form.question.trim() || !form.a.trim() || !form.b.trim()) return;
+    if (!form.question.trim()) return;
     setCreating(true);
     try {
-      await post(`/v3/tests/${id}/questions`, {
-        question: form.question, optionA: form.a, optionB: form.b, optionC: form.c || null,
-        optionD: form.d || null, correct: form.correct, marks: form.marks,
-      });
+      const body: any = {
+        question: form.question, type: form.type, marks: form.marks,
+        explanation: form.explanation || undefined,
+        sectionId: form.sectionId ? Number(form.sectionId) : undefined,
+      };
+      if (form.type === 'mcq') {
+        body.optionA = form.a; body.optionB = form.b; body.optionC = form.c || undefined; body.optionD = form.d || undefined;
+        body.correct = form.correct;
+      } else if (form.type === 'truefalse') {
+        body.correct = form.correct; // 'a' (True) | 'b' (False)
+      } else if (form.type === 'objective') {
+        body.acceptedAnswers = form.accepted.split(',').map((s) => s.trim()).filter(Boolean);
+      } // subjective: sirf question + marks
+      await post(`/v3/tests/${id}/questions`, body);
       setOpen(false);
-      setForm({ question: '', a: '', b: '', c: '', d: '', correct: 'a', marks: 1 });
+      setForm(blankForm);
       load();
     } finally { setCreating(false); }
   };
@@ -60,7 +97,10 @@ export default function TestEditorPage() {
 
   const saveTest = async () => {
     if (!test) return;
-    await put(`/v3/tests/${id}`, { title: test.title, description: test.description, durationMin: test.duration_min });
+    await put(`/v3/tests/${id}`, {
+      title: test.title, description: test.description, durationMin: test.duration_min,
+      reattemptMode: !!test.reattempt_mode,
+    });
     load();
   };
 
@@ -73,9 +113,35 @@ export default function TestEditorPage() {
     }
   };
 
+  const addSection = async () => {
+    if (!sectionName.trim()) return;
+    await post(`/v3/tests/${id}/sections`, { name: sectionName });
+    setSectionOpen(false); setSectionName('');
+    load();
+  };
+
+  const deleteSection = async (sid: number) => {
+    if (!confirm('Section delete? Questions ungrouped ho jayenge.')) return;
+    await del(`/v3/tests/${id}/sections/${sid}`);
+    load();
+  };
+
+  const gradeAttempt = async (att: Attempt) => {
+    const scores = grading[att.id] || att.manual || {};
+    try {
+      await post(`/v3/attempts/${att.id}/grade`, { scores });
+      load();
+    } catch (e: any) { alert(e?.response?.data?.message || 'Grading fail'); }
+  };
+
+  const sectionNameOf = (sid: number | null) => sections.find((s) => s.id === sid)?.name || '—';
+
+  const pendingSubj = (att: Attempt) =>
+    questions.filter((q) => q.type === 'subjective' && att.manual[q.id] === undefined);
+
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
         <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/content/test-portal')}>Back</Button>
         <Typography variant="h5" fontWeight={800}>Test Editor</Typography>
         <Box sx={{ flexGrow: 1 }} />
@@ -95,83 +161,208 @@ export default function TestEditorPage() {
       {loading ? <Typography color="text.secondary">Loading…</Typography> : test && (
         <>
           {/* Test details */}
-          <Card elevation={2} sx={{ mb: 3 }}>
-            <CardContent sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <TextField label="Title" value={test.title} fullWidth sx={{ flex: '1 1 260px' }}
+          <Card elevation={2} sx={{ mb: 2 }}>
+            <CardContent sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+              <TextField label="Title" value={test.title} sx={{ flex: '1 1 240px' }}
                 onChange={(e) => setTest({ ...test, title: e.target.value })} />
-              <TextField label="Description" value={test.description || ''} fullWidth sx={{ flex: '1 1 260px' }}
+              <TextField label="Description" value={test.description || ''} sx={{ flex: '1 1 240px' }}
                 onChange={(e) => setTest({ ...test, description: e.target.value })} />
-              <TextField label="Duration (min)" type="number" value={test.duration_min} sx={{ width: 140 }}
+              <TextField label="Duration (min)" type="number" value={test.duration_min} sx={{ width: 130 }}
                 onChange={(e) => setTest({ ...test, duration_min: Number(e.target.value) })} />
-              <Button variant="outlined" onClick={saveTest} sx={{ alignSelf: 'center' }}>Save Details</Button>
+              <Button variant="outlined" onClick={saveTest}>Save Details</Button>
+              <FormControlLabel
+                control={<Switch checked={!!test.reattempt_mode} onChange={(e) => setTest({ ...test, reattempt_mode: e.target.checked ? 1 : 0 })} />}
+                label="Re-attempt Mode (View Solution during test)"
+                sx={{ ml: 1 }}
+              />
             </CardContent>
           </Card>
 
-          {/* Questions */}
-          <Card elevation={2} sx={{ mb: 3 }}>
+          {/* Sections */}
+          <Card elevation={2} sx={{ mb: 2 }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Typography variant="subtitle1" fontWeight={800} sx={{ flexGrow: 1 }}>Questions ({questions.length})</Typography>
-                <Button size="small" variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Add Question</Button>
+                <Typography variant="subtitle1" fontWeight={800} sx={{ flexGrow: 1 }}>
+                  <FolderIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />Sections ({sections.length})
+                </Typography>
+                <Button size="small" startIcon={<AddIcon />} onClick={() => setSectionOpen(true)}>Add Section</Button>
               </Box>
-              {questions.length === 0 && <Typography color="text.secondary">Koi question nahi — publish se pehle add karo.</Typography>}
-              {questions.map((q, i) => (
-                <Box key={q.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, mb: 1, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-                  <Typography sx={{ width: 28, fontWeight: 800 }}>{i + 1}.</Typography>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="body2" fontWeight={700}>{q.question}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {OPTS.map((o) => `(${o}) ${q[`option_${o}` as keyof Question] ?? '-'} `).join('  ')}
-                    </Typography>
-                  </Box>
-                  <Chip size="small" label={`✓ ${q.correct.toUpperCase()} · ${q.marks}m`} color="primary" variant="outlined" />
-                  <IconButton size="small" color="error" onClick={() => deleteQuestion(q.id)}><DeleteIcon fontSize="small" /></IconButton>
-                </Box>
-              ))}
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {sections.length === 0 && <Typography variant="body2" color="text.secondary">No sections — sab questions ungrouped (optional).</Typography>}
+                {sections.map((s) => (
+                  <Chip key={s.id} label={`${s.name} (${questions.filter((q) => q.section_id === s.id).length})`}
+                    onDelete={() => deleteSection(s.id)} variant="outlined" color="primary" />
+                ))}
+              </Box>
             </CardContent>
           </Card>
 
-          {/* Results */}
-          <Card elevation={2}>
-            <CardContent>
-              <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 1 }}>Student Results ({attempts.length})</Typography>
-              {attempts.length === 0 && <Typography color="text.secondary">Abhi koi attempt nahi hua.</Typography>}
-              {attempts.map((a) => (
-                <Box key={a.id} sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
-                  <Typography variant="body2">{a.student_name || 'Anonymous'} · {a.student_phone || '-'}</Typography>
-                  <Chip size="small" label={`${a.score}/${a.total}`} color={a.score / Math.max(a.total, 1) >= 0.5 ? 'success' : 'warning'} />
+          {/* Tabs: Questions | Results & Grading */}
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+            <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+              <Tab label={`Questions (${questions.length})`} />
+              <Tab label={`Results & Grading (${attempts.length})`} icon={<GradeIcon fontSize="small" />} iconPosition="start" />
+            </Tabs>
+          </Box>
+
+          {tab === 0 && (
+            <Card elevation={2}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="subtitle1" fontWeight={800} sx={{ flexGrow: 1 }}>Questions</Typography>
+                  <Button size="small" variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Add Question</Button>
                 </Box>
-              ))}
-            </CardContent>
-          </Card>
+                {questions.length === 0 && <Typography color="text.secondary">Koi question nahi — publish se pehle add karo.</Typography>}
+                {questions.map((q, i) => (
+                  <Box key={q.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, mb: 1, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                    <Typography sx={{ width: 28, fontWeight: 800 }}>{i + 1}.</Typography>
+                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>{q.question}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {q.type === 'mcq' && OPTS.map((o) => `(${o}) ${q[`option_${o}` as keyof Question] ?? '-'} `).join('  ')}
+                        {q.type === 'truefalse' && '(True / False)'}
+                        {q.type === 'objective' && `Accepted: ${q.accepted_answers}`}
+                        {q.type === 'subjective' && '(teacher grading)'}
+                        {q.section_id ? ` · 📁 ${sectionNameOf(q.section_id)}` : ''}
+                      </Typography>
+                      {q.explanation && <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>💡 {q.explanation}</Typography>}
+                    </Box>
+                    <Chip size="small" variant="outlined" label={q.type} />
+                    {q.type !== 'subjective' && q.correct && <Chip size="small" label={`✓ ${q.correct.toUpperCase()}`} color="primary" variant="outlined" />}
+                    <Chip size="small" label={`${q.marks}m`} variant="outlined" />
+                    <IconButton size="small" color="error" onClick={() => deleteQuestion(q.id)}><DeleteIcon fontSize="small" /></IconButton>
+                  </Box>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {tab === 1 && (
+            <Card elevation={2}>
+              <CardContent>
+                <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 1 }}>Student Results ({attempts.length})</Typography>
+                {attempts.length === 0 && <Typography color="text.secondary">Abhi koi attempt nahi hua.</Typography>}
+                {attempts.map((a) => (
+                  <Box key={a.id} sx={{ p: 1.5, mb: 1.5, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                      <Typography variant="body2" fontWeight={700} sx={{ flexGrow: 1 }}>
+                        {a.student_name || 'Anonymous'} · {a.student_phone || '-'} · {a.submitted_at}
+                      </Typography>
+                      {a.rated > 0 && <Chip size="small" label={'⭐'.repeat(a.rated)} variant="outlined" />}
+                      <Chip size="small" label={`${a.score}/${a.total}`}
+                        color={a.graded ? 'success' : 'warning'} variant="outlined" />
+                      {!a.graded && <Chip size="small" label="grading pending" color="warning" />}
+                    </Box>
+                    {/* Subjective answers grading */}
+                    {pendingSubj(a).length > 0 && (
+                      <Box sx={{ mt: 1, pl: 1, borderLeft: '3px solid', borderColor: 'warning.light' }}>
+                        {pendingSubj(a).map((q) => (
+                          <Box key={q.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5, flexWrap: 'wrap' }}>
+                            <Typography variant="caption" sx={{ flex: '1 1 300px' }}>
+                              <b>{typeIcon(q.type)} {q.question}</b>: "{a.answers[q.id] || '—'}"
+                            </Typography>
+                            <TextField size="small" type="number" label={`/${q.marks}`} sx={{ width: 90 }}
+                              value={grading[a.id]?.[q.id] ?? ''}
+                              onChange={(e) => setGrading({
+                                ...grading,
+                                [a.id]: { ...(grading[a.id] || {}), [q.id]: Number(e.target.value) },
+                              })} />
+                          </Box>
+                        ))}
+                        <Button size="small" variant="contained" color="success" sx={{ mt: 1 }}
+                          onClick={() => gradeAttempt(a)}>Save Grades</Button>
+                      </Box>
+                    )}
+                    {a.graded > 0 && pendingSubj(a).length === 0 && (
+                      <Typography variant="caption" color="success.main">✅ Graded — subjective marks: {Object.values(a.manual).join(', ') || '—'}</Typography>
+                    )}
+                  </Box>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
 
-      {/* Add question dialog */}
+      {/* Add question dialog — type-aware */}
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add MCQ Question</DialogTitle>
+        <DialogTitle>Add Question</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pt: 2 }}>
+          <FormControl fullWidth>
+            <InputLabel>Question Type</InputLabel>
+            <Select label="Question Type" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+              {Q_TYPES.map((t) => <MenuItem key={t.value} value={t.value}>{t.icon} {t.label}</MenuItem>)}
+            </Select>
+          </FormControl>
+          {sections.length > 0 && (
+            <FormControl fullWidth>
+              <InputLabel>Section</InputLabel>
+              <Select label="Section" value={form.sectionId} onChange={(e) => setForm({ ...form, sectionId: e.target.value })}>
+                <MenuItem value="">— Ungrouped —</MenuItem>
+                {sections.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
+              </Select>
+            </FormControl>
+          )}
           <TextField label="Question" multiline rows={2} value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} fullWidth />
-          {(['a', 'b', 'c', 'd'] as const).map((o) => (
-            <TextField key={o} label={`Option (${o})${o === 'c' || o === 'd' ? ' — optional' : ''}`}
-              value={form[o]} onChange={(e) => setForm({ ...form, [o]: e.target.value })} fullWidth />
-          ))}
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <FormControl sx={{ width: 120 }}>
+
+          {form.type === 'mcq' && (<>
+            {(['a', 'b', 'c', 'd'] as const).map((o) => (
+              <TextField key={o} label={`Option (${o})${o === 'c' || o === 'd' ? ' — optional' : ''}`}
+                value={form[o]} onChange={(e) => setForm({ ...form, [o]: e.target.value })} fullWidth />
+            ))}
+            <FormControl sx={{ width: 140 }}>
               <InputLabel>Correct</InputLabel>
               <Select label="Correct" value={form.correct} onChange={(e) => setForm({ ...form, correct: e.target.value })}>
                 {OPTS.map((o) => <MenuItem key={o} value={o}>{o.toUpperCase()}</MenuItem>)}
               </Select>
             </FormControl>
-            <TextField label="Marks" type="number" value={form.marks} sx={{ width: 120 }}
-              onChange={(e) => setForm({ ...form, marks: Number(e.target.value) })} />
-          </Box>
+          </>)}
+
+          {form.type === 'truefalse' && (
+            <FormControl sx={{ width: 180 }}>
+              <InputLabel>Correct Answer</InputLabel>
+              <Select label="Correct Answer" value={form.correct} onChange={(e) => setForm({ ...form, correct: e.target.value })}>
+                <MenuItem value="a">True</MenuItem>
+                <MenuItem value="b">False</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+
+          {form.type === 'objective' && (
+            <TextField label="Accepted answers (comma separated)" placeholder="h2o, H2O, water"
+              value={form.accepted} onChange={(e) => setForm({ ...form, accepted: e.target.value })}
+              helperText="Case-insensitive exact match. Multiple valid answers allowed." fullWidth />
+          )}
+
+          {form.type === 'subjective' && (
+            <Typography variant="caption" color="text.secondary">
+              📝 Subjective: student long text likhega, score aap "Results & Grading" tab mein manually denge.
+            </Typography>
+          )}
+
+          <Divider />
+          <TextField label="Explanation (View Solution ke liye)" multiline rows={2}
+            value={form.explanation} onChange={(e) => setForm({ ...form, explanation: e.target.value })} fullWidth />
+          <TextField label="Marks" type="number" value={form.marks} sx={{ width: 140 }}
+            onChange={(e) => setForm({ ...form, marks: Number(e.target.value) })} />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button variant="contained" disabled={!form.question.trim() || !form.a.trim() || !form.b.trim() || creating} onClick={addQuestion}>
+          <Button variant="contained" disabled={!form.question.trim() || creating} onClick={addQuestion}>
             {creating ? 'Adding…' : 'Add'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add section dialog */}
+      <Dialog open={sectionOpen} onClose={() => setSectionOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Add Section</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <TextField label="Section name (e.g. Section_A_MCQ)" value={sectionName} onChange={(e) => setSectionName(e.target.value)} fullWidth autoFocus />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSectionOpen(false)}>Cancel</Button>
+          <Button variant="contained" disabled={!sectionName.trim()} onClick={addSection}>Create</Button>
         </DialogActions>
       </Dialog>
     </Box>
