@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import {
-  Box, Card, CardContent, Grid, Typography, Skeleton, MenuItem, Select, Stack, Chip,
+  Box, Card, CardContent, Grid, Typography, Skeleton, MenuItem, Select, Stack, Chip, Alert,
 } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { get } from '../../api/client';
@@ -49,9 +49,21 @@ export default function DashboardPage() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>Namaste, {user?.name} 👋</Typography>
+      <Typography variant="h4" gutterBottom>Namaste, {user?.name} ðŸ‘‹</Typography>
+      {user?.role !== 'superadmin' && user?.trialEnd && (() => {
+        const ms = new Date(user.trialEnd).getTime() - Date.now();
+        const days = Math.ceil(ms / (24*60*60*1000));
+        const expired = days <= 0;
+        return (
+          <Alert severity={expired ? 'warning' : 'info'} sx={{ mb: 2 }}>
+            {expired
+              ? `âš ï¸ Aapka 7-day trial expire ho gaya hai. Upgrade ke liye admin se contact karo.`
+              : `ðŸŽ Trial: ${days} din baaki hain (expire: ${new Date(user.trialEnd).toLocaleDateString()}).`}
+          </Alert>
+        );
+      })()}
       <Typography color="text.secondary" sx={{ mb: 3 }}>
-        Aaj ka overview — original DIY dashboard stats pattern (landingPage/dashboard API se)
+        Aaj ka overview â€” original DIY dashboard stats pattern (landingPage/dashboard API se)
       </Typography>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -93,7 +105,7 @@ export default function DashboardPage() {
                     <Typography variant="h4" fontWeight={900}>{a.points}</Typography>
                     <Chip
                       size="small"
-                      label={a.percent + ' ' + (a.flag === 0 ? '↓' : '↑')}
+                      label={a.percent + ' ' + (a.flag === 0 ? 'â†“' : 'â†‘')}
                       color={a.flag === 0 ? 'error' : 'success'}
                       sx={{ mt: 1 }}
                     />
@@ -110,3 +122,6 @@ export default function DashboardPage() {
     </Box>
   );
 }
+
+
+

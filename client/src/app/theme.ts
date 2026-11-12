@@ -8,7 +8,7 @@ export const theme = createTheme({
     background: { default: '#F7F8FC' },
   },
   typography: {
-    fontFamily: ['"Nunito Sans"', 'system-ui', 'sans-serif'].join(','),
+    fontFamily: ['"Nunito Sans"', '"Noto Sans Devanagari"', 'system-ui', 'sans-serif'].join(','),
     h4: { fontWeight: 800 },
     h5: { fontWeight: 800 },
     h6: { fontWeight: 700 },

@@ -102,7 +102,8 @@ function sectionHTML(s: BaseSection, t: Theme, slug: string): string {
   }
 }
 
-export function renderPageHTML(sections: BaseSection[], theme: Theme, slug: string): string {
+export function renderPageHTML(sections: BaseSection[], theme: Theme, slug: string, fbOpts?: { fbMode?: boolean; materials?: any[] }): string {
+  const FB = !!fbOpts?.fbMode;
   const leadForm = `
   <section id="lead-form" style="padding:48px 20px;background:${theme.colors.primary};color:#fff">
     <div style="max-width:480px;margin:0 auto;text-align:center">
@@ -121,20 +122,39 @@ export function renderPageHTML(sections: BaseSection[], theme: Theme, slug: stri
       e.preventDefault();
       var msg = document.getElementById('lf-msg');
       try{
-        var res = await fetch('/v1/diy/leads', {method:'POST',headers:{'Content-Type':'application/json'},
+        ${FB
+          ? `parent.postMessage({ type: 'apna-lead', slug: '${slug}', name: document.getElementById('lf-name').value, phone: document.getElementById('lf-phone').value }, '*');\n        msg.textContent = '✅ Thank you! Hum jaldi call karenge.';\n        e.target.reset();`
+          : `var res = await fetch('/v1/diy/leads', {method:'POST',headers:{'Content-Type':'application/json'},
           body: JSON.stringify({slug:'${slug}', name:document.getElementById('lf-name').value, phone:document.getElementById('lf-phone').value})});
         var j = await res.json();
         msg.textContent = j.status==='success' ? '✅ Thank you! Hum jaldi call karenge.' : ('❌ ' + (j.message||'Error'));
-        if(j.status==='success') e.target.reset();
+        if(j.status==='success') e.target.reset();`}
       }catch(err){ msg.textContent = '❌ Network error'; }
     }
   </script>`;
 
+  const sectionsHtml = sections.map((s) => {
+    if (s.type === 'FREE_MATERIAL' && FB) {
+      // Firestore mode: live fetch ki zaroorat nahi — published materials pehle se fetch hoke inline
+      const p: any = s.props || {};
+      const items = (fbOpts?.materials && fbOpts.materials.length ? fbOpts.materials : (p.items || []));
+      const rows = items.map((i: any) => `<div style="border:1px solid #eee;border-radius:${theme.radius}px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <span style="font-weight:700">${i.type === 'pdf' ? '📄' : i.type === 'youtube' ? '▶️' : '🎬'} ${esc(i.title)}</span>
+          ${i.url ? `<a href="${esc(i.url)}" target="_blank" style="color:${theme.colors.primary};font-weight:800;text-decoration:none">Get</a>` : ''}
+        </div>`).join('');
+      return `<section id="free-material" style="padding:48px 20px;background:${theme.colors.bg}">
+        <h2 style="text-align:center;margin:0 0 20px">${esc(p.heading || 'Free Study Material')}</h2>
+        <div style="display:flex;flex-direction:column;gap:10px;max-width:640px;margin:0 auto">${rows || '<p style="text-align:center;color:#888">Abhi koi material published nahi.</p>'}</div>
+      </section>`;
+    }
+    return sectionHTML(s, theme, slug);
+  }).join('\n');
+
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Landing Page</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;900&family=Nunito+Sans:wght@400;700;900&display=swap" rel="stylesheet">
     </head><body style="margin:0;font-family:'${esc(theme.font)}',sans-serif;background:${theme.colors.bg}">
-    ${sections.map((s) => sectionHTML(s, theme, slug)).join('\n')}
+    ${sectionsHtml}
     ${leadForm}
     </body></html>`;
 }

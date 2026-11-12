@@ -3,6 +3,16 @@ import { useParams } from 'react-router-dom';
 import { Box, Card, CardContent, Chip, Typography } from '@mui/material';
 import axios from 'axios';
 
+const FB = (window as any).runConfig?.FIREBASE_MODE === true;
+const pubGet = async (path: string) => {
+  if (FB) {
+    const { route } = await import('../../firebase/fbRouter');
+    return route('GET', path);
+  }
+  const r = await axios.get(path);
+  return r.data.data;
+};
+
 /**
  * PUBLIC Free Material page (/free/:teacherId) — koi login nahi.
  * Student yahan teacher ke free PDFs/videos dekh + access kar sakta hai (lead magnet).
@@ -18,8 +28,8 @@ export default function PublicFreeMaterialsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    axios.get(`/lp/api/free-materials?teacher=${teacherId}`)
-      .then((r) => { setTeacherName(r.data.data.teacherName); setItems(r.data.data.items); })
+    pubGet(`/lp/api/free-materials?teacher=${teacherId}`)
+      .then((d: any) => { setTeacherName(d.teacherName); setItems(d.items); })
       .catch((e) => setError(e?.response?.data?.message || 'Load fail hua'));
   }, [teacherId]);
 

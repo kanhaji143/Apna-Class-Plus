@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isOwner(d) { return signedIn() && request.auth.uid == d.ownerUid; }
+    function testDoc(tid) { return get(/databases/$(database)/documents/tests/$(tid)).data; }
+    function testReadable(t) { return t.status == 'published' || isOwner(t); }
+    function isSuperAdmin() { return signedIn() && exists(/databases/$(database)/documents/config/roles) && get(/databases/$(database)/documents/config/roles).data.superAdminUid == request.auth.uid; }
+
+    // numeric id counters â€” public attempts/leads bhi id banate hain
+    match /counters/{name} {
+      allow read, write: if true;
+    }
+
+    match /users/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isSuperAdmin());
+      allow list: if isSuperAdmin();
+      allow write: if signedIn() && request.auth.uid == uid; // own profile (name/phone)
+      allow update: if isSuperAdmin(); // role/plan/trial changes
+    }
+
+    match /config/{docId} {
+      allow read: if signedIn();
+      allow write: if signedIn() && (!exists(/databases/$(database)/documents/config/roles) || isSuperAdmin());
+    }
+
+    match /tests/{tid} {
+      allow read: if resource.data.status == 'published' || isOwner(resource.data);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isOwner(resource.data);
+
+      match /questions/{qid} {
+        allow read: if testReadable(testDoc(tid));
+        allow write: if isOwner(testDoc(tid));
+      }
+      match /sections/{sid} {
+        allow read: if testReadable(testDoc(tid));
+        allow write: if isOwner(testDoc(tid));
+      }
+      match /attempts/{aid} {
+        allow create: if true;                       // public test submit
+        allow update: if isOwner(testDoc(tid)) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rated']); // teacher grading ya public rate-the-test
+        allow read, delete: if isOwner(testDoc(tid));
+      }
+    }
+
+    match /freeMaterials/{mid} {
+      allow read: if resource.data.status == 'published' || isOwner(resource.data);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    match /pages/{pid} {
+      allow read: if resource.data.status == 'published' || isOwner(resource.data);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    match /leads/{lid} {
+      allow create: if true;   // public landing page lead capture
+      allow read, update, delete: if isOwner(resource.data);
+    }
+  }
+}
+

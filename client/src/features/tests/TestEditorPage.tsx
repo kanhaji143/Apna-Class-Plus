@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Button, Card, CardContent, Typography, TextField, Dialog, DialogTitle, DialogContent,
@@ -31,12 +31,12 @@ interface Test {
 }
 
 const Q_TYPES = [
-  { value: 'mcq', label: 'MCQ (single correct)', icon: '🔘' },
-  { value: 'truefalse', label: 'True / False', icon: '✅' },
-  { value: 'objective', label: 'Objective (short answer)', icon: '✏️' },
-  { value: 'subjective', label: 'Subjective (long answer)', icon: '📝' },
+  { value: 'mcq', label: 'MCQ (single correct)', icon: 'ðŸ”˜' },
+  { value: 'truefalse', label: 'True / False', icon: 'âœ…' },
+  { value: 'objective', label: 'Objective (short answer)', icon: 'âœï¸' },
+  { value: 'subjective', label: 'Subjective (long answer)', icon: 'ðŸ“' },
 ];
-const typeIcon = (t: string) => Q_TYPES.find((x) => x.value === t)?.icon ?? '❓';
+const typeIcon = (t: string) => Q_TYPES.find((x) => x.value === t)?.icon ?? 'â“';
 const OPTS = ['a', 'b', 'c', 'd'] as const;
 
 const blankForm = { type: 'mcq', question: '', a: '', b: '', c: '', d: '', correct: 'a', marks: 1, explanation: '', sectionId: '', accepted: '', qHi: '', aHi: '', bHi: '', cHi: '', dHi: '', explHi: '' };
@@ -164,7 +164,7 @@ export default function TestEditorPage() {
     finally { setBulkBusy(false); }
   };
 
-  const sectionNameOf = (sid: number | null) => sections.find((s) => s.id === sid)?.name || '—';
+  const sectionNameOf = (sid: number | null) => sections.find((s) => s.id === sid)?.name || 'â€”';
 
   const pendingSubj = (att: Attempt) =>
     questions.filter((q) => q.type === 'subjective' && att.manual[q.id] === undefined);
@@ -175,7 +175,7 @@ export default function TestEditorPage() {
         <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/content/test-portal')}>Back</Button>
         <Typography variant="h5" fontWeight={800}>Test Editor</Typography>
         <Box sx={{ flexGrow: 1 }} />
-        {test && <Chip label={test.status === 'published' ? '🟢 Published' : '⚪ Draft'}
+        {test && <Chip label={test.status === 'published' ? 'ðŸŸ¢ Published' : 'âšª Draft'}
           color={test.status === 'published' ? 'success' : 'default'} variant="outlined" />}
         {test && test.status !== 'published' && (
           <Button variant="contained" color="success" onClick={publish}>Publish</Button>
@@ -188,7 +188,7 @@ export default function TestEditorPage() {
         )}
       </Box>
 
-      {loading ? <Typography color="text.secondary">Loading…</Typography> : test && (
+      {loading ? <Typography color="text.secondary">Loadingâ€¦</Typography> : test && (
         <>
           {/* Test details */}
           <Card elevation={2} sx={{ mb: 2 }}>
@@ -218,7 +218,7 @@ export default function TestEditorPage() {
                 <Button size="small" startIcon={<AddIcon />} onClick={() => setSectionOpen(true)}>Add Section</Button>
               </Box>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {sections.length === 0 && <Typography variant="body2" color="text.secondary">No sections — sab questions ungrouped (optional).</Typography>}
+                {sections.length === 0 && <Typography variant="body2" color="text.secondary">No sections â€” sab questions ungrouped (optional).</Typography>}
                 {sections.map((s) => (
                   <Chip key={s.id} label={`${s.name} (${questions.filter((q) => q.section_id === s.id).length})`}
                     onDelete={() => deleteSection(s.id)} variant="outlined" color="primary" />
@@ -243,7 +243,7 @@ export default function TestEditorPage() {
                   <Button size="small" sx={{ mr: 1 }} onClick={() => { setBulkPreview(null); setBulkOpen(true); }}>Bulk Import</Button>
                   <Button size="small" variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Add Question</Button>
                 </Box>
-                {questions.length === 0 && <Typography color="text.secondary">Koi question nahi — publish se pehle add karo.</Typography>}
+                {questions.length === 0 && <Typography color="text.secondary">Koi question nahi â€” publish se pehle add karo.</Typography>}
                 {questions.map((q, i) => (
                   <Box key={q.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, mb: 1, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
                     <Typography sx={{ width: 28, fontWeight: 800 }}>{i + 1}.</Typography>
@@ -254,13 +254,13 @@ export default function TestEditorPage() {
                         {q.type === 'truefalse' && '(True / False)'}
                         {q.type === 'objective' && `Accepted: ${q.accepted_answers}`}
                         {q.type === 'subjective' && '(teacher grading)'}
-                        {q.section_id ? ` · 📁 ${sectionNameOf(q.section_id)}` : ''}
-                        {q.question_hi ? ' · 🌐 हिंदी' : ''}
+                        {q.section_id ? ` Â· ðŸ“ ${sectionNameOf(q.section_id)}` : ''}
+                        {q.question_hi ? ' Â· ðŸŒ à¤¹à¤¿à¤‚à¤¦à¥€' : ''}
                       </Typography>
-                      {q.explanation && <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>💡 {q.explanation}</Typography>}
+                      {q.explanation && <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>ðŸ’¡ {q.explanation}</Typography>}
                     </Box>
                     <Chip size="small" variant="outlined" label={q.type} />
-                    {q.type !== 'subjective' && q.correct && <Chip size="small" label={`✓ ${q.correct.toUpperCase()}`} color="primary" variant="outlined" />}
+                    {q.type !== 'subjective' && q.correct && <Chip size="small" label={`âœ“ ${q.correct.toUpperCase()}`} color="primary" variant="outlined" />}
                     <Chip size="small" label={`${q.marks}m`} variant="outlined" />
                     <IconButton size="small" color="error" onClick={() => deleteQuestion(q.id)}><DeleteIcon fontSize="small" /></IconButton>
                   </Box>
@@ -278,9 +278,9 @@ export default function TestEditorPage() {
                   <Box key={a.id} sx={{ p: 1.5, mb: 1.5, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                       <Typography variant="body2" fontWeight={700} sx={{ flexGrow: 1 }}>
-                        {a.student_name || 'Anonymous'} · {a.student_phone || '-'} · {a.submitted_at}
+                        {a.student_name || 'Anonymous'} Â· {a.student_phone || '-'} Â· {a.submitted_at}
                       </Typography>
-                      {a.rated > 0 && <Chip size="small" label={'⭐'.repeat(a.rated)} variant="outlined" />}
+                      {a.rated > 0 && <Chip size="small" label={'â­'.repeat(a.rated)} variant="outlined" />}
                       <Chip size="small" label={`${a.score}/${a.total}`}
                         color={a.graded ? 'success' : 'warning'} variant="outlined" />
                       {!a.graded && <Chip size="small" label="grading pending" color="warning" />}
@@ -291,7 +291,7 @@ export default function TestEditorPage() {
                         {pendingSubj(a).map((q) => (
                           <Box key={q.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5, flexWrap: 'wrap' }}>
                             <Typography variant="caption" sx={{ flex: '1 1 300px' }}>
-                              <b>{typeIcon(q.type)} {q.question}</b>: "{a.answers[q.id] || '—'}"
+                              <b>{typeIcon(q.type)} {q.question}</b>: "{a.answers[q.id] || 'â€”'}"
                             </Typography>
                             <TextField size="small" type="number" label={`/${q.marks}`} sx={{ width: 90 }}
                               value={grading[a.id]?.[q.id] ?? ''}
@@ -306,7 +306,7 @@ export default function TestEditorPage() {
                       </Box>
                     )}
                     {a.graded > 0 && pendingSubj(a).length === 0 && (
-                      <Typography variant="caption" color="success.main">✅ Graded — subjective marks: {Object.values(a.manual).join(', ') || '—'}</Typography>
+                      <Typography variant="caption" color="success.main">âœ… Graded â€” subjective marks: {Object.values(a.manual).join(', ') || 'â€”'}</Typography>
                     )}
                   </Box>
                 ))}
@@ -316,7 +316,7 @@ export default function TestEditorPage() {
         </>
       )}
 
-      {/* Add question dialog — type-aware */}
+      {/* Add question dialog â€” type-aware */}
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Add Question</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pt: 2 }}>
@@ -330,14 +330,14 @@ export default function TestEditorPage() {
             <FormControl fullWidth>
               <InputLabel>Section</InputLabel>
               <Select label="Section" value={form.sectionId} onChange={(e) => setForm({ ...form, sectionId: e.target.value })}>
-                <MenuItem value="">— Ungrouped —</MenuItem>
+                <MenuItem value="">â€” Ungrouped â€”</MenuItem>
                 {sections.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
               </Select>
             </FormControl>
           )}
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={qLang} onChange={(_, v: number) => setQLang(v)}>
-              <Tab label="English" /><Tab label="हिंदी" />
+              <Tab label="English" /><Tab label="à¤¹à¤¿à¤‚à¤¦à¥€" />
             </Tabs>
           </Box>
 
@@ -346,7 +346,7 @@ export default function TestEditorPage() {
 
             {form.type === 'mcq' && (<>
               {(['a', 'b', 'c', 'd'] as const).map((o) => (
-                <TextField key={o} label={`Option (${o})${o === 'c' || o === 'd' ? ' — optional' : ''}`}
+                <TextField key={o} label={`Option (${o})${o === 'c' || o === 'd' ? ' â€” optional' : ''}`}
                   value={form[o]} onChange={(e) => setForm({ ...form, [o]: e.target.value })} fullWidth />
               ))}
               <FormControl sx={{ width: 140 }}>
@@ -375,35 +375,46 @@ export default function TestEditorPage() {
 
             {form.type === 'subjective' && (
               <Typography variant="caption" color="text.secondary">
-                📝 Subjective: student long text likhega, score aap "Results & Grading" tab mein manually denge.
+                ðŸ“ Subjective: student long text likhega, score aap "Results & Grading" tab mein manually denge.
               </Typography>
             )}
 
             <TextField label="Explanation (View Solution ke liye)" multiline rows={2}
               value={form.explanation} onChange={(e) => setForm({ ...form, explanation: e.target.value })} fullWidth />
           </>) : (<>
-            <TextField label="प्रश्न (Hindi)" multiline rows={2} value={form.qHi}
+            <Button size="small" variant="outlined" sx={{ mb: 1 }} onClick={() => setForm((f: any) => ({
+              ...f,
+              qHi: f.qHi || f.question,
+              aHi: f.aHi || f.a,
+              bHi: f.bHi || f.b,
+              cHi: f.cHi || f.c,
+              dHi: f.dHi || f.d,
+              explanationHi: f.explanationHi || f.explanation,
+            }))}>
+              Copy English to Hindi (phir translate karo)
+            </Button>
+            <TextField label="à¤ªà¥à¤°à¤¶à¥à¤¨ (Hindi)" multiline rows={2} value={form.qHi}
               onChange={(e) => setForm({ ...form, qHi: e.target.value })} fullWidth
               helperText="Khali chhoda toh English text hi dikhega (fallback)" />
 
             {form.type === 'mcq' && (<>
               {(['a', 'b', 'c', 'd'] as const).map((o, i) => (
-                <TextField key={o} label={`विकल्प (${o})${i > 1 ? ' — optional' : ''}`}
+                <TextField key={o} label={`à¤µà¤¿à¤•à¤²à¥à¤ª (${o})${i > 1 ? ' â€” optional' : ''}`}
                   value={form[`${o}Hi` as 'aHi']} onChange={(e) => setForm({ ...form, [`${o}Hi`]: e.target.value })} fullWidth />
               ))}
             </>)}
 
             {form.type === 'truefalse' && (
-              <Typography variant="caption" color="text.secondary">True/False विकल्प अपने आप सेट हो जाते हैं — Hindi text ki zaroorat nahi.</Typography>
+              <Typography variant="caption" color="text.secondary">True/False à¤µà¤¿à¤•à¤²à¥à¤ª à¤…à¤ªà¤¨à¥‡ à¤†à¤ª à¤¸à¥‡à¤Ÿ à¤¹à¥‹ à¤œà¤¾à¤¤à¥‡ à¤¹à¥ˆà¤‚ â€” Hindi text ki zaroorat nahi.</Typography>
             )}
             {form.type === 'objective' && (
-              <Typography variant="caption" color="text.secondary">Objective answers (numbers/words) language-neutral hote hain — Hindi version optional.</Typography>
+              <Typography variant="caption" color="text.secondary">Objective answers (numbers/words) language-neutral hote hain â€” Hindi version optional.</Typography>
             )}
             {form.type === 'subjective' && (
               <Typography variant="caption" color="text.secondary">Subjective question ka Hindi version upar likhein.</Typography>
             )}
 
-            <TextField label="समाधान / Explanation (Hindi)" multiline rows={2} value={form.explHi}
+            <TextField label="à¤¸à¤®à¤¾à¤§à¤¾à¤¨ / Explanation (Hindi)" multiline rows={2} value={form.explHi}
               onChange={(e) => setForm({ ...form, explHi: e.target.value })} fullWidth />
           </>)}
 
@@ -413,7 +424,7 @@ export default function TestEditorPage() {
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>
           <Button variant="contained" disabled={!form.question.trim() || creating} onClick={addQuestion}>
-            {creating ? 'Adding…' : 'Add'}
+            {creating ? 'Addingâ€¦' : 'Add'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -432,10 +443,10 @@ export default function TestEditorPage() {
 
       {/* Bulk import dialog (docx format paste) */}
       <Dialog open={bulkOpen} onClose={() => setBulkOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>📥 Bulk Import — docx format paste karo</DialogTitle>
+        <DialogTitle>ðŸ“¥ Bulk Import â€” docx format paste karo</DialogTitle>
         <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           <Typography variant="caption" color="text.secondary">
-            Format: <code>Question / Type (multiple_choice, true_false, integer, fill_ups) / Option + correct|incorrect / Answer / Solution / Marks</code> —
+            Format: <code>Question / Type (multiple_choice, true_false, integer, fill_ups) / Option + correct|incorrect / Answer / Solution / Marks</code> â€”
             har token apni line pe. Hindi (Devanagari) lines auto-split ho kar Hindi field mein jaati hain.
           </Typography>
           <TextField label="Questions text (paste here)" multiline rows={12} value={bulkText}
@@ -444,25 +455,25 @@ export default function TestEditorPage() {
             sx={{ '& textarea': { fontFamily: 'monospace', fontSize: 13 } }} />
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button variant="outlined" disabled={!bulkText.trim() || bulkBusy} onClick={bulkParse}>
-              {bulkBusy ? 'Parsing…' : 'Parse Preview'}
+              {bulkBusy ? 'Parsingâ€¦' : 'Parse Preview'}
             </Button>
             <Button variant="contained" color="success" disabled={!bulkPreview?.length || bulkBusy} onClick={bulkImport}>
-              {bulkBusy ? 'Importing…' : `Import ${bulkPreview?.length ?? 0} Questions`}
+              {bulkBusy ? 'Importingâ€¦' : `Import ${bulkPreview?.length ?? 0} Questions`}
             </Button>
           </Box>
           {bulkPreview && (
             <Box sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
-              <Typography variant="caption" fontWeight={800}>Preview — {bulkPreview.length} questions parsed:</Typography>
+              <Typography variant="caption" fontWeight={800}>Preview â€” {bulkPreview.length} questions parsed:</Typography>
               {bulkPreview.map((q, i) => (
                 <Box key={i} sx={{ p: 0.5, borderBottom: '1px solid', borderColor: 'divider' }}>
                   <Typography variant="caption" sx={{ display: 'block' }}>
-                    <b>{i + 1}. [{q.type}{q.marks ? ` · ${q.marks}m` : ''}]</b> {String(q.question || '').slice(0, 80)}
-                    {q.questionHi ? ' · हिंदी ✓' : ''}
+                    <b>{i + 1}. [{q.type}{q.marks ? ` Â· ${q.marks}m` : ''}]</b> {String(q.question || '').slice(0, 80)}
+                    {q.questionHi ? ' Â· à¤¹à¤¿à¤‚à¤¦à¥€ âœ“' : ''}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {q.correct ? `correct=${q.correct}` : ''}{q.acceptedAnswers ? `accepted=[${q.acceptedAnswers.join(', ')}]` : ''}
-                    {q.optionA ? ` · opts: ${[q.optionA, q.optionB, q.optionC, q.optionD].filter(Boolean).join(' | ')}` : ''}
-                    {q.explanation ? ` · 💡 ${String(q.explanation).slice(0, 50)}` : ''}
+                    {q.optionA ? ` Â· opts: ${[q.optionA, q.optionB, q.optionC, q.optionD].filter(Boolean).join(' | ')}` : ''}
+                    {q.explanation ? ` Â· ðŸ’¡ ${String(q.explanation).slice(0, 50)}` : ''}
                   </Typography>
                 </Box>
               ))}

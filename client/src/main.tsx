@@ -9,7 +9,7 @@ import ThemeProvider, { theme } from './app/theme';
 // Nunito Sans — original DIY font
 const link = document.createElement('link');
 link.rel = 'stylesheet';
-link.href = 'https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;900&display=swap';
+link.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;900&family=Nunito+Sans:wght@300;400;600;700;900&display=swap';
 document.head.appendChild(link);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

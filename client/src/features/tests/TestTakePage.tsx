@@ -10,6 +10,17 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import FlagIcon from '@mui/icons-material/Flag';
 import axios from 'axios';
 
+const FB = (window as any).runConfig?.FIREBASE_MODE === true;
+// FB_MODE mein public test calls Firestore router se; warna axios (local server)
+const pubCall = async (method: 'get' | 'post', path: string, body?: any) => {
+  if (FB) {
+    const { route } = await import('../../firebase/fbRouter');
+    return route(method.toUpperCase() as any, path, body);
+  }
+  const r = await axios[method](path, body);
+  return r.data.data;
+};
+
 /**
  * PUBLIC student-facing test player (/test/:id) — Classplus test flow:
  * sections, question palette, per-question time + speed indicators, re-attempt mode
@@ -58,11 +69,11 @@ export default function TestTakePage() {
 
   // bilingual text helper — lang=hi pe Hindi field, warna English (fallback English)
   const L = (en: string | null | undefined, hi: string | null | undefined): string =>
-    (lang === 'hi' && hi ? hi : en) || '';
+    (lang === 'hi' ? (hi || en) : (en || hi)) || '';
 
   useEffect(() => {
-    axios.get(`/public/test/${id}`)
-      .then((r) => { setTest(r.data.data.test); setSections(r.data.data.sections); setQuestions(r.data.data.questions); })
+    pubCall('get', `/public/test/${id}`)
+      .then((d: any) => { setTest(d.test); setSections(d.sections); setQuestions(d.questions); })
       .catch((e) => setError(e?.response?.data?.message || 'Test load nahi hua'));
   }, [id]);
 
@@ -90,11 +101,11 @@ export default function TestTakePage() {
     if (submitting) return;
     setSubmitting(true);
     try {
-      const r = await axios.post(`/public/test/${id}/submit`, { studentName: name, studentPhone: phone, answers, timeSpent: times });
-      setResult(r.data.data);
+      const r = await pubCall('post', `/public/test/${id}/submit`, { studentName: name, studentPhone: phone, answers, timeSpent: times });
+      setResult(r);
       setShowSummary(false);
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Submit fail hua');
+      setError(e?.message || e?.response?.data?.message || 'Submit fail hua');
       setShowSummary(false);
     } finally { setSubmitting(false); }
   };
@@ -103,13 +114,13 @@ export default function TestTakePage() {
   const rate = async (stars: number) => {
     if (!result) return;
     setRated(stars);
-    await axios.post(`/public/test/${id}/rate`, { attemptId: result.attemptId, stars }).catch(() => {});
+    await pubCall('post', `/public/test/${id}/rate`, { attemptId: result.attemptId, stars }).catch(() => {});
   };
 
   const viewSolution = async (qid: number) => {
     if (solutions[qid]) { setSolutions((s) => { const n = { ...s }; delete n[qid]; return n; }); return; }
-    const r = await axios.get(`/public/test/${id}/solution/${qid}`).catch(() => null);
-    if (r) setSolutions((s) => ({ ...s, [qid]: r.data.data }));
+    const r = await pubCall('get', `/public/test/${id}/solution/${qid}`).catch(() => null);
+    if (r) setSolutions((s) => ({ ...s, [qid]: r }));
   };
 
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -373,7 +384,7 @@ export default function TestTakePage() {
                 {(q.type === 'mcq' || q.type === 'truefalse') && (
                   <FormControl sx={{ mt: 1 }}>
                     <RadioGroup value={answers[q.id] || ''} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}>
-                      {(q.type === 'truefalse' ? ['a', 'b'] : OPTS).filter((o) => q[`option_${o}` as keyof PubQuestion]).map((o) => (
+                      {(q.type === 'truefalse' ? ['a', 'b'] : OPTS).filter((o) => L(q[`option_${o}` as keyof PubQuestion] as string, q[`option_${o}_hi` as keyof PubQuestion] as string)).map((o) => (
                         <FormControlLabel key={o} value={o} control={<Radio size="small" />}
                           label={`(${o}) ${q.type === 'truefalse' ? tfText(o) : L(q[`option_${o}` as keyof PubQuestion] as string, q[`option_${o}_hi` as keyof PubQuestion] as string)}`} />
                       ))}

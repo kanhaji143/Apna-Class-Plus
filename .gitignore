@@ -6,6 +6,7 @@ server/node_modules/
 # Build output
 client/dist/
 client/.vite/
+client/.firebase/
 
 # Environment / secrets
 .env
@@ -40,3 +41,4 @@ desktop.ini
 # Temporary
 *.tmp
 *.temp
+*.tsbuildinfo

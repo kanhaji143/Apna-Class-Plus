@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+﻿import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
@@ -26,11 +26,13 @@ import TestEditorPage from './features/tests/TestEditorPage';
 import TestTakePage from './features/tests/TestTakePage';
 import FreeMaterialPage from './features/freeMaterial/FreeMaterialPage';
 import PublicFreeMaterialsPage from './features/freeMaterial/PublicFreeMaterialsPage';
+import AdminPage from './features/admin/AdminPage';
+import { fbBootstrap } from './features/auth/authSlice';
 
 function Protected({ children }: { children: React.ReactNode }) {
   const user = useSelector((s: RootState) => s.auth.user);
   const booted = useSelector((s: RootState) => s.auth.booted);
-  // bootstrap (refresh-token auto-login) attempt complete hone tak loader — warna
+  // bootstrap (refresh-token auto-login) attempt complete hone tak loader â€” warna
   // pehla render (user=null) turant /login pe redirect kar deta hai (race fix)
   if (!user && !booted) {
     return <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><CircularProgress /></Box>;
@@ -43,7 +45,10 @@ export default function App() {
   const user = useSelector((s: RootState) => s.auth.user);
 
   useEffect(() => {
-    if (!user) dispatch(bootstrap() as any); // refresh token se auto-login (original pattern)
+    if (user) return;
+    // FB_MODE: Firebase Auth bootstrap; warna refresh-token flow (original pattern)
+    if ((window as any).runConfig?.FIREBASE_MODE === true) dispatch(fbBootstrap() as any);
+    else dispatch(bootstrap() as any);
   }, []); // eslint-disable-line
 
   return (
@@ -81,6 +86,7 @@ export default function App() {
           <Route path="content/test-portal" element={<TestPortalPage />} />
           <Route path="content/test-portal/:id" element={<TestEditorPage />} />
           <Route path="content/free-material" element={<FreeMaterialPage />} />
+          <Route path="admin" element={<AdminPage />} />
           {/* Phase 4+: courses, batches, chat yahan lazy-load honge */}
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -88,3 +94,4 @@ export default function App() {
     </BrowserRouter>
   );
 }
+

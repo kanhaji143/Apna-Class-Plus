@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
-import { get } from '../../api/client';
+import { get, post } from '../../api/client';
 import type { BaseSection, Theme } from './types';
 import { renderPageHTML } from './renderPageHTML';
 import { DEFAULT_THEME } from './types';
@@ -18,9 +18,31 @@ export default function LpPreviewPage() {
 
   useEffect(() => {
     if (!slug) return;
-    get<{ title: string; sections: BaseSection[]; theme: Theme }>(`/lp/api/${slug}`)
-      .then((d) => setHtml(renderPageHTML(d.sections || [], d.theme?.colors ? d.theme : DEFAULT_THEME, slug)))
-      .catch((e: any) => setError(e?.response?.data?.message || 'Page load fail hua'));
+    const FB = (window as any).runConfig?.FIREBASE_MODE === true;
+    const load = async () => {
+      try {
+        const d = await get<{ title: string; sections: BaseSection[]; theme: Theme }>(`/lp/api/${slug}`);
+        let materials: any[] = [];
+        if (FB) {
+          try { const m = await get<any>('/lp/api/free-materials?teacher=me'); materials = m.items || []; } catch { /* ignore */ }
+        }
+        setHtml(renderPageHTML(d.sections || [], d.theme?.colors ? d.theme : DEFAULT_THEME, slug, { fbMode: FB, materials }));
+      } catch (e: any) {
+        setError(e?.response?.data?.message || e?.message || 'Page load fail hua');
+      }
+    };
+    load();
+    // FB mode: iframe lead form parent ko postMessage karta hai → Firestore pe write
+    if (FB) {
+      const onMsg = async (ev: MessageEvent) => {
+        if (ev.data?.type !== 'apna-lead') return;
+        try {
+          await post('/v1/diy/leads', { slug: ev.data.slug, name: ev.data.name, phone: ev.data.phone });
+        } catch { /* ignore */ }
+      };
+      window.addEventListener('message', onMsg);
+      return () => window.removeEventListener('message', onMsg);
+    }
   }, [slug]);
 
   if (error) {

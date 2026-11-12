@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+﻿import { Fragment, useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import {
   Box, Drawer, List, ListItemButton, ListItemText, Typography, AppBar, Toolbar,
@@ -46,7 +46,7 @@ export default function ProtectedLayout() {
                 <ListItemText
                   primary={t.title}
                   primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }}
-                  secondary={t.subMenu?.map((s) => s.title).join(' · ')}
+                  secondary={t.subMenu?.map((s) => s.title).join(' Â· ')}
                   secondaryTypographyProps={{ fontSize: 11, noWrap: true }}
                 />
               </ListItemButton>
@@ -61,6 +61,11 @@ export default function ProtectedLayout() {
               )}
             </Fragment>
           ))}
+          {(user.role === 'admin' || user.role === 'superadmin') && (
+            <ListItemButton onClick={() => navigate('/admin')} sx={{ borderRadius: 2, mx: 1 }}>
+              <ListItemText primary="Admin (Users & Trials)" primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }} />
+            </ListItemButton>
+          )}
         </List>
       </Drawer>
 
@@ -70,7 +75,7 @@ export default function ProtectedLayout() {
             <Box sx={{ flexGrow: 1 }} />
             <Paper sx={{ px: 2, py: 0.5, mr: 1, bgcolor: 'primary.lighter' }}>
               <Typography variant="body2" fontWeight={700}>
-                {user.name} · {user.role}
+                {user.name} Â· {user.role}
               </Typography>
             </Paper>
             <Tooltip title="Logout">
@@ -88,3 +93,4 @@ export default function ProtectedLayout() {
     </Box>
   );
 }
+

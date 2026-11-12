@@ -59,29 +59,42 @@ api.interceptors.response.use(
   }
 );
 
-// ---------- typed helpers ----------
+// ---------- typed helpers (FB_MODE mein Firestore router pe route hota hai) ----------
+import { FB_MODE } from '../firebase/fb';
+
 export interface ApiResponse<T> {
   status: 'success' | 'error';
   data: T;
   message: string;
 }
 
+type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
+
+async function routeIfFb<T>(method: Method, url: string, body?: unknown): Promise<T> {
+  const { route } = await import('../firebase/fbRouter');
+  return route(method, url, body) as Promise<T>;
+}
+
 export async function get<T>(url: string): Promise<T> {
+  if (FB_MODE) return routeIfFb<T>('GET', url);
   const res = await api.get<ApiResponse<T>>(url);
   return res.data.data;
 }
 
 export async function post<T>(url: string, body?: unknown): Promise<T> {
+  if (FB_MODE) return routeIfFb<T>('POST', url, body);
   const res = await api.post<ApiResponse<T>>(url, body);
   return res.data.data;
 }
 
 export async function put<T>(url: string, body?: unknown): Promise<T> {
+  if (FB_MODE) return routeIfFb<T>('PUT', url, body);
   const res = await api.put<ApiResponse<T>>(url, body);
   return res.data.data;
 }
 
 export async function del<T = any>(url: string): Promise<T> {
+  if (FB_MODE) return routeIfFb<T>('DELETE', url);
   const res = await api.delete<ApiResponse<T>>(url);
   return res.data.data;
 }
