@@ -1,0 +1,79 @@
+import { useEffect, useState } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import {
+  Box, Drawer, List, ListItemButton, ListItemText, Typography, AppBar, Toolbar,
+  Button, Divider, Tooltip, Paper,
+} from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
+import { get } from '../../api/client';
+import { logout } from '../../features/auth/authSlice';
+import type { RootState } from '../../app/store';
+
+const DRAWER_W = 240;
+
+/** Original DIY pattern (live-verified): sidebar /v1/diy/configuration/tabs se aata hai */
+interface TabItem {
+  icon: string; activeIcon: string; title: string; slug: string;
+  order: number; subMenu?: { title: string; slug: string }[];
+  isAddOnEnabled: number; addOnKey?: string;
+}
+
+export default function ProtectedLayout() {
+  const user = useSelector((s: RootState) => s.auth.user);
+  const [tabs, setTabs] = useState<TabItem[]>([]);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    get<TabItem[]>('/v1/diy/configuration/tabs').then(setTabs).catch(() => setTabs([]));
+  }, []);
+
+  if (!user) return null;
+
+  const go = (slug: string) => navigate('/' + slug);
+
+  return (
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Drawer variant="permanent" sx={{ width: DRAWER_W, flexShrink: 0, '& .MuiDrawer-paper': { width: DRAWER_W } }}>
+        <Toolbar sx={{ px: 2 }}>
+          <Typography variant="h6" color="primary" fontWeight={900}>Apna Class Plus</Typography>
+        </Toolbar>
+        <Divider />
+        <List sx={{ flex: 1 }}>
+          {tabs.map((t) => (
+            <ListItemButton key={t.slug + t.order} onClick={() => go(t.slug)} sx={{ borderRadius: 2, mx: 1 }}>
+              <ListItemText
+                primary={t.title}
+                primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }}
+                secondary={t.subMenu?.map((s) => s.title).join(' · ')}
+                secondaryTypographyProps={{ fontSize: 11, noWrap: true }}
+              />
+            </ListItemButton>
+          ))}
+        </List>
+      </Drawer>
+
+      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+        <AppBar position="sticky" color="inherit" elevation={1} sx={{ bgcolor: 'white' }}>
+          <Toolbar>
+            <Box sx={{ flexGrow: 1 }} />
+            <Paper sx={{ px: 2, py: 0.5, mr: 1, bgcolor: 'primary.lighter' }}>
+              <Typography variant="body2" fontWeight={700}>
+                {user.name} · {user.role}
+              </Typography>
+            </Paper>
+            <Tooltip title="Logout">
+              <Button variant="outlined" color="primary" onClick={() => { dispatch(logout()); navigate('/login'); }}>
+                Logout
+              </Button>
+            </Tooltip>
+          </Toolbar>
+        </AppBar>
+
+        <Box component="main" sx={{ p: 3 }}>
+          <Outlet />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
