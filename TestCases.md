@@ -774,3 +774,25 @@
 - **Steps:** Delete passage (batch update).
 - **Expected:** Sub-question parent_id = null; test cleanup.
 - **Status:** PASS.
+
+## Module 31 - Auto Access Link (Phase 13p)
+
+### TC-31.1 Convert lead with course
+- **Steps:** Create store lead (courseId=1) -> People -> Convert.
+- **Expected:** Convert response mein learnUrl; courseLinks doc banega.
+- **Status:** PASS (token ksftip988tpducsp5jaleox1).
+
+### TC-31.2 Dialog auto-open + prefill
+- **Steps:** Convert ke baad.
+- **Expected:** "Share Course Access" dialog — student name + link prefilled.
+- **Status:** PASS ("Auto Link Student").
+
+### TC-31.3 Public page personalized
+- **Steps:** Open generated link.
+- **Expected:** "For Auto Link Student" + course content + 0% progress.
+- **Status:** PASS.
+
+### TC-31.4 Progress dashboard
+- **Steps:** /progress after convert.
+- **Expected:** Naya link list mein dikhe (0%).
+- **Status:** PASS (3 links, avg 33%).

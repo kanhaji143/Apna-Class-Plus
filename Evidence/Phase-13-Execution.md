@@ -396,3 +396,27 @@
 ### Notes
 - Bulk import mein comprehension support nahi (docx format se passage parsing complex) — documented.
 - Next: trial enforcement / payments.
+
+---
+
+## Phase 13p - Auto Access Link on Lead Convert
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/people
+
+### What was done
+- `createCourseLink()` helper extract kiya (share route + convert route dono use karte hain).
+- Convert route: agar lead mein `courseId` hai to `courseLinks` snapshot banata hai (`studentName` = lead name) aur `learnUrl/courseId/courseTitle` return karta hai.
+- People page: convert ke baad AccessLinkDialog auto-open (student name + link prefilled); "New Link" se regenerate bhi kar sakte hain.
+- Flow: Store enroll (lead) -> People -> Convert -> turant learning link -> student `/learn/<token>`.
+
+### Live E2E verified
+1. Lead (courseId=1) convert -> auto link - PASS
+2. Dialog auto-open + name prefill - PASS
+3. Public page "For Auto Link Student" - PASS
+4. Progress dashboard 3 links (avg 33%) - PASS
+
+### Notes
+- Sirf leads with courseId ke saath convert hoti hain (manual leads par koi link nahi).
+- Link regenerate = naya token (purana progress reset).
+- Next: trial enforcement / payments.

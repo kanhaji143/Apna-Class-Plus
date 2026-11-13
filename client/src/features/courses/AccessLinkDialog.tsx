@@ -12,21 +12,22 @@ interface Props {
   courseId: number | null;
   courseTitle?: string;
   defaultStudentName?: string;
+  initialLink?: string | null;
 }
 
 /**
  * Course access link generator — student bina login /learn/<token> pe content dekhta hai.
  * Snapshot Firestore (`courseLinks`) mein jata hai, isliye rules public get allow karte hain.
  */
-export default function AccessLinkDialog({ open, onClose, courseId, courseTitle, defaultStudentName }: Props) {
+export default function AccessLinkDialog({ open, onClose, courseId, courseTitle, defaultStudentName, initialLink }: Props) {
   const [studentName, setStudentName] = useState(defaultStudentName || '');
   const [link, setLink] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) { setStudentName(defaultStudentName || ''); setLink(''); setError(null); }
-  }, [open, defaultStudentName]);
+    if (open) { setStudentName(defaultStudentName || ''); setLink(initialLink || ''); setError(null); }
+  }, [open, defaultStudentName, initialLink]);
 
   const generate = async () => {
     if (!courseId) return;

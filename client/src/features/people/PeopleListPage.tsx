@@ -34,7 +34,7 @@ export default function PeopleListPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '' });
   const [busy, setBusy] = useState(false);
-  const [access, setAccess] = useState<{ courseId: number; courseTitle?: string; studentName?: string } | null>(null);
+  const [access, setAccess] = useState<{ courseId: number; courseTitle?: string; studentName?: string; initialLink?: string } | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -67,8 +67,16 @@ export default function PeopleListPage() {
   const convertLead = async (l: Lead) => {
     setBusy(true);
     try {
-      await post(`/v2/people/leads/${l.id}/convert`);
+      const res = await post<{ id: number; learnUrl?: string; courseId?: number; courseTitle?: string }>(`/v2/people/leads/${l.id}/convert`);
       flash(`${l.name} student ban gaya 🎉`);
+      if (res?.learnUrl) {
+        setAccess({
+          courseId: Number(res.courseId || l.courseId),
+          courseTitle: res.courseTitle || l.courseTitle,
+          studentName: l.name,
+          initialLink: window.location.origin + res.learnUrl,
+        });
+      }
       load();
     } catch {
       flash('Convert nahi hua — dobara try karo.', 'error');
@@ -211,6 +219,7 @@ export default function PeopleListPage() {
         courseId={access?.courseId ?? null}
         courseTitle={access?.courseTitle}
         defaultStudentName={access?.studentName}
+        initialLink={access?.initialLink}
       />
     </Box>
   );

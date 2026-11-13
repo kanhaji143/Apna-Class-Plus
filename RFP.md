@@ -252,3 +252,16 @@
 5. Passage count/scoring mein shamil nahi (total sirf sub-questions ke marks).
 6. Passage delete → sub-questions ungroup (parent_id null).
 7. Rules unchanged (questions subcollection pehle se owner/public rules).
+
+---
+
+## Phase 13p - Auto Access Link on Lead Convert
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Jab teacher People page se **lead convert** kare aur lead mein `courseId` ho, to **automatic course access link** generate ho.
+2. Convert ke baad dialog auto-open — student name prefilled + link (copy / open / new link).
+3. Link wahi snapshot flow (`courseLinks`) use kare — student bina login course dekhe.
+4. Share route aur convert route ek hi helper (`createCourseLink`) se chale.
+5. Store enroll → lead → teacher convert → learning link ka flow documented.

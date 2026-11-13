@@ -652,36 +652,7 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     }
     if (method === 'POST' && seg.length === 4 && seg[3] === 'share') {
       const courseId = Number(seg[2]);
-      const csnap = await getDoc(doc(dbv, 'courses', String(courseId)));
-      if (!csnap.exists()) throw new Error('Course not found');
-      const course: any = csnap.data();
-      const contents = await qGet<any>('courseContents', { wheres: [['course_id', '==', courseId], ['ownerUid', '==', ownerUid]] });
-      const folders = await qGet<any>('courseFolders', { wheres: [['course_id', '==', courseId], ['ownerUid', '==', ownerUid]] });
-      contents.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
-      folders.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
-      let teacherName = 'Teacher';
-      try {
-        const u = await getDoc(doc(dbv, 'users', ownerUid));
-        if (u.exists()) teacherName = u.data()?.name || teacherName;
-      } catch { /* ignore */ }
-      const token = (Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10)).slice(0, 24);
-      await setDoc(doc(dbv, 'courseLinks', token), {
-        token, ownerUid, courseId,
-        courseTitle: course.title || 'Course',
-        courseDescription: course.description || '',
-        price: Number(course.price || 0), currency: course.currency || 'INR',
-        studentName: body?.studentName || '',
-        teacherName,
-        items: contents.map((c: any) => ({
-          id: c.id, title: c.title, type: c.type, url: c.url || '',
-          description: c.description || '', folderId: c.folder_id ?? null, sortOrder: c.sort_order || 0,
-        })),
-        folders: folders.map((f: any) => ({
-          id: f.id, name: f.name, parentId: f.parent_id ?? null, sortOrder: f.sort_order || 0,
-        })),
-        createdAt: new Date().toISOString(),
-      });
-      return { token, url: '/learn/' + token, courseTitle: course.title, itemCount: contents.length };
+      return createCourseLink(dbv, ownerUid, courseId, body?.studentName);
     }
   }
 
@@ -765,7 +736,18 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
         createdAt: tsNow(),
       });
       await updateDoc(doc(dbv, 'leads', seg[3]), { converted: true, studentId: id });
-      return { id };
+      const out: any = { id };
+      // course enrolled lead → automatic learning access link
+      if (lead.courseId) {
+        try {
+          const link = await createCourseLink(dbv, ownerUid, Number(lead.courseId), lead.name || '');
+          out.learnToken = link.token;
+          out.learnUrl = link.url;
+          out.courseId = link.courseId;
+          out.courseTitle = link.courseTitle;
+        } catch { /* course missing — ignore */ }
+      }
+      return out;
     }
     if (method === 'DELETE' && seg[2] === 'leads' && seg[3]) {
       await deleteDoc(doc(dbv, 'leads', seg[3]));
@@ -1112,6 +1094,40 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     return [];
   }
   return { placeholder: true, feature: path };
+}
+
+// ---------- course access link (share / auto on convert) ----------
+async function createCourseLink(dbv: any, ownerUid: string, courseId: number, studentName?: string) {
+  const csnap = await getDoc(doc(dbv, 'courses', String(courseId)));
+  if (!csnap.exists()) throw new Error('Course not found');
+  const course: any = csnap.data();
+  const contents = await qGet<any>('courseContents', { wheres: [['course_id', '==', courseId], ['ownerUid', '==', ownerUid]] });
+  const folders = await qGet<any>('courseFolders', { wheres: [['course_id', '==', courseId], ['ownerUid', '==', ownerUid]] });
+  contents.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+  folders.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+  let teacherName = 'Teacher';
+  try {
+    const u = await getDoc(doc(dbv, 'users', ownerUid));
+    if (u.exists()) teacherName = u.data()?.name || teacherName;
+  } catch { /* ignore */ }
+  const token = (Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10)).slice(0, 24);
+  await setDoc(doc(dbv, 'courseLinks', token), {
+    token, ownerUid, courseId,
+    courseTitle: course.title || 'Course',
+    courseDescription: course.description || '',
+    price: Number(course.price || 0), currency: course.currency || 'INR',
+    studentName: studentName || '',
+    teacherName,
+    items: contents.map((c: any) => ({
+      id: c.id, title: c.title, type: c.type, url: c.url || '',
+      description: c.description || '', folderId: c.folder_id ?? null, sortOrder: c.sort_order || 0,
+    })),
+    folders: folders.map((f: any) => ({
+      id: f.id, name: f.name, parentId: f.parent_id ?? null, sortOrder: f.sort_order || 0,
+    })),
+    createdAt: new Date().toISOString(),
+  });
+  return { token, url: '/learn/' + token, courseTitle: course.title, itemCount: contents.length, courseId };
 }
 
 // ---------- add question (type-aware) ----------
