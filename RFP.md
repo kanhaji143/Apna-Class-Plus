@@ -99,3 +99,19 @@
 6. Dashboard "Published Courses" count = active courses.
 7. Firestore rules: courses public read when active; contents/folders owner-only.
 8. Store dismiss-free (no composite indexes) — client-side sorting.
+
+---
+
+## Phase 13f - People Page (Firestore, user requirements, chat)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. People page Firestore pe: Leads + Students lists (owner-scoped).
+2. Lead cards: name, phone, source, course, date, converted state.
+3. Convert lead -> student (lead pe "Converted" mark).
+4. Add Student manually (name + phone).
+5. Delete lead / student.
+6. Search by name or phone.
+7. Store/landing-page enroll leads automatically yahan dikhein.
+8. Firestore rules: students owner-only; leads owner read/update/delete + public create.

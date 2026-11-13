@@ -119,3 +119,32 @@
 - No payments (Phase 5): Enroll stores a lead only.
 - Student course viewer (post-enrollment video access) not built yet.
 - Still placeholder in FB mode: Batches, People, Chat, Campaigns, Analytics.
+
+---
+
+## Phase 13f - People Page (Firestore)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/people
+
+### What was done
+- fbRouter `GET /v2/people`: owner-scoped leads + students (sorted id desc).
+- `POST /v2/people/students` (manual add), `DELETE /v2/people/students/:id`.
+- `POST /v2/people/leads/:id/convert`: creates student from lead + marks lead converted.
+- `DELETE /v2/people/leads/:id`.
+- Store enroll leads (Phase 13e) automatically appear on People page.
+- Page UI: search, lead cards (source/course/date + Convert), student cards (delete), Add Student dialog, success/error alerts.
+- Firestore rules: `students` owner-only read/write; `leads` owner read/update/delete + public create.
+- Bugfix: public leads POST route was matching `/v2/people/leads/:id/convert` (seg[2] collision) -> scoped to `/v1/diy/leads`.
+
+### Live E2E verified
+1. /people loads Rahul Sharma lead (source store, course chip) - PASS
+2. Convert -> "student ban gaya", lead Converted, Students (1) - PASS
+3. Add Student "Priya Verma" -> Students (2) - PASS
+4. Search "priya" -> Leads 0 / Students 1 - PASS
+5. Delete student -> count decreases - PASS
+6. Re-add + reload -> data persisted - PASS
+
+### Notes
+- Students are contact records (no Firebase Auth login yet).
+- Batch assignment / chat linking still pending.

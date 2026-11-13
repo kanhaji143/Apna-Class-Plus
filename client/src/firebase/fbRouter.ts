@@ -347,9 +347,10 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
   }
 
   // ---------- leads ----------
-  if (seg[2] === 'leads' && method === 'POST') {
+  if (seg[0] === 'v1' && seg[1] === 'diy' && seg[2] === 'leads' && method === 'POST') {
     const id = await nextId(dbv, 'leads');
-    await setDoc(doc(dbv, 'leads', String(id)), { id, ownerUid: body.ownerUid || 'public', ...body, createdAt: tsNow() });
+    const b = body || {};
+    await setDoc(doc(dbv, 'leads', String(id)), { id, ownerUid: b.ownerUid || 'public', ...b, createdAt: tsNow() });
     return { id };
   }
 
@@ -502,7 +503,50 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     }
   }
 
-  // ---------- baaki (batches/chat/campaigns/analytics/people) — FB mode core nahi ----------
+  // ---------- people (leads + students) ----------
+  if (path.startsWith('/v2/people')) {
+    if (method === 'GET' && seg.length === 2) {
+      const leads = await qGet<any>('leads', { wheres: [['ownerUid', '==', ownerUid]] });
+      const students = await qGet<any>('students', { wheres: [['ownerUid', '==', ownerUid]] });
+      leads.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+      students.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+      return { leads, students, total: leads.length + students.length };
+    }
+    if (method === 'POST' && seg[2] === 'students' && seg.length === 3) {
+      const id = await nextId(dbv, 'students');
+      await setDoc(doc(dbv, 'students', String(id)), {
+        id, ownerUid, name: body.name || 'Student', phone: body.phone || '',
+        source: body.source || 'manual',
+        courseId: body.courseId ?? null, courseTitle: body.courseTitle ?? null,
+        createdAt: tsNow(),
+      });
+      return { id };
+    }
+    if (method === 'DELETE' && seg[2] === 'students' && seg[3]) {
+      await deleteDoc(doc(dbv, 'students', seg[3]));
+      return { deleted: true, id: Number(seg[3]) };
+    }
+    if (method === 'POST' && seg[2] === 'leads' && seg[4] === 'convert' && seg[3]) {
+      const leadSnap = await getDoc(doc(dbv, 'leads', seg[3]));
+      if (!leadSnap.exists()) throw new Error('Lead not found');
+      const lead = leadSnap.data();
+      const id = await nextId(dbv, 'students');
+      await setDoc(doc(dbv, 'students', String(id)), {
+        id, ownerUid, name: lead.name || 'Student', phone: lead.phone || '',
+        source: lead.source || lead.slug || 'lead',
+        courseId: lead.courseId ?? null, courseTitle: lead.courseTitle ?? null,
+        createdAt: tsNow(),
+      });
+      await updateDoc(doc(dbv, 'leads', seg[3]), { converted: true, studentId: id });
+      return { id };
+    }
+    if (method === 'DELETE' && seg[2] === 'leads' && seg[3]) {
+      await deleteDoc(doc(dbv, 'leads', seg[3]));
+      return { deleted: true, id: Number(seg[3]) };
+    }
+  }
+
+  // ---------- baaki (batches/chat/campaigns/analytics) — FB mode core nahi ----------
   if (method === 'GET') {
     if (path.includes('campaignList') || path.includes('analytcs/stats')) return { data: [] };
     return [];

@@ -419,3 +419,35 @@
 - **Steps:** Dashboard -> Published Courses card.
 - **Expected:** Count of active courses.
 - **Status:** PASS (1).
+
+## Module 21 - People Page (Phase 13f)
+
+### TC-21.1 People loads leads + students
+- **Steps:** /people (logged in).
+- **Expected:** Leads + Students sections with counts; store enroll lead visible.
+- **Status:** PASS (Rahul Sharma, source store, course chip).
+
+### TC-21.2 Convert lead to student
+- **Steps:** Lead card -> Convert.
+- **Expected:** Student created; lead shows "Converted"; student count increases.
+- **Status:** PASS (Rahul Sharma converted).
+
+### TC-21.3 Add student manually
+- **Steps:** Add Student -> name + phone -> Add.
+- **Expected:** Student appears in list with source "manual".
+- **Status:** PASS (Priya Verma).
+
+### TC-21.4 Search
+- **Steps:** Type "priya" in search.
+- **Expected:** Leads 0 / Students 1 (name/phone filter).
+- **Status:** PASS.
+
+### TC-21.5 Delete student
+- **Steps:** Student card delete icon -> confirm.
+- **Expected:** Student removed, count decreases.
+- **Status:** PASS.
+
+### TC-21.6 Route collision fix
+- **Steps:** Convert lead (POST /v2/people/leads/:id/convert).
+- **Expected:** Convert route not swallowed by public leads POST route.
+- **Status:** PASS (leads route scoped to /v1/diy/leads).
