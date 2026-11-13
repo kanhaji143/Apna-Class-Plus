@@ -115,3 +115,18 @@
 6. Search by name or phone.
 7. Store/landing-page enroll leads automatically yahan dikhein.
 8. Firestore rules: students owner-only; leads owner read/update/delete + public create.
+
+---
+
+## Phase 13g - Batches (Firestore, user requirements, chat)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Batches ko Firestore pe migrate karo (list, create, update, archive).
+2. Batch cards: name, course title, student count, start date, status.
+3. Manage Students page: batch students list + add by phone + remove.
+4. Add by phone: existing student link karo, warna naya student auto-create.
+5. Duplicate student in same batch block.
+6. Firestore rules: batches + batchStudents owner-only.
+7. Delete student from batch via query-param route (FB mode compatible).

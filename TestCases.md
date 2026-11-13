@@ -451,3 +451,35 @@
 - **Steps:** Convert lead (POST /v2/people/leads/:id/convert).
 - **Expected:** Convert route not swallowed by public leads POST route.
 - **Status:** PASS (leads route scoped to /v1/diy/leads).
+
+## Module 22 - Batches (Phase 13g)
+
+### TC-22.1 Create batch
+- **Steps:** /batches -> Create New Batch -> select course, name, dates -> Create.
+- **Expected:** Batch saved (status active), card shows course title + 0 students.
+- **Status:** PASS (Morning Batch A, Class 10 Science Complete Course, 2026-11-20).
+
+### TC-22.2 Add existing student by phone
+- **Steps:** Manage Students -> phone 9123456780 -> Add.
+- **Expected:** Existing student linked to batch (no duplicate student).
+- **Status:** PASS (Priya Verma linked).
+
+### TC-22.3 Add new student by phone
+- **Steps:** Manage Students -> new phone + name -> Add.
+- **Expected:** New student auto-created and added to batch.
+- **Status:** PASS (Amit Kumar / 9000000001).
+
+### TC-22.4 Remove student from batch
+- **Steps:** Student card delete -> confirm.
+- **Expected:** Student removed from batch; student contact stays in People.
+- **Status:** PASS (Amit removed; batch count 1).
+
+### TC-22.5 Batch student count
+- **Steps:** /batches list after add/remove.
+- **Expected:** Card shows live student count.
+- **Status:** PASS (1 students).
+
+### TC-22.6 Enrolled date display
+- **Steps:** Batch students list.
+- **Expected:** Date shown as dd/mm/yyyy, not raw ISO.
+- **Status:** PASS (13/11/2026).

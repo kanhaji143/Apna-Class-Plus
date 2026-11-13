@@ -546,7 +546,99 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     }
   }
 
-  // ---------- baaki (batches/chat/campaigns/analytics) — FB mode core nahi ----------
+  // ---------- batches ----------
+  if (path.startsWith('/v2/batches')) {
+    if (method === 'GET' && seg.length === 2) {
+      const list = await qGet<any>('batches', { wheres: [['ownerUid', '==', ownerUid]] });
+      list.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+      const withCount = [];
+      for (const b of list) {
+        const js = await qGet<any>('batchStudents', { wheres: [['batchId', '==', b.id], ['ownerUid', '==', ownerUid]] });
+        withCount.push({ ...b, studentCount: js.length });
+      }
+      return withCount;
+    }
+    if (method === 'POST' && seg.length === 2) {
+      const id = await nextId(dbv, 'batches');
+      let courseTitle = '';
+      try {
+        const c = await getDoc(doc(dbv, 'courses', String(body.courseId)));
+        if (c.exists()) courseTitle = c.data().title || '';
+      } catch { courseTitle = ''; }
+      await setDoc(doc(dbv, 'batches', String(id)), {
+        id, ownerUid, course_id: Number(body.courseId), courseTitle,
+        name: body.name || 'Batch', start_date: body.startDate || null, end_date: body.endDate || null,
+        status: 'active', created_at: tsNow(),
+      });
+      return { id, courseTitle, status: 'active' };
+    }
+    if (method === 'GET' && seg.length === 3) {
+      const snap = await getDoc(doc(dbv, 'batches', seg[2]));
+      if (!snap.exists()) throw new Error('Batch not found');
+      const b: any = snap.data();
+      const joins = await qGet<any>('batchStudents', { wheres: [['batchId', '==', b.id], ['ownerUid', '==', ownerUid]] });
+      joins.sort((x: any, y: any) => (y.id || 0) - (x.id || 0));
+      const students = joins.map((j: any) => ({ id: j.studentId, name: j.name, phone: j.phone, role: 'student', enrolled_at: j.enrolled_at }));
+      return { ...b, students };
+    }
+    if (method === 'PUT' && seg.length === 3) {
+      const upd: any = {};
+      if (body.name !== undefined) upd.name = body.name;
+      if (body.startDate !== undefined) upd.start_date = body.startDate;
+      if (body.endDate !== undefined) upd.end_date = body.endDate;
+      if (body.status !== undefined) upd.status = body.status;
+      await updateDoc(doc(dbv, 'batches', seg[2]), upd);
+      return { updated: true };
+    }
+    if (method === 'DELETE' && seg.length === 3) {
+      await updateDoc(doc(dbv, 'batches', seg[2]), { status: 'archived' });
+      return { archived: true, id: Number(seg[2]) };
+    }
+  }
+
+  // ---------- batch students ----------
+  if (seg[0] === 'v2' && seg[1] === 'batch' && seg[2] === 'students') {
+    if (method === 'POST' && seg[3] === 'add') {
+      const batchId = Number(body.batchId);
+      let sid = Number(body.studentId || 0);
+      let name = body.name || '';
+      let phone = body.phone || '';
+      if (!sid && phone) {
+        const found = await qGet<any>('students', { wheres: [['phone', '==', phone], ['ownerUid', '==', ownerUid]] });
+        if (found[0]) { sid = found[0].id; name = found[0].name; phone = found[0].phone; }
+        else {
+          sid = await nextId(dbv, 'students');
+          await setDoc(doc(dbv, 'students', String(sid)), {
+            id: sid, ownerUid, name: name || 'Student', phone, source: 'batch',
+            courseId: null, courseTitle: null, createdAt: tsNow(),
+          });
+        }
+      }
+      if (!sid) throw new Error('studentId or phone required');
+      if (!name || !phone) {
+        const s = await getDoc(doc(dbv, 'students', String(sid)));
+        if (s.exists()) { name = name || s.data().name || 'Student'; phone = phone || s.data().phone || ''; }
+      }
+      const already = await qGet<any>('batchStudents', { wheres: [['batchId', '==', batchId], ['studentId', '==', sid], ['ownerUid', '==', ownerUid]] });
+      if (already.length) throw new Error('Student already in batch');
+      const jid = await nextId(dbv, 'batchStudents');
+      await setDoc(doc(dbv, 'batchStudents', String(jid)), {
+        id: jid, batchId, studentId: sid, ownerUid, name, phone,
+        enrolled_at: new Date().toISOString(), createdAt: tsNow(),
+      });
+      return { batchId, studentId: sid };
+    }
+    if (method === 'DELETE' && seg[3] === 'remove') {
+      const qs = new URLSearchParams(path.split('?')[1] || '');
+      const batchId = Number(qs.get('batchId') || 0);
+      const studentId = Number(qs.get('studentId') || 0);
+      const found = await qGet<any>('batchStudents', { wheres: [['batchId', '==', batchId], ['studentId', '==', studentId], ['ownerUid', '==', ownerUid]] });
+      for (const j of found) await deleteDoc(doc(dbv, 'batchStudents', String(j.id)));
+      return { removed: true };
+    }
+  }
+
+  // ---------- baaki (chat/campaigns/analytics) — FB mode core nahi ----------
   if (method === 'GET') {
     if (path.includes('campaignList') || path.includes('analytcs/stats')) return { data: [] };
     return [];

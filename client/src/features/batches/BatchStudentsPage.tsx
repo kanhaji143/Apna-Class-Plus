@@ -7,10 +7,16 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { get, post, api } from '../../api/client';
+import { get, post, del } from '../../api/client';
 
 interface Student { id: number; name: string; phone: string; role: string; enrolled_at: string; }
 interface Batch { id: number; name: string; courseTitle: string; status: string; }
+
+const fmtDate = (v: string) => {
+  if (!v) return '';
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? v : d.toLocaleDateString('en-IN');
+};
 
 export default function BatchStudentsPage() {
   const { id } = useParams();
@@ -39,7 +45,7 @@ export default function BatchStudentsPage() {
 
   const removeStudent = async (studentId: number) => {
     if (!confirm('Student remove karna hai?')) return;
-    await api.delete('/v2/batch/students/remove', { data: { batchId: Number(id), studentId } });
+    await del(`/v2/batch/students/remove?batchId=${id}&studentId=${studentId}`);
     load();
   };
 
@@ -67,7 +73,7 @@ export default function BatchStudentsPage() {
                 <Avatar>{s.name?.[0] || '?'}</Avatar>
                 <Box sx={{ flexGrow: 1 }}>
                   <Typography fontWeight={700}>{s.name}</Typography>
-                  <Typography variant="caption" color="text.secondary">{s.phone} · enrolled {s.enrolled_at}</Typography>
+                  <Typography variant="caption" color="text.secondary">{s.phone} · enrolled {fmtDate(s.enrolled_at)}</Typography>
                 </Box>
                 <Chip size="small" label={s.role} />
                 <IconButton size="small" color="error" onClick={() => removeStudent(s.id)}>

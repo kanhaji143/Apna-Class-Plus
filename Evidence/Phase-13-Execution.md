@@ -148,3 +148,31 @@
 ### Notes
 - Students are contact records (no Firebase Auth login yet).
 - Batch assignment / chat linking still pending.
+
+---
+
+## Phase 13g - Batches (Firestore)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/batches
+
+### What was done
+- Firestore collections: `batches` (owner-scoped, active/archived) + `batchStudents` join docs (denormalized name/phone).
+- fbRouter: GET/POST /v2/batches, GET/PUT/DELETE /v2/batches/:id, POST /v2/batch/students/add, DELETE /v2/batch/students/remove (query params).
+- Add by phone: existing student linked, otherwise auto-created in `students` (source=batch).
+- Duplicate guard: same student same batch blocked.
+- Batch list shows live student count; batch students page shows formatted enrolled date.
+- Rules: batches + batchStudents owner-only.
+- Bugfix: BatchStudentsPage used raw axios `api.delete` (bypassed FB router) -> switched to `del()` with query params.
+
+### Live E2E verified
+1. Create batch "Morning Batch A" (course + dates) - PASS
+2. Add existing student Priya (9123456780) by phone - PASS
+3. Add new student Amit (9000000001) -> auto-created - PASS
+4. Remove Amit -> count 1 - PASS
+5. /batches list: "Class 10 Science Complete Course - 1 students" - PASS
+6. Enrolled date "13/11/2026" - PASS
+
+### Notes
+- Batches are contact-groupings; no student login yet.
+- Next: Analytics (real counts), Chat, Campaigns.
