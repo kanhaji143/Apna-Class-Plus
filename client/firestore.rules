@@ -81,6 +81,11 @@ service cloud.firestore {
       allow read, delete: if isOwner(resource.data);
     }
 
+    match /campaigns/{cid} {
+      allow read, update, delete: if isOwner(resource.data);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+    }
+
     match /courses/{cid} {
       allow read: if resource.data.status == 'active' || isOwner(resource.data);
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;

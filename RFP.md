@@ -147,3 +147,19 @@
 7. Public landing page se aaye lead ka owner resolve karo (slug se), taaki People + analytics mein dikhe.
 8. Firestore rules: `events` public create, owner-only read/delete.
 9. Bugfix: public `/lp/api/:slug` route match (seg index) + rules-safe published filter.
+
+---
+
+## Phase 13i - Campaigns (Firestore, mock send)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Campaigns ko Firestore pe migrate karo (list, create, update, publish, delete).
+2. Audience options: All (Students + Leads), Leads only, Students only, Course students, Batch students.
+3. Course/Batch audience ke liye **dropdown** (raw ID nahi) — course title / batch name dikhe.
+4. Publish par recipients resolve + **phone se dedupe**, `sentCount`, `publishedAt`, recipients snapshot.
+5. Cards: name, status, channel, sent count, audience label, published date, message preview.
+6. Firestore rules: campaigns owner-only.
+7. Dashboard "Campaigns" count real campaigns se aaye (tests+materials mix nahi).
+8. Spark plan note: publish = **mock send** (real SMS/Email/WhatsApp gateway nahi — Blaze/Cloud Functions ke bina).

@@ -435,10 +435,9 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
   // ---------- dashboard stats ----------
   if (path.startsWith('/v1/diy/landingPage/dashboard')) {
     const pages = await qGet<any>('pages', { wheres: [['ownerUid', '==', ownerUid]] });
-    const tests = await qGet<any>('tests', { wheres: [['ownerUid', '==', ownerUid]] });
-    const materials = await qGet<any>('freeMaterials', { wheres: [['ownerUid', '==', ownerUid]] });
     const courses = await qGet<any>('courses', { wheres: [['ownerUid', '==', ownerUid]] });
-    return { landingPageCount: pages.length, publishedCourseCount: courses.filter((c: any) => c.status === 'active').length, couponCount: 0, campaignCount: tests.length + materials.length };
+    const campaigns = await qGet<any>('campaigns', { wheres: [['ownerUid', '==', ownerUid]] });
+    return { landingPageCount: pages.length, publishedCourseCount: courses.filter((c: any) => c.status === 'active').length, couponCount: 0, campaignCount: campaigns.length };
   }
   if (path.startsWith('/v1/diy/analytcs/stats')) {
     const qs = new URLSearchParams(path.split('?')[1] || '');
@@ -737,6 +736,130 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
       const found = await qGet<any>('batchStudents', { wheres: [['batchId', '==', batchId], ['studentId', '==', studentId], ['ownerUid', '==', ownerUid]] });
       for (const j of found) await deleteDoc(doc(dbv, 'batchStudents', String(j.id)));
       return { removed: true };
+    }
+  }
+
+  // ---------- campaigns ----------
+  if (seg[0] === 'v1' && seg[1] === 'diy' && (seg[2] === 'campaign' || seg[2] === 'campaignList')) {
+    const audienceLabelOf = async (audience: any): Promise<string> => {
+      const type = audience?.type || 'all';
+      if (type === 'leads') return 'Leads only';
+      if (type === 'students') return 'Students only';
+      if (type === 'batch') {
+        try {
+          const b = await getDoc(doc(dbv, 'batches', String(audience.id)));
+          if (b.exists()) return 'Batch: ' + (b.data().name || audience.id);
+        } catch { /* ignore */ }
+        return 'Batch #' + audience.id;
+      }
+      if (type === 'course') {
+        try {
+          const c = await getDoc(doc(dbv, 'courses', String(audience.id)));
+          if (c.exists()) return 'Course: ' + (c.data().title || audience.id);
+        } catch { /* ignore */ }
+        return 'Course #' + audience.id;
+      }
+      return 'All (Students + Leads)';
+    };
+
+    const resolveRecipients = async (audience: any): Promise<{ name: string; phone: string }[]> => {
+      const type = audience?.type || 'all';
+      const toRows = (arr: any[]) => arr
+        .map((x) => ({ name: x.name || 'Student', phone: String(x.phone || '') }))
+        .filter((r) => r.phone);
+      const dedupe = (rows: { name: string; phone: string }[]) => {
+        const seen = new Set<string>();
+        const out: { name: string; phone: string }[] = [];
+        for (const r of rows) { if (!seen.has(r.phone)) { seen.add(r.phone); out.push(r); } }
+        return out;
+      };
+
+      if (type === 'leads') {
+        return dedupe(toRows(await qGet<any>('leads', { wheres: [['ownerUid', '==', ownerUid]] })));
+      }
+      if (type === 'students') {
+        return dedupe(toRows(await qGet<any>('students', { wheres: [['ownerUid', '==', ownerUid]] })));
+      }
+      if (type === 'batch') {
+        return dedupe(toRows(await qGet<any>('batchStudents', { wheres: [['batchId', '==', Number(audience.id)], ['ownerUid', '==', ownerUid]] })));
+      }
+      if (type === 'course') {
+        const cid = Number(audience.id);
+        const studs = (await qGet<any>('students', { wheres: [['ownerUid', '==', ownerUid]] }))
+          .filter((s: any) => Number(s.courseId) === cid);
+        const batches = (await qGet<any>('batches', { wheres: [['ownerUid', '==', ownerUid]] }))
+          .filter((b: any) => Number(b.course_id) === cid);
+        let joins: any[] = [];
+        for (const b of batches) {
+          joins = joins.concat(await qGet<any>('batchStudents', { wheres: [['batchId', '==', b.id], ['ownerUid', '==', ownerUid]] }));
+        }
+        return dedupe(toRows(studs).concat(toRows(joins)));
+      }
+      const leads = toRows(await qGet<any>('leads', { wheres: [['ownerUid', '==', ownerUid]] }));
+      const studs = toRows(await qGet<any>('students', { wheres: [['ownerUid', '==', ownerUid]] }));
+      return dedupe(leads.concat(studs));
+    };
+
+    if (seg[2] === 'campaignList' && method === 'GET') {
+      const list = await qGet<any>('campaigns', { wheres: [['ownerUid', '==', ownerUid]] });
+      list.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+      return list.map((c: any) => ({
+        _id: c.id, name: c.name, channel: c.channel, audience: c.audience || null,
+        audienceLabel: c.audienceLabel || '', message: c.message, status: c.status,
+        sentCount: c.sentCount || 0, createdAt: c.createdAt, publishedAt: c.publishedAt || null,
+      }));
+    }
+    if (seg[2] === 'campaign' && seg.length === 3 && method === 'POST') {
+      const audience = body?.audience || { type: 'all' };
+      const id = await nextId(dbv, 'campaigns');
+      const audienceLabel = await audienceLabelOf(audience);
+      await setDoc(doc(dbv, 'campaigns', String(id)), {
+        id, ownerUid, name: body?.name || 'Untitled Campaign', channel: body?.channel || 'SMS',
+        audience, audienceLabel, message: body?.message || '', status: 'draft',
+        sentCount: 0, createdAt: tsNow(), publishedAt: null,
+      });
+      return { _id: id, name: body?.name, audienceLabel, status: 'draft' };
+    }
+    if (seg[2] === 'campaign' && seg[3] === 'publish' && method === 'POST') {
+      const id = Number(body?.id);
+      const snap = await getDoc(doc(dbv, 'campaigns', String(id)));
+      if (!snap.exists()) throw new Error('Campaign not found');
+      const c: any = snap.data();
+      const recipients = await resolveRecipients(c.audience || { type: 'all' });
+      await updateDoc(doc(dbv, 'campaigns', String(id)), {
+        status: 'published',
+        sentCount: recipients.length,
+        publishedAt: new Date().toISOString(),
+        recipients: recipients.slice(0, 200),
+      });
+      return { sentCount: recipients.length, channel: c.channel };
+    }
+    if (seg[2] === 'campaign' && seg.length === 4 && method === 'GET') {
+      const snap = await getDoc(doc(dbv, 'campaigns', seg[3]));
+      if (!snap.exists()) throw new Error('Campaign not found');
+      const c: any = snap.data();
+      return {
+        _id: c.id, name: c.name, channel: c.channel, audience: c.audience || null,
+        audienceLabel: c.audienceLabel || '', message: c.message, status: c.status,
+        sentCount: c.sentCount || 0, createdAt: c.createdAt, publishedAt: c.publishedAt || null,
+        recipients: c.recipients || [],
+      };
+    }
+    if (seg[2] === 'campaign' && seg.length === 4 && method === 'PUT') {
+      const upd: any = {};
+      if (body?.name !== undefined) upd.name = body.name;
+      if (body?.channel !== undefined) upd.channel = body.channel;
+      if (body?.message !== undefined) upd.message = body.message;
+      if (body?.audience !== undefined) {
+        upd.audience = body.audience;
+        upd.audienceLabel = await audienceLabelOf(body.audience);
+      }
+      await updateDoc(doc(dbv, 'campaigns', seg[3]), upd);
+      return { updated: true };
+    }
+    if (seg[2] === 'campaign' && seg.length === 4 && method === 'DELETE') {
+      await deleteDoc(doc(dbv, 'campaigns', seg[3]));
+      return { deleted: true };
     }
   }
 

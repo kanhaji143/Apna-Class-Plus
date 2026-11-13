@@ -206,3 +206,33 @@
 - Campaigns = 0 (campaign feature abhi placeholder).
 - Students = total contacts (batch/manual/store/landing), not auth users.
 - Next: Chat, Campaigns.
+
+---
+
+## Phase 13i - Campaigns (Firestore)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/campaigns
+
+### What was done
+- Firestore `campaigns` collection (owner-scoped): name, channel, audience {type,id}, audienceLabel, message, status, sentCount, recipients snapshot, createdAt, publishedAt.
+- fbRouter: GET /v1/diy/campaignList, POST /v1/diy/campaign, GET/PUT/DELETE /v1/diy/campaign/:id, POST /v1/diy/campaign/publish.
+- Audience resolution + phone dedupe: all / leads / students / course (students.courseId + course batches) / batch (batchStudents).
+- UI: course/batch **dropdowns** (raw ID input hataya), students-only option, audience label + published date on cards, publish in-flight state.
+- Rules: campaigns owner-only.
+- Dashboard "Campaigns" count ab real campaigns.
+- Spark note: publish = mock send (no Cloud Functions / SMS gateway).
+
+### Live E2E verified
+1. Empty state - PASS
+2. Create draft (WhatsApp, Batch: Morning Batch A) - PASS
+3. Publish batch -> 1 recipient - PASS
+4. Create + publish All -> 4 recipients (dedupe) - PASS
+5. Create + publish Course -> 2 recipients - PASS
+6. Dropdowns show course/batch names - PASS
+7. Delete campaign - PASS
+8. Dashboard Campaigns = 2 - PASS
+
+### Notes
+- Mock send: sentCount/publishedAt/recipients Firestore mein; real delivery gateway Phase 8.5 (Blaze).
+- Next: Chat.

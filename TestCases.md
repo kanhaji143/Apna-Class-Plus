@@ -525,3 +525,45 @@
 - **Steps:** GET /lp/api/:slug.
 - **Expected:** Returns title, sections, theme, ownerUid (published only).
 - **Status:** PASS (ownerUid + 0 sections blank template).
+
+## Module 24 - Campaigns (Phase 13i)
+
+### TC-24.1 Campaign list empty state
+- **Steps:** Login -> /campaigns.
+- **Expected:** Empty state with create hint.
+- **Status:** PASS.
+
+### TC-24.2 Create draft (batch audience)
+- **Steps:** Create Campaign -> name, channel WhatsApp, audience Batch students -> select batch, message -> Create.
+- **Expected:** Draft card with audience label "Batch: <name>".
+- **Status:** PASS (Batch Launch WhatsApp, Batch: Morning Batch A).
+
+### TC-24.3 Publish batch campaign
+- **Steps:** Publish -> confirm.
+- **Expected:** Status published, sentCount = batch students (deduped), published date shown.
+- **Status:** PASS (1 recipient).
+
+### TC-24.4 All audience dedupe
+- **Steps:** Create -> audience All -> publish.
+- **Expected:** Unique phones across leads + students (Rahul lead+student counted once).
+- **Status:** PASS (4 recipients).
+
+### TC-24.5 Course audience
+- **Steps:** Create -> audience Course students -> select course -> publish.
+- **Expected:** Students with that courseId + batch students of batches mapped to course, deduped.
+- **Status:** PASS (2 recipients).
+
+### TC-24.6 Audience dropdowns
+- **Steps:** Audience = Course/Batch.
+- **Expected:** Course title / batch name dropdown, no raw ID input; empty state if none.
+- **Status:** PASS (Class 10 Science Complete Course; Morning Batch A · course).
+
+### TC-24.7 Delete campaign
+- **Steps:** Card delete -> confirm.
+- **Expected:** Campaign removed from list.
+- **Status:** PASS (Course Students SMS removed).
+
+### TC-24.8 Dashboard campaign count
+- **Steps:** Dashboard overview.
+- **Expected:** Campaigns = actual campaigns count.
+- **Status:** PASS (2).
