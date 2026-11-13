@@ -3,7 +3,7 @@ import {
   Box, Card, CardContent, Grid, Typography, Skeleton, MenuItem, Select, Stack, Chip, Alert, Button,
 } from '@mui/material';
 import { useSelector } from 'react-redux';
-import { get } from '../../api/client';
+import { get, post } from '../../api/client';
 import type { RootState } from '../../app/store';
 
 interface DashboardStats {
@@ -25,6 +25,8 @@ export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<AnalyticsCard[]>([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedMsg, setSeedMsg] = useState<string | null>(null);
   const storeUrl = `${window.location.origin}/store`;
   const copyStore = async () => {
     try {
@@ -52,6 +54,18 @@ export default function DashboardPage() {
       .catch(() => setAnalytics([]))
       .finally(() => setAnalyticsLoading(false));
   }, [day]);
+
+  const seedDemo = async () => {
+    setSeeding(true);
+    setSeedMsg(null);
+    try {
+      const r = await post<any>('/v1/diy/seed-demo', {});
+      const created = Object.entries(r).filter(([, v]) => v).map(([k]) => k);
+      setSeedMsg(created.length ? `✅ Seeded: ${created.join(', ')}` : '✅ Demo data pehle se mojood hai.');
+    } catch (e: any) {
+      setSeedMsg('❌ Seed fail: ' + (e?.message || 'error'));
+    } finally { setSeeding(false); }
+  };
 
   const cards = [
     { label: 'Landing Pages', value: stats?.landingPageCount },
@@ -97,9 +111,15 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <Typography color="text.secondary" sx={{ mb: 3 }}>
-        Aaj ka overview â€” original DIY dashboard stats pattern (landingPage/dashboard API se)
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3, gap: 2, flexWrap: 'wrap' }}>
+        <Typography color="text.secondary">
+          Aaj ka overview â€” original DIY dashboard stats pattern (landingPage/dashboard API se)
+        </Typography>
+        <Button variant="outlined" onClick={seedDemo} disabled={seeding}>
+          {seeding ? 'Seeding…' : '🌱 Seed Demo Data'}
+        </Button>
+      </Box>
+      {seedMsg && <Alert severity="info" sx={{ mb: 2 }}>{seedMsg}</Alert>}
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {cards.map((c) => (

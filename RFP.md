@@ -292,3 +292,16 @@
 4. Lead mein `couponCode` save; usage count leads se.
 5. Rules: coupons public read sirf `status == 'active'` (store validation ke liye); owner-only write.
 6. Dashboard "Coupons" count real.
+
+---
+
+## Phase 13s - Final QA, README & Demo Seed
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Project root mein **README.md** — setup, local dev, live deploy (Spark), credentials, features, limitations.
+2. Dashboard par **"Seed Demo Data"** button — ek click mein course/test/coupon/page/free material/lead (jo missing ho).
+3. Seed idempotent ho (dobara click par "already exists").
+4. **QA sweep** — saare 18 pages ek-ek karke load ho, koi crash/console error na.
+5. QA mein mile bugs fix ho (Landing Pages list Timestamp crash).

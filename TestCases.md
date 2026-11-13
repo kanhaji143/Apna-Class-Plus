@@ -850,3 +850,30 @@
 - **Steps:** Sidebar.
 - **Expected:** "Coupons" tab + navigation.
 - **Status:** PASS.
+
+## Module 34 - Final QA / README / Demo Seed (Phase 13s)
+
+### TC-34.1 README
+- **Steps:** Project root README.md padho.
+- **Expected:** setup, local dev, Spark deploy, credentials, features, limitations.
+- **Status:** PASS.
+
+### TC-34.2 Seed demo data
+- **Steps:** Dashboard -> "🌱 Seed Demo Data".
+- **Expected:** Missing entities create (test, coupon, page, contacts).
+- **Status:** PASS ("Seeded: test, coupon, page, contacts").
+
+### TC-34.3 Seed idempotent
+- **Steps:** Button dobara click.
+- **Expected:** "Demo data pehle se mojood hai" (koi duplicate nahi).
+- **Status:** PASS (existence checks).
+
+### TC-34.4 QA sweep — saare pages
+- **Steps:** 18 URLs navigate + render marker + console errors.
+- **Expected:** Sab load, koi crash nahi.
+- **Status:** PASS (after cache-bust; 0 console errors).
+
+### TC-34.5 Landing list crash fix
+- **Steps:** /landing-pages/list.
+- **Expected:** Pages list render, date formatted; React error #31 gone.
+- **Status:** PASS (Timestamp→ISO in route + fmtDate in page).

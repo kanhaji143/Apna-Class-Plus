@@ -187,11 +187,113 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     }
   }
 
+  // ---------- demo seed (one-click demo data) ----------
+  if (path.startsWith('/v1/diy/seed-demo') && method === 'POST') {
+    const out: any = { course: false, test: false, coupon: false, page: false, material: false, contacts: false };
+
+    let courseId = 0;
+    const existingCourses = await qGet<any>('courses', { wheres: [['ownerUid', '==', ownerUid]] });
+    const ec = existingCourses.find((c: any) => c.title === 'Class 10 Science Complete Course');
+    if (ec) {
+      courseId = ec.id;
+    } else {
+      courseId = await nextId(dbv, 'courses');
+      await setDoc(doc(dbv, 'courses', String(courseId)), {
+        id: courseId, ownerUid, title: 'Class 10 Science Complete Course', price: 499, currency: 'INR',
+        description: 'Full syllabus videos + notes + tests. Hindi & English medium', status: 'active', created_at: tsNow(),
+      });
+      const fid = await nextId(dbv, 'courseFolders');
+      await setDoc(doc(dbv, 'courseFolders', String(fid)), {
+        id: fid, course_id: courseId, ownerUid, parent_id: null, name: 'Chapter 1 - Chemical Reactions', sort_order: 1, createdAt: tsNow(),
+      });
+      const cid = await nextId(dbv, 'courseContents');
+      await setDoc(doc(dbv, 'courseContents', String(cid)), {
+        id: cid, course_id: courseId, ownerUid, folder_id: null, type: 'video',
+        title: 'Chapter 1: Chemical Reactions (Video)', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        description: '', duration: 0, sort_order: 1, createdAt: tsNow(),
+      });
+      out.course = true;
+    }
+
+    const tests = await qGet<any>('tests', { wheres: [['ownerUid', '==', ownerUid]] });
+    if (!tests.find((t: any) => t.title === 'Demo Sample Test')) {
+      const tid = await nextId(dbv, 'tests');
+      await setDoc(doc(dbv, 'tests', String(tid)), {
+        id: tid, ownerUid, title: 'Demo Sample Test', description: 'Auto-seeded sample test',
+        durationMin: 10, reattemptMode: 0, courseId: courseId || null, status: 'published', createdAt: tsNow(),
+      });
+      const q1 = await nextId(dbv, 'questions');
+      await setDoc(doc(dbv, `tests/${tid}/questions`, String(q1)), {
+        id: q1, section_id: null, parent_id: null, type: 'mcq', question: 'What is the chemical symbol of water?',
+        option_a: 'H2O', option_b: 'O2', option_c: 'CO2', option_d: null, correct: 'a', accepted_answers: null,
+        explanation: 'Water = H2O', question_hi: null, option_a_hi: null, option_b_hi: null, option_c_hi: null,
+        option_d_hi: null, explanation_hi: null, marks: 1, sort_order: 1,
+      });
+      const q2 = await nextId(dbv, 'questions');
+      await setDoc(doc(dbv, `tests/${tid}/questions`, String(q2)), {
+        id: q2, section_id: null, parent_id: null, type: 'objective', question: 'Capital of India?',
+        option_a: null, option_b: null, option_c: null, option_d: null, correct: '',
+        accepted_answers: JSON.stringify(['New Delhi', 'Delhi']), explanation: null, question_hi: null,
+        option_a_hi: null, option_b_hi: null, option_c_hi: null, option_d_hi: null, explanation_hi: null,
+        marks: 1, sort_order: 2,
+      });
+      out.test = true;
+    }
+
+    const coupons = await qGet<any>('coupons', { wheres: [['ownerUid', '==', ownerUid]] });
+    if (!coupons.find((c: any) => c.code === 'WELCOME20')) {
+      const cid = await nextId(dbv, 'coupons');
+      await setDoc(doc(dbv, 'coupons', String(cid)), {
+        id: cid, ownerUid, code: 'WELCOME20', discountType: 'percent', value: 20,
+        courseId: courseId || null, courseTitle: 'Class 10 Science Complete Course',
+        status: 'active', expiry: null, createdAt: tsNow(),
+      });
+      out.coupon = true;
+    }
+
+    const mats = await qGet<any>('freeMaterials', { wheres: [['ownerUid', '==', ownerUid]] });
+    if (!mats.find((m: any) => m.title === 'Class 10 Science Notes (PDF)')) {
+      const mid = await nextId(dbv, 'freeMaterials');
+      await setDoc(doc(dbv, 'freeMaterials', String(mid)), {
+        id: mid, ownerUid, type: 'pdf', title: 'Class 10 Science Notes (PDF)', url: '',
+        description: 'Complete chapter-wise notes', status: 'published', sort_order: 1, createdAt: tsNow(),
+      });
+      out.material = true;
+    }
+
+    const pages = await qGet<any>('pages', { wheres: [['ownerUid', '==', ownerUid]] });
+    if (!pages.find((p: any) => p.title === 'Welcome Landing')) {
+      const tpl = getTemplates().find((t: any) => t.id === 'lead') || getTemplates()[0];
+      const pid = await nextId(dbv, 'pages');
+      await setDoc(doc(dbv, 'pages', String(pid)), {
+        id: pid, ownerUid, title: 'Welcome Landing', slug: 'welcome-landing-' + pid, status: 'published',
+        sections: tpl.sections, theme: tpl.theme, courseId: null, createdAt: tsNow(),
+      });
+      out.page = true;
+    }
+
+    const leads = await qGet<any>('leads', { wheres: [['ownerUid', '==', ownerUid]] });
+    if (!leads.find((l: any) => l.name === 'Demo Lead')) {
+      const lid = await nextId(dbv, 'leads');
+      await setDoc(doc(dbv, 'leads', String(lid)), {
+        id: lid, ownerUid, name: 'Demo Lead', phone: '9000000005', courseId: courseId || null,
+        courseTitle: 'Class 10 Science Complete Course', source: 'seed', converted: false, createdAt: tsNow(),
+      });
+      out.contacts = true;
+    }
+
+    return out;
+  }
+
   // ---------- landing pages ----------
   if (seg[2] === 'landingPages') {    if (method === 'GET' && seg.length === 3) {
       const pages = await qGet<any>('pages', { wheres: [['ownerUid', '==', ownerUid]] });
       pages.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
-      return { data: pages.map((p: any) => ({ _id: p.id, id: p.id, title: p.title, slug: p.slug, status: p.status, createdAt: p.createdAt })) };
+      return { data: pages.map((p: any) => ({
+        _id: p.id, id: p.id, title: p.title, slug: p.slug, status: p.status,
+        type: p.type || 'Landing',
+        createdAt: p.createdAt?.toDate ? p.createdAt.toDate().toISOString() : (p.createdAt || ''),
+      })) };
     }
     if (method === 'POST' && seg.length === 3) {
       const tplId = String(body?.templateId ?? 'blank');

@@ -470,3 +470,31 @@
 - Coupons public active-only readable (codes enumerate ho sakte hain — demo trade-off).
 - Payments skip ki wajah se discounted price lead par rely karta hai.
 - Next: trial enforcement / payments.
+
+---
+
+## Phase 13s - Final QA, README & Demo Seed
+
+**Date:** 2026-11-13
+
+### What was done
+- `README.md`: stack, structure, local dev, Spark deploy (BOM-free config note), test credentials, features, data-model notes, known limitations.
+- Dashboard "🌱 Seed Demo Data" button + `POST /v1/diy/seed-demo`: course (folder+content), published test (2 questions), WELCOME20 coupon, Welcome Landing (published, Lead Magnet), free material, demo lead. Idempotent (existence checks).
+- **Bugfix:** `/landing-pages/list` crash — Firestore `createdAt` Timestamp directly render ho raha tha (React error #31). Route ab ISO string deta hai + page `fmtDate` use karta hai.
+- QA sweep: 18 pages (dashboard, landing list, courses, batches, people, chat, campaigns, analytics, progress, coupons, test portal, free material, admin, store, lp-preview, learn, public chat, public test) — sab render, 0 console errors (cache-bust ke baad).
+
+### QA sweep result (live)
+| Page | Status |
+|---|---|
+| / dashboard | PASS |
+| /landing-pages/list | PASS (after fix) |
+| /courses, /batches, /people, /chat, /campaigns | PASS |
+| /analytics, /progress, /coupons | PASS |
+| /content/test-portal, /content/free-material, /admin | PASS |
+| /store (public) | PASS |
+| /lp-preview/lead-magnet-2 (iframe) | PASS |
+| /learn/<token>, /chat/<token>, /test/2 | PASS |
+
+### Notes
+- Hosting cache: naye deploy ke baad purana chunk tab mein cache ho sakta hai — fresh tab + `?cb=<ts>` use karo.
+- Project ab demo/handoff ke liye ready hai (payments ke alawa poori feature parity).

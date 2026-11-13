@@ -9,6 +9,12 @@ import { get } from '../../api/client';
 
 interface PageRow { _id: number; title: string; slug: string | null; type: string; status: string; totalVisitors: number; createdAt: string; }
 
+const fmtDate = (v: any) => {
+  if (!v) return '';
+  const d = v?.toDate ? v.toDate() : new Date(v);
+  return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-IN');
+};
+
 export default function LandingPagesListPage() {
   const [pages, setPages] = useState<PageRow[]>([]);
   const [search, setSearch] = useState('');
@@ -55,7 +61,7 @@ export default function LandingPagesListPage() {
                     <Typography variant="h6" noWrap sx={{ maxWidth: 220 }}>{p.title}</Typography>
                     <Chip size="small" label={p.status} color={p.status === 'published' ? 'success' : 'default'} />
                   </Box>
-                  <Typography variant="body2" color="text.secondary">{p.type} · {p.createdAt}</Typography>
+                  <Typography variant="body2" color="text.secondary">{p.type || 'Landing'} · {fmtDate(p.createdAt)}</Typography>
                   <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
                     <Button size="small" variant="outlined" onClick={(e) => { e.stopPropagation(); navigate(`/landing-pages/edit/${p._id}`); }}>
                       Edit
