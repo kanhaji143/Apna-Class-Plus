@@ -498,3 +498,46 @@
 ### Notes
 - Hosting cache: naye deploy ke baad purana chunk tab mein cache ho sakta hai — fresh tab + `?cb=<ts>` use karo.
 - Project ab demo/handoff ke liye ready hai (payments ke alawa poori feature parity).
+
+---
+
+## Phase 13t - Mobile Responsive Polish
+
+**Date:** 2026-11-13
+
+### What was done
+- `ProtectedLayout`: mobile (≤768px) pe temporary drawer + hamburger; desktop pe permanent. Compact AppBar (small Logout, user chip maxWidth), main padding `xs:1.5`.
+- Theme: dialog paper mobile margin 8px / maxWidth calc(100%-16px); `WebkitTextSizeAdjust: 100%`.
+- `flexWrap: 'wrap'` added: TestEditor question row, ContentManager rows/header, LearnPage item row, TestTakePage bottom nav, PublicFreeMaterials card row.
+- Phone inputs `type="tel"`: Store enroll, People add student, Batch add student.
+
+### Live E2E verified
+1. Mobile drawer: matchMedia override se sidebar hidden + hamburger → tap → drawer open - PASS
+2. Desktop regression: permanent drawer, QA sweep 20 pages, 0 console errors - PASS
+3. Rows/dialogs/inputs: code-level + build PASS
+
+---
+
+## Phase 13u - Payments Integration (Razorpay + mock)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/orders
+
+### What was done
+- `orders` collection + rules (public create, owner read/update).
+- Store checkout: enroll → order (amount/discount/couponCode) → `PaymentDialog` (real Razorpay Checkout.js jab key configured; warna Test Mode mock Simulate Pay/Fail) → `/v1/diy/orders/:id/complete` → order `paid` + paid lead.
+- `/orders` page: Revenue (paid), Paid Orders, Pending + cards (student, amount, coupon, paymentId).
+- Analytics: revenue daily chart + dashboard "Revenue" card.
+- Sidebar "Orders" tab.
+- **Bugfixes during verification:** `/orders/:id/complete` path match (seg[4]), `pubPost` generic typing.
+
+### Live E2E verified
+1. Enroll ₹499 -> order created + checkout dialog - PASS
+2. Simulate Pay -> order paid, paymentId mock_pay_*, lead created - PASS
+3. /orders: Revenue ₹499, Paid 1, Pending 1 - PASS
+4. Dashboard Revenue card = 499 - PASS
+5. QA sweep (20 pages, 0 console errors) - PASS
+
+### Notes
+- Real keys ke bina Test Mode (simulated) — keys `runConfig.RAZORPAY_KEY` set karne par real checkout enable.
+- Spark plan: webhook/backend verification nahi — real integration mein teacher manually verify karega (documented).

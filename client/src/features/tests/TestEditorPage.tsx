@@ -251,7 +251,7 @@ export default function TestEditorPage() {
                   const answerable = questions.filter((qq) => qq.type !== 'comprehension');
                   const numOf = (qid: number) => answerable.findIndex((qq) => qq.id === qid) + 1;
                   const renderRow = (q: Question, num: number) => (
-                    <Box key={q.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, mb: 1, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                    <Box key={q.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, mb: 1, borderRadius: 1, border: '1px solid', borderColor: 'divider', flexWrap: 'wrap' }}>
                       <Typography sx={{ width: 28, fontWeight: 800 }}>{num}.</Typography>
                       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                         <Typography variant="body2" fontWeight={700}>{q.question}</Typography>

@@ -877,3 +877,72 @@
 - **Steps:** /landing-pages/list.
 - **Expected:** Pages list render, date formatted; React error #31 gone.
 - **Status:** PASS (Timestamp→ISO in route + fmtDate in page).
+
+## Module 35 - Mobile Responsive (Phase 13t)
+
+### TC-35.1 Mobile drawer
+- **Steps:** Mobile width pe app kholo (matchMedia override se verify).
+- **Expected:** Sidebar hidden, hamburger dikhe; tap karne par drawer khule.
+- **Status:** PASS (sidebar hidden → open on hamburger).
+
+### TC-35.2 Desktop regression
+- **Steps:** Desktop width pe sidebar permanent.
+- **Expected:** Permanent drawer, koi hamburger nahi.
+- **Status:** PASS.
+
+### TC-35.3 Dialogs small screen
+- **Steps:** Theme override check.
+- **Expected:** Dialog margin 8px, maxWidth calc(100%-16px).
+- **Status:** PASS (code-level).
+
+### TC-35.4 Rows wrap
+- **Steps:** Test editor / Content manager / Learn page / Test player / Public free material.
+- **Expected:** `flexWrap: 'wrap'` on potentially wide rows.
+- **Status:** PASS.
+
+### TC-35.5 Phone inputs
+- **Steps:** Store enroll, People add student, Batch add student.
+- **Expected:** `type="tel"`.
+- **Status:** PASS.
+
+### TC-35.6 Desktop QA sweep
+- **Steps:** 20 pages navigate.
+- **Expected:** Sab render, 0 console errors.
+- **Status:** PASS.
+
+## Module 36 - Payments (Phase 13u)
+
+### TC-36.1 Order create
+- **Steps:** /store -> Enroll paid course (₹499).
+- **Expected:** Order #1 create (amount 499), checkout dialog khule.
+- **Status:** PASS.
+
+### TC-36.2 Mock checkout dialog
+- **Steps:** Dialog check.
+- **Expected:** Order ID, Total, Test Mode alert, Simulate Pay/Fail buttons.
+- **Status:** PASS.
+
+### TC-36.3 Simulate pay → order paid
+- **Steps:** "Simulate Pay ₹499".
+- **Expected:** Order status paid, paymentId mock_pay_*, paid lead banega.
+- **Status:** PASS (after complete-route fix).
+
+### TC-36.4 Orders page
+- **Steps:** /orders.
+- **Expected:** Revenue ₹499, Paid Orders 1, Pending 1, order cards.
+- **Status:** PASS.
+
+### TC-36.5 Dashboard revenue card
+- **Steps:** Dashboard analytics (last 7 days).
+- **Expected:** Revenue 499.
+- **Status:** PASS.
+
+### TC-36.6 Bugfix — complete route
+- **Steps:** `/v1/diy/orders/:id/complete` path.
+- **Expected:** seg[4]==='complete' match; order paid.
+- **Status:** PASS.
+
+### TC-36.7 Bugfix — pubPost typing
+- **Steps:** StorePage `pubPost<{...}>`.
+- **Expected:** Generic pubPost; tsc clean.
+- **Status:** PASS.

@@ -16,6 +16,14 @@ export const theme = createTheme({
   shape: { borderRadius: 12 },
   components: {
     MuiButton: { styleOverrides: { root: { textTransform: 'none', fontWeight: 700 } } },
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: { WebkitTextSizeAdjust: '100%' },
+        '@media (max-width: 600px)': {
+          '.MuiDialog-paper': { margin: '8px', maxWidth: 'calc(100% - 16px)' },
+        },
+      },
+    },
   },
 });
 

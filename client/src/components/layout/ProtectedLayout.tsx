@@ -2,8 +2,9 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import {
   Box, Drawer, List, ListItemButton, ListItemText, Typography, AppBar, Toolbar,
-  Button, Divider, Tooltip, Paper, Chip,
+  Button, Divider, Tooltip, Paper, Chip, IconButton, useMediaQuery,
 } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import { useDispatch, useSelector } from 'react-redux';
 import { get } from '../../api/client';
 import { logout } from '../../features/auth/authSlice';
@@ -23,6 +24,8 @@ export default function ProtectedLayout() {
   const [tabs, setTabs] = useState<TabItem[]>([]);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     get<TabItem[]>('/v1/diy/configuration/tabs').then(setTabs).catch(() => setTabs([]));
@@ -30,11 +33,19 @@ export default function ProtectedLayout() {
 
   if (!user) return null;
 
-  const go = (slug: string) => navigate('/' + slug);
+  const go = (slug: string) => {
+    setMobileOpen(false);
+    navigate('/' + slug);
+  };
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-      <Drawer variant="permanent" sx={{ width: DRAWER_W, flexShrink: 0, '& .MuiDrawer-paper': { width: DRAWER_W } }}>
+      <Drawer
+        variant={isMobile ? 'temporary' : 'permanent'}
+        open={isMobile ? mobileOpen : true}
+        onClose={() => setMobileOpen(false)}
+        sx={{ width: DRAWER_W, flexShrink: 0, '& .MuiDrawer-paper': { width: DRAWER_W } }}
+      >
         <Toolbar sx={{ px: 2 }}>
           <Typography variant="h6" color="primary" fontWeight={900}>Apna Class Plus</Typography>
         </Toolbar>
@@ -55,17 +66,17 @@ export default function ProtectedLayout() {
                   {t.subMenu.map((s) => (
                     <Chip key={s.slug} label={s.title} size="small"
                       sx={{ cursor: 'pointer', fontSize: 11 }}
-                      onClick={() => navigate('/' + s.slug)} />
+                      onClick={() => go(s.slug)} />
                   ))}
                 </Box>
               )}
             </Fragment>
           ))}
-          <ListItemButton onClick={() => window.open('/store', '_blank')} sx={{ borderRadius: 2, mx: 1 }}>
+          <ListItemButton onClick={() => { setMobileOpen(false); window.open('/store', '_blank'); }} sx={{ borderRadius: 2, mx: 1 }}>
             <ListItemText primary="🛍️ My Store (public)" primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }} />
           </ListItemButton>
           {(user.role === 'admin' || user.role === 'superadmin') && (
-            <ListItemButton onClick={() => navigate('/admin')} sx={{ borderRadius: 2, mx: 1 }}>
+            <ListItemButton onClick={() => go('/admin')} sx={{ borderRadius: 2, mx: 1 }}>
               <ListItemText primary="Admin (Users & Trials)" primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }} />
             </ListItemButton>
           )}
@@ -74,22 +85,27 @@ export default function ProtectedLayout() {
 
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
         <AppBar position="sticky" color="inherit" elevation={1} sx={{ bgcolor: 'white' }}>
-          <Toolbar>
+          <Toolbar sx={{ gap: 1 }}>
+            {isMobile && (
+              <IconButton onClick={() => setMobileOpen(true)} size="small" sx={{ mr: 0.5 }}>
+                <MenuIcon />
+              </IconButton>
+            )}
             <Box sx={{ flexGrow: 1 }} />
-            <Paper sx={{ px: 2, py: 0.5, mr: 1, bgcolor: 'primary.lighter' }}>
-              <Typography variant="body2" fontWeight={700}>
+            <Paper sx={{ px: 2, py: 0.5, mr: 1, bgcolor: 'primary.lighter', maxWidth: { xs: 150, sm: 'none' } }}>
+              <Typography variant="body2" fontWeight={700} noWrap>
                 {user.name} Â· {user.role}
               </Typography>
             </Paper>
             <Tooltip title="Logout">
-              <Button variant="outlined" color="primary" onClick={() => { dispatch(logout()); navigate('/login'); }}>
+              <Button variant="outlined" color="primary" onClick={() => { dispatch(logout()); navigate('/login'); }} size={isMobile ? 'small' : 'medium'}>
                 Logout
               </Button>
             </Tooltip>
           </Toolbar>
         </AppBar>
 
-        <Box component="main" sx={{ p: 3 }}>
+        <Box component="main" sx={{ p: { xs: 1.5, sm: 3 } }}>
           <Outlet />
         </Box>
       </Box>

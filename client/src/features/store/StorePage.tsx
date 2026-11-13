@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import PaymentDialog from './PaymentDialog';
 
 const FB = (window as any).runConfig?.FIREBASE_MODE === true;
 
@@ -17,13 +18,13 @@ const pubGet = async (path: string) => {
   return r.data.data;
 };
 
-const pubPost = async (path: string, body: any) => {
+const pubPost = async <T = any>(path: string, body: any): Promise<T> => {
   if (FB) {
     const { route } = await import('../../firebase/fbRouter');
-    return route('POST', path, body);
+    return route('POST', path, body) as Promise<T>;
   }
   const r = await axios.post(path, body);
-  return r.data.data;
+  return r.data.data as T;
 };
 
 interface StoreCourse { id: number; title: string; description: string | null; price: number; currency: string; ownerUid?: string; }
@@ -46,6 +47,8 @@ export default function StorePage() {
   const [couponInfo, setCouponInfo] = useState<any | null>(null);
   const [couponMsg, setCouponMsg] = useState<string | null>(null);
   const [couponBusy, setCouponBusy] = useState(false);
+  const [order, setOrder] = useState<{ id: number; amount: number; courseTitle?: string } | null>(null);
+  const [payOpen, setPayOpen] = useState(false);
 
   useEffect(() => {
     pubGet('/store').then((d: any) => {
@@ -61,6 +64,8 @@ export default function StorePage() {
     setEnrollForm({ name: '', phone: '', coupon: '' });
     setCouponInfo(null);
     setCouponMsg(null);
+    setOrder(null);
+    setPayOpen(false);
     setEnrolled(false);
   };
 
@@ -78,7 +83,7 @@ export default function StorePage() {
     } finally { setCouponBusy(false); }
   };
 
-  const submitEnroll = async () => {
+  const directEnroll = async () => {
     if (!enrollCourse || !enrollForm.name.trim() || !enrollForm.phone.trim()) return;
     setEnrolling(true);
     try {
@@ -93,10 +98,45 @@ export default function StorePage() {
       });
       setEnrolled(true);
     } catch {
-      // still show success-ish fallback? keep dialog open for retry
       setEnrolled(false);
     } finally {
       setEnrolling(false);
+    }
+  };
+
+  const submitEnroll = async () => {
+    if (!enrollCourse || !enrollForm.name.trim() || !enrollForm.phone.trim()) return;
+    const amount = couponInfo?.finalPrice ?? enrollCourse.price;
+    if (!amount || amount <= 0) { await directEnroll(); return; } // free course
+    setEnrolling(true);
+    try {
+      const o = await pubPost<{ id: number; amount: number }>('/v1/diy/orders', {
+        ownerUid: enrollCourse.ownerUid || 'public',
+        courseId: enrollCourse.id,
+        courseTitle: enrollCourse.title,
+        studentName: enrollForm.name,
+        studentPhone: enrollForm.phone,
+        amount,
+        discount: couponInfo?.discount || 0,
+        couponCode: couponInfo?.code || undefined,
+      });
+      setOrder({ id: o.id, amount: o.amount, courseTitle: enrollCourse.title });
+      setPayOpen(true);
+    } catch {
+      setEnrolled(false);
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const onPaymentSuccess = async (paymentId: string) => {
+    setPayOpen(false);
+    try {
+      await pubPost('/v1/diy/orders/' + order!.id + '/complete', { paymentId });
+      setEnrolled(true);
+    } catch {
+      setEnrolled(false);
+      window.alert('Payment complete record nahi hua — teacher se contact karo.');
     }
   };
 
@@ -218,7 +258,7 @@ export default function StorePage() {
                 Apna naam aur phone number chhodo — teacher aapko course access ke liye contact karega.
               </Typography>
               <TextField label="Aapka naam" value={enrollForm.name} onChange={(e) => setEnrollForm({ ...enrollForm, name: e.target.value })} fullWidth autoFocus />
-              <TextField label="Phone number" value={enrollForm.phone} onChange={(e) => setEnrollForm({ ...enrollForm, phone: e.target.value })} fullWidth />
+              <TextField label="Phone number" type="tel" value={enrollForm.phone} onChange={(e) => setEnrollForm({ ...enrollForm, phone: e.target.value })} fullWidth />
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                 <TextField label="Coupon code (optional)" value={enrollForm.coupon}
                   onChange={(e) => setEnrollForm({ ...enrollForm, coupon: e.target.value })} fullWidth size="small" />
@@ -251,6 +291,13 @@ export default function StorePage() {
           )}
         </DialogActions>
       </Dialog>
+
+      <PaymentDialog
+        open={payOpen}
+        onClose={() => setPayOpen(false)}
+        order={order}
+        onSuccess={onPaymentSuccess}
+      />
     </Box>
   );
 }

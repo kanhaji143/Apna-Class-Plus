@@ -437,7 +437,7 @@ export default function TestTakePage() {
             </Card>
           )}
 
-          <Box sx={{ display: 'flex', gap: 1, mb: 4 }}>
+          <Box sx={{ display: 'flex', gap: 1, mb: 4, flexWrap: 'wrap' }}>
             <Button variant="outlined" disabled={idx <= 0} onClick={() => setIdx((i) => i - 1)}>Previous</Button>
             <Button variant="outlined" disabled={idx >= visibleQs.length - 1} onClick={() => setIdx((i) => i + 1)}>Next</Button>
             <Box sx={{ flexGrow: 1 }} />

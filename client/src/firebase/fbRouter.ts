@@ -101,6 +101,7 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
       tab('Analytics', 'analytics/sales-traffic', 9),
       tab('Student Progress', 'progress', 10),
       tab('Coupons', 'coupons', 11),
+      tab('Orders', 'orders', 12),
     ];
   }
 
@@ -119,6 +120,47 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
         createdAt: l.createdAt || '',
       };
     });
+  }
+
+  // ---------- orders (payments) ----------
+  if (seg[0] === 'v1' && seg[1] === 'diy' && seg[2] === 'orders') {
+    if (method === 'POST' && seg.length === 3) {
+      const id = await nextId(dbv, 'orders');
+      await setDoc(doc(dbv, 'orders', String(id)), {
+        id, ownerUid: body?.ownerUid || 'public',
+        courseId: body?.courseId ?? null, courseTitle: body?.courseTitle || 'Course',
+        studentName: body?.studentName || 'Student', studentPhone: body?.studentPhone || '',
+        amount: Number(body?.amount || 0), discount: Number(body?.discount || 0),
+        couponCode: body?.couponCode || null, status: 'created', paymentId: null,
+        createdAt: tsNow(), paidAt: null,
+      });
+      return { id, amount: Number(body?.amount || 0) };
+    }
+    if (method === 'GET' && seg.length === 3) {
+      const list = await qGet<any>('orders', { wheres: [['ownerUid', '==', ownerUid]] });
+      list.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+      return list.map((o: any) => ({
+        _id: o.id, courseId: o.courseId, courseTitle: o.courseTitle,
+        studentName: o.studentName, studentPhone: o.studentPhone,
+        amount: o.amount, discount: o.discount, couponCode: o.couponCode,
+        status: o.status, paymentId: o.paymentId, createdAt: o.createdAt, paidAt: o.paidAt || null,
+      }));
+    }
+    if (method === 'POST' && seg.length === 5 && seg[4] === 'complete') {
+      const oid = Number(seg[3]);
+      const snap = await getDoc(doc(dbv, 'orders', String(oid)));
+      if (!snap.exists()) throw new Error('Order not found');
+      const o: any = snap.data();
+      const paymentId = String(body?.paymentId || 'mock_pay_' + Date.now());
+      await updateDoc(doc(dbv, 'orders', String(oid)), { status: 'paid', paymentId, paidAt: new Date().toISOString() });
+      const lid = await nextId(dbv, 'leads');
+      await setDoc(doc(dbv, 'leads', String(lid)), {
+        id: lid, ownerUid: o.ownerUid, courseId: o.courseId, courseTitle: o.courseTitle,
+        name: o.studentName, phone: o.studentPhone, couponCode: o.couponCode, source: 'store',
+        paid: true, amount: o.amount, paymentId, converted: false, createdAt: tsNow(),
+      });
+      return { ok: true, paymentId, leadId: lid };
+    }
   }
 
   // ---------- coupons ----------
@@ -665,13 +707,18 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     const toDate = (v: any): Date | null => (v && typeof v.toDate === 'function') ? v.toDate() : (v ? new Date(v) : null);
     const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (days - 1));
     const dayKey = (d: Date) => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const buckets: Record<string, { day: string; leads: number; views: number }> = {};
+    const buckets: Record<string, { day: string; leads: number; views: number; revenue: number }> = {};
     for (let i = 0; i < days; i++) {
       const d = new Date(start); d.setDate(start.getDate() + i);
-      buckets[dayKey(d)] = { day: dayKey(d), leads: 0, views: 0 };
+      buckets[dayKey(d)] = { day: dayKey(d), leads: 0, views: 0, revenue: 0 };
     }
     leads.forEach((l: any) => { const d = toDate(l.createdAt); if (d && d >= start) { const k = dayKey(d); if (buckets[k]) buckets[k].leads += 1; } });
     events.forEach((e: any) => { const d = toDate(e.createdAt); if (d && d >= start) { const k = dayKey(d); if (buckets[k]) buckets[k].views += 1; } });
+    const paidOrders = await qGet<any>('orders', { wheres: [['ownerUid', '==', ownerUid], ['status', '==', 'paid']] });
+    paidOrders.forEach((o: any) => {
+      const d = toDate(o.paidAt || o.createdAt);
+      if (d && d >= start) { const k = dayKey(d); if (buckets[k]) buckets[k].revenue += Number(o.amount || 0); }
+    });
     const daily = Object.values(buckets).sort((a, b) => a.day.localeCompare(b.day));
     const totalLeads = leads.length;
     const totalPageViews = events.length;
@@ -688,7 +735,7 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
       charts: {
         dailyLeads: daily.map((d) => ({ day: d.day, value: d.leads })),
         dailyViews: daily.map((d) => ({ day: d.day, value: d.views })),
-        revenue: daily.map((d) => ({ day: d.day, revenue: 0 })),
+        revenue: daily.map((d) => ({ day: d.day, revenue: d.revenue || 0 })),
       },
       topPages,
     };
@@ -719,11 +766,15 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     const curLeads = inRange(leads, start, now); const prevLeads = inRange(leads, prevStart, start);
     const curViews = inRange(events, start, now); const prevViews = inRange(events, prevStart, start);
     const activeCourses = courses.filter((c: any) => c.status === 'active').length;
+    const paidOrders = await qGet<any>('orders', { wheres: [['ownerUid', '==', ownerUid], ['status', '==', 'paid']] });
+    const revenue = paidOrders.filter((o: any) => { const d = toDate(o.paidAt || o.createdAt); return !!d && d >= start; })
+      .reduce((s: number, o: any) => s + Number(o.amount || 0), 0);
     const data = [
       { id: 1, points: curLeads, text: 'New Leads', percent: pct(curLeads, prevLeads), flag: curLeads >= prevLeads ? 1 : 0, subtext: `last ${days} days` },
       { id: 2, points: curViews, text: 'Page Views', percent: pct(curViews, prevViews), flag: curViews >= prevViews ? 1 : 0, subtext: `last ${days} days` },
       { id: 3, points: students.length, text: 'Students', percent: '0%', flag: 1, subtext: 'total contacts' },
       { id: 4, points: activeCourses, text: 'Courses', percent: '0%', flag: 1, subtext: 'active' },
+      { id: 5, points: revenue, text: 'Revenue', percent: '0%', flag: 1, subtext: `₹ last ${days} days` },
     ];
     return { data };
   }

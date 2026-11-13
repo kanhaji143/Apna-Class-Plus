@@ -305,3 +305,32 @@
 3. Seed idempotent ho (dobara click par "already exists").
 4. **QA sweep** — saare 18 pages ek-ek karke load ho, koi crash/console error na.
 5. QA mein mile bugs fix ho (Landing Pages list Timestamp crash).
+
+---
+
+## Phase 13t - Mobile Responsive Polish
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Sidebar mobile pe **temporary drawer + hamburger** (desktop pe permanent) — `useMediaQuery('(max-width:768px)')`.
+2. Mobile AppBar compact (chhota Logout, user chip shrink).
+3. Main padding mobile pe kam (`xs:1.5`), dialogs chhote screen pe fit (margin 8px).
+4. Flex rows wrap ho (Test editor, Content manager, Learn page, Test player, Public free material).
+5. Phone inputs `type="tel"` (Store, People, Batches).
+6. Desktop regression na aaye.
+
+---
+
+## Phase 13u - Payments Integration (Razorpay + mock mode)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Store enroll paid course par **order** bane (amount, discount, couponCode).
+2. **Checkout dialog** — real Razorpay Checkout.js (key configured ho to) ya **Test Mode mock** (placeholder key `rzp_test_XXXX...`).
+3. Payment complete → order `paid` + **paid lead** (People mein).
+4. `/orders` page — Revenue (paid), Paid Orders, Pending + order cards.
+5. Analytics mein revenue (daily chart + dashboard Revenue card).
+6. Rules: orders public create, owner read/update.
+7. Verification ke dauran mile bugs fix (complete route path, pubPost generic).

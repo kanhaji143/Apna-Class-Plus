@@ -53,7 +53,7 @@ export default function PublicFreeMaterialsPage() {
         ) : (
           items.map((m) => (
             <Card key={m.id} elevation={2} sx={{ mb: 2 }}>
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                 <Typography variant="h4">{icon(m.type)}</Typography>
                 <Box sx={{ flexGrow: 1 }}>
                   <Typography variant="body1" fontWeight={800}>{m.title}</Typography>

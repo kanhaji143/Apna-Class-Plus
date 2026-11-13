@@ -34,7 +34,7 @@ function SortableContent({ c, onDelete }: { c: Content; onDelete: (id: number) =
     <Box
       ref={setNodeRef}
       sx={{
-        display: 'flex', alignItems: 'center', gap: 1, p: 1, mb: 0.5, borderRadius: 1,
+        display: 'flex', alignItems: 'center', gap: 1, p: 1, mb: 0.5, borderRadius: 1, flexWrap: 'wrap',
         border: '1px solid', borderColor: 'divider', bgcolor: isDragging ? 'grey.200' : '#fff',
         transform: CSS.Transform.toString(transform), transition,
       }}
@@ -124,7 +124,7 @@ export default function ContentManagerPage() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
         <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/courses')}>Back</Button>
         <Typography variant="h5" fontWeight={800}>{courseTitle || 'Course'} — Content Manager</Typography>
         <Box sx={{ flexGrow: 1 }} />
@@ -159,7 +159,7 @@ export default function ContentManagerPage() {
               </AccordionSummary>
               <AccordionDetails>
                 {folderContents(f.id).map((c) => (
-                  <Box key={c.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, mb: 0.5, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                  <Box key={c.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, mb: 0.5, borderRadius: 1, border: '1px solid', borderColor: 'divider', flexWrap: 'wrap' }}>
                     <Typography>{typeIcon(c.type)}</Typography>
                     <Box sx={{ flexGrow: 1 }}>
                       <Typography variant="body2" fontWeight={700}>{c.title}</Typography>

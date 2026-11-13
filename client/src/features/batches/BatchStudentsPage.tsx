@@ -88,7 +88,7 @@ export default function BatchStudentsPage() {
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Add Student to Batch</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
-          <TextField label="Phone (10 digit)" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} fullWidth />
+          <TextField label="Phone (10 digit)" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} fullWidth />
           <TextField label="Name (optional)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} fullWidth />
         </DialogContent>
         <DialogActions>

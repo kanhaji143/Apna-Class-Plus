@@ -81,7 +81,7 @@ export default function LearnPage() {
   };
 
   const renderItem = (it: Item) => (
-    <Box key={it.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25 }}>
+    <Box key={it.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, flexWrap: 'wrap' }}>
       <Avatar sx={{ bgcolor: 'grey.100', color: 'text.primary', fontWeight: 800 }}>{typeIcon(it.type)}</Avatar>
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
         <Typography variant="body2" fontWeight={700} noWrap>{it.title}</Typography>
