@@ -306,7 +306,84 @@ Sirf **admin/superadmin** ke paas:
 
 ---
 
-## 18. Public URLs — Quick Reference
+## 18. Demo Kaise Dena Hai — Live Demo Script (15 min)
+
+Demo dene se pehle ye 3 cheezein ready rakho:
+1. **Teacher screen** — ek browser (laptop) mein `teacher@apnatest.in / secret123` se login
+2. **Student screen** — doosra browser/incognito (ya phone) jisme aap sirf public links kholte ho (login ki zaroorat nahi)
+3. **Demo data** — dashboard par "🌱 Seed Demo Data" click karo (missing cheezein ban jayengi)
+
+### Demo flow (step-by-step)
+
+**Step 1 — Dashboard tour (2 min)**
+- Sidebar tabs dikhao: Landing Pages, Courses, Batches, People, Chats, Campaigns, Analytics, Progress, Coupons, Orders
+- Overview cards + Analytics cards (leads, views, revenue) dikhao
+- "My Student Store" link copy karo → student screen par kholka dikhao
+
+**Step 2 — Student store + enroll (3 min)**
+- Student screen: `/store` kholo → courses/tests/free material tabs
+- Course par "Enroll →" → naam/phone bharo → coupon `WELCOME20` apply karo (₹499 → ₹399 dikhega)
+- Enroll → checkout dialog (Test Mode) → "Simulate Pay ₹399" → Enrolled
+
+**Step 3 — Teacher side: lead → convert (2 min)**
+- Teacher screen: People → naya lead dikhega
+- "Convert" click karo → **onboarding links** khulenge: 📚 learning + 💬 chat
+- Dono links copy karo, student screen par kholka dikhao
+
+**Step 4 — Student learning + progress (2 min)**
+- `/learn/<token>` kholo → "For <student>" + course content
+- Kisi lesson par "Mark done" → progress bar 100%
+- Teacher screen: Student Progress → link ka completion dikhega
+
+**Step 5 — Chat (1 min)**
+- Student screen: `/chat/<token>` → message bhejo
+- Teacher screen: Chats → conversation + reply dikhega
+
+**Step 6 — Tests + comprehension (2 min)**
+- Test Portal → "Comprehension Demo Test" → public link `/test/2`
+- Student screen: test kholo → passage + sub-question dikhega → answer → submit → score
+- Teacher screen: Results & Grading tab
+
+**Step 7 — Campaigns + Coupons (1 min)**
+- Campaigns: audience chuno (All / Leads / Course / Batch) → Publish (mock send, recipients count)
+- Coupons: code, discount, usage count dikhao
+
+**Step 8 — Analytics + Orders (1 min)**
+- Analytics: leads/views/revenue charts + top pages
+- Orders: paid order ₹399, revenue card
+
+**Step 9 — Admin (30 sec)**
+- Admin (Users & Trials) → users, roles, trial
+
+**Step 10 — Mobile view (30 sec)**
+- Browser mobile view (F12 → device toolbar) ya phone par kholka dikhao — hamburger sidebar
+
+### Demo ke dauran kya bolna hai (talking points)
+- "Student ko koi app install nahi karna — sirf link bhejna hai"
+- "Har student ke liye personalized learning + chat link"
+- "Payment checkout bhi aa jayega — abhi Test Mode, real keys se real payment"
+- "Analytics mein leads, views aur revenue sab live"
+
+### Demo se pehle checklist
+- [ ] Seed Demo Data click kiya
+- [ ] Ek paid course active hai (₹499)
+- [ ] WELCOME20 coupon active hai
+- [ ] Kam se kam 1 published test hai
+- [ ] Student screen ready hai (incognito/phone)
+- [ ] Internet stable hai (public pages Firebase se load hote hain)
+
+### Demo mein aane wale common sawaal
+| Sawaal | Jawab |
+|---|---|
+| Kya student ko app chahiye? | Nahi — link se sab access |
+| Payment sach mein hoga? | Abhi Test Mode; real keys se real checkout |
+| Data kahan store hota hai? | Firebase Firestore (asia-south1) |
+| Kya ye free hai? | Abhi Spark plan — demo ke liye zero cost |
+| Apna institute ka data kaise daalein? | Courses/Students manually add karo; tests mein bulk import hai |
+
+---
+
+## 19. Public URLs — Quick Reference
 
 | Feature | URL pattern | Login |
 |---|---|---|
@@ -322,7 +399,7 @@ Sirf **admin/superadmin** ke paas:
 
 ---
 
-## 19. Troubleshooting & FAQ
+## 20. Troubleshooting & FAQ
 
 | Problem | Solution |
 |---|---|
@@ -336,7 +413,7 @@ Sirf **admin/superadmin** ke paas:
 
 ---
 
-## 20. Do's & Don'ts
+## 21. Do's & Don'ts
 
 **Do:**
 - Pehle **Seed Demo Data** se samjho, phir real data daalo
@@ -353,7 +430,7 @@ Sirf **admin/superadmin** ke paas:
 
 ---
 
-## 21. Known Limitations (training mein batana zaroori)
+## 22. Known Limitations (training mein batana zaroori)
 
 | Limitation | Reason |
 |---|---|

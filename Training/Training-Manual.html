@@ -300,13 +300,93 @@ h2, h3, tr { page-break-after: avoid; }
 <li>Teacher campaigns/tests se engagement badhata hai</li>
 </ol>
 <hr>
-<h2>18. Public URLs — Quick Reference</h2>
+<h2>18. Demo Kaise Dena Hai — Live Demo Script (15 min)</h2>
+<p>Demo dene se pehle ye 3 cheezein ready rakho:</p>
+<ol>
+<li><strong>Teacher screen</strong> — ek browser (laptop) mein <code>teacher@apnatest.in / secret123</code> se login</li>
+<li><strong>Student screen</strong> — doosra browser/incognito (ya phone) jisme aap sirf public links kholte ho (login ki zaroorat nahi)</li>
+<li><strong>Demo data</strong> — dashboard par "🌱 Seed Demo Data" click karo (missing cheezein ban jayengi)</li>
+</ol>
+<h3>Demo flow (step-by-step)</h3>
+<p><strong>Step 1 — Dashboard tour (2 min)</strong></p>
+<ul>
+<li>Sidebar tabs dikhao: Landing Pages, Courses, Batches, People, Chats, Campaigns, Analytics, Progress, Coupons, Orders</li>
+<li>Overview cards + Analytics cards (leads, views, revenue) dikhao</li>
+<li>"My Student Store" link copy karo → student screen par kholka dikhao</li>
+</ul>
+<p><strong>Step 2 — Student store + enroll (3 min)</strong></p>
+<ul>
+<li>Student screen: <code>/store</code> kholo → courses/tests/free material tabs</li>
+<li>Course par "Enroll →" → naam/phone bharo → coupon <code>WELCOME20</code> apply karo (₹499 → ₹399 dikhega)</li>
+<li>Enroll → checkout dialog (Test Mode) → "Simulate Pay ₹399" → Enrolled</li>
+</ul>
+<p><strong>Step 3 — Teacher side: lead → convert (2 min)</strong></p>
+<ul>
+<li>Teacher screen: People → naya lead dikhega</li>
+<li>"Convert" click karo → <strong>onboarding links</strong> khulenge: 📚 learning + 💬 chat</li>
+<li>Dono links copy karo, student screen par kholka dikhao</li>
+</ul>
+<p><strong>Step 4 — Student learning + progress (2 min)</strong></p>
+<ul>
+<li><code>/learn/&lt;token&gt;</code> kholo → "For &lt;student&gt;" + course content</li>
+<li>Kisi lesson par "Mark done" → progress bar 100%</li>
+<li>Teacher screen: Student Progress → link ka completion dikhega</li>
+</ul>
+<p><strong>Step 5 — Chat (1 min)</strong></p>
+<ul>
+<li>Student screen: <code>/chat/&lt;token&gt;</code> → message bhejo</li>
+<li>Teacher screen: Chats → conversation + reply dikhega</li>
+</ul>
+<p><strong>Step 6 — Tests + comprehension (2 min)</strong></p>
+<ul>
+<li>Test Portal → "Comprehension Demo Test" → public link <code>/test/2</code></li>
+<li>Student screen: test kholo → passage + sub-question dikhega → answer → submit → score</li>
+<li>Teacher screen: Results &amp; Grading tab</li>
+</ul>
+<p><strong>Step 7 — Campaigns + Coupons (1 min)</strong></p>
+<ul>
+<li>Campaigns: audience chuno (All / Leads / Course / Batch) → Publish (mock send, recipients count)</li>
+<li>Coupons: code, discount, usage count dikhao</li>
+</ul>
+<p><strong>Step 8 — Analytics + Orders (1 min)</strong></p>
+<ul>
+<li>Analytics: leads/views/revenue charts + top pages</li>
+<li>Orders: paid order ₹399, revenue card</li>
+</ul>
+<p><strong>Step 9 — Admin (30 sec)</strong></p>
+<ul>
+<li>Admin (Users &amp; Trials) → users, roles, trial</li>
+</ul>
+<p><strong>Step 10 — Mobile view (30 sec)</strong></p>
+<ul>
+<li>Browser mobile view (F12 → device toolbar) ya phone par kholka dikhao — hamburger sidebar</li>
+</ul>
+<h3>Demo ke dauran kya bolna hai (talking points)</h3>
+<ul>
+<li>"Student ko koi app install nahi karna — sirf link bhejna hai"</li>
+<li>"Har student ke liye personalized learning + chat link"</li>
+<li>"Payment checkout bhi aa jayega — abhi Test Mode, real keys se real payment"</li>
+<li>"Analytics mein leads, views aur revenue sab live"</li>
+</ul>
+<h3>Demo se pehle checklist</h3>
+<ul>
+<li>[ ] Seed Demo Data click kiya</li>
+<li>[ ] Ek paid course active hai (₹499)</li>
+<li>[ ] WELCOME20 coupon active hai</li>
+<li>[ ] Kam se kam 1 published test hai</li>
+<li>[ ] Student screen ready hai (incognito/phone)</li>
+<li>[ ] Internet stable hai (public pages Firebase se load hote hain)</li>
+</ul>
+<h3>Demo mein aane wale common sawaal</h3>
+<table><thead><tr><th>Sawaal</th><th>Jawab</th></tr></thead><tbody><tr><td>Kya student ko app chahiye?</td><td>Nahi — link se sab access</td></tr><tr><td>Payment sach mein hoga?</td><td>Abhi Test Mode; real keys se real checkout</td></tr><tr><td>Data kahan store hota hai?</td><td>Firebase Firestore (asia-south1)</td></tr><tr><td>Kya ye free hai?</td><td>Abhi Spark plan — demo ke liye zero cost</td></tr><tr><td>Apna institute ka data kaise daalein?</td><td>Courses/Students manually add karo; tests mein bulk import hai</td></tr></tbody></table>
+<hr>
+<h2>19. Public URLs — Quick Reference</h2>
 <table><thead><tr><th>Feature</th><th>URL pattern</th><th>Login</th></tr></thead><tbody><tr><td>Login</td><td><code>/login</code></td><td>—</td></tr><tr><td>Public store</td><td><code>/store</code></td><td>Nahi</td></tr><tr><td>Course landing</td><td><code>/lp-preview/&lt;slug&gt;</code></td><td>Nahi</td></tr><tr><td>Public test</td><td><code>/test/&lt;id&gt;</code></td><td>Nahi</td></tr><tr><td>Free material</td><td><code>/free/&lt;teacherId&gt;</code></td><td>Nahi</td></tr><tr><td>Course learning</td><td><code>/learn/&lt;token&gt;</code></td><td>Nahi (capability link)</td></tr><tr><td>Student chat</td><td><code>/chat/&lt;token&gt;</code></td><td>Nahi (capability link)</td></tr><tr><td>Teacher dashboard</td><td><code>/</code></td><td>Haan</td></tr><tr><td>Admin</td><td><code>/admin</code></td><td>Haan (admin/superadmin)</td></tr></tbody></table>
 <hr>
-<h2>19. Troubleshooting &amp; FAQ</h2>
+<h2>20. Troubleshooting &amp; FAQ</h2>
 <table><thead><tr><th>Problem</th><th>Solution</th></tr></thead><tbody><tr><td>Page blank / old version dikha</td><td>Fresh tab + <code>?cb=&lt;timestamp&gt;</code> use karo (hosting cache)</td></tr><tr><td>Coupon apply nahi ho raha</td><td>Code exact (case-insensitive) daalo; expiry check karo; course match karo</td></tr><tr><td>Link kholte hi "valid nahi"</td><td>Link expire/regenerate ho gayi — teacher se naya link maango</td></tr><tr><td>Payment nahi ho raha</td><td><code>runConfig.RAZORPAY_KEY</code> check karo; abhi Test Mode hai (simulated)</td></tr><tr><td>Student chat nahi mil raha</td><td>Teacher chat page se share link copy karo</td></tr><tr><td>Sidebar nahi dikh raha (mobile)</td><td>Hamburger icon kholkar dekho</td></tr><tr><td>Landing page mein sections nahi</td><td>Publish karo; template khali to Blank choose karo</td></tr></tbody></table>
 <hr>
-<h2>20. Do's &amp; Don'ts</h2>
+<h2>21. Do's &amp; Don'ts</h2>
 <p><strong>Do:</strong></p>
 <ul>
 <li>Pehle <strong>Seed Demo Data</strong> se samjho, phir real data daalo</li>
@@ -323,7 +403,7 @@ h2, h3, tr { page-break-after: avoid; }
 <li>Student ko login credentials ki zaroorat nahi — links hi kaam karti hain</li>
 </ul>
 <hr>
-<h2>21. Known Limitations (training mein batana zaroori)</h2>
+<h2>22. Known Limitations (training mein batana zaroori)</h2>
 <table><thead><tr><th>Limitation</th><th>Reason</th></tr></thead><tbody><tr><td>Payments abhi Test Mode (simulated)</td><td>real Razorpay keys set nahi</td></tr><tr><td>Real SMS/WhatsApp/Email gateway nahi</td><td>Spark plan — campaigns mock send</td></tr><tr><td>Cloud Functions/webhook nahi</td><td>Spark plan — payments manually verify</td></tr><tr><td>Trial expiry soft banner</td><td>product decision (option C)</td></tr><tr><td>Bulk import mein comprehension nahi</td><td>docx parser limitation</td></tr><tr><td>Student login nahi</td><td>capability links use hoti hain</td></tr><tr><td>Chat realtime = 3s polling</td><td>no Cloud Functions/listeners</td></tr></tbody></table>
 <hr>
 <p><em>Manual version: 2026-11-13 | Apna Class Plus — Training &amp; Audit pack</em></p>
