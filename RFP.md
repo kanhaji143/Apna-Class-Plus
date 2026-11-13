@@ -237,3 +237,18 @@
 5. Empty state.
 6. **Sidebar tabs FB mode mein** — `/v1/diy/configuration/tabs` abhi fallback `[]` de raha tha (sidebar khaali). Original DIY jaisa tab set return karo.
 7. Rules unchanged (`courseLinks` list owner-only already).
+
+---
+
+## Phase 13o - Comprehension (passage + sub-questions)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Test editor mein **Comprehension** question type — passage container (marks 0).
+2. Passage ke neeche **sub-questions** (mcq/truefalse/objective/subjective) — "Passage (Comprehension)" select se attach.
+3. Editor list mein passage header + indented sub-questions; numbering sirf answerable questions ki.
+4. Public player: sub-question ke saath **passage context box** (Show/Hide), bilingual (English default, Hindi fallback).
+5. Passage count/scoring mein shamil nahi (total sirf sub-questions ke marks).
+6. Passage delete → sub-questions ungroup (parent_id null).
+7. Rules unchanged (questions subcollection pehle se owner/public rules).

@@ -319,7 +319,18 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
         return { inserted: n };
       }
       if (method === 'DELETE' && seg[3] === 'questions' && seg.length === 5) {
-        await deleteDoc(doc(dbv, `tests/${seg[2]}/questions`, seg[4]));
+        const qref = doc(dbv, `tests/${seg[2]}/questions`, seg[4]);
+        const qsnap = await getDoc(qref);
+        // comprehension delete → uske sub-questions ungroup ho jayen
+        if (qsnap.exists() && qsnap.data()?.type === 'comprehension') {
+          const children = await getDocs(query(collection(dbv, `tests/${seg[2]}/questions`), where('parent_id', '==', Number(seg[4]))));
+          const b = writeBatch(dbv);
+          children.docs.forEach((d) => b.update(d.ref, { parent_id: null }));
+          b.delete(qref);
+          await b.commit();
+        } else {
+          await deleteDoc(qref);
+        }
         return { deleted: true };
       }
       if (method === 'PUT' && seg.length === 3) {
@@ -381,6 +392,7 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
         let autoScore = 0, total = 0, hasSubjective = false;
         const review: any = {};
         for (const q of questions) {
+          if (q.type === 'comprehension') continue; // passage — marks 0, score mein nahi
           total += q.marks || 1;
           const given = body.answers?.[q.id] !== undefined ? String(body.answers[q.id]) : '';
           if (q.type === 'subjective') {
@@ -1104,13 +1116,17 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
 
 // ---------- add question (type-aware) ----------
 async function addQuestion(dbv: any, tid: string, body: any) {
-  const qType = ['mcq', 'truefalse', 'objective', 'subjective'].includes(body.type) ? body.type : 'mcq';
+  const qType = ['mcq', 'truefalse', 'objective', 'subjective', 'comprehension'].includes(body.type) ? body.type : 'mcq';
   if (!body.question) throw new Error('question required');
   let finalOptions: any = { a: body.optionA, b: body.optionB, c: body.optionC, d: body.optionD };
   let finalCorrect = body.correct ? String(body.correct).toLowerCase() : '';
   let acceptedJson: string | null = null;
 
-  if (qType === 'truefalse') {
+  if (qType === 'comprehension') {
+    // passage container — marks 0, koi options nahi; sub-questions parent_id se attach hote hain
+    finalOptions = { a: null, b: null, c: null, d: null };
+    finalCorrect = '';
+  } else if (qType === 'truefalse') {
     finalOptions = { a: 'True', b: 'False' };
     if (!['a', 'b'].includes(finalCorrect)) throw new Error('truefalse ke liye correct = a ya b');
   } else if (qType === 'mcq') {
@@ -1140,7 +1156,8 @@ async function addQuestion(dbv: any, tid: string, body: any) {
     question_hi: body.questionHi || null,
     option_a_hi: body.optionAHi || null, option_b_hi: body.optionBHi || null, option_c_hi: body.optionCHi || null, option_d_hi: body.optionDHi || null,
     explanation_hi: body.explanationHi || null,
-    marks: body.marks || 1, sort_order: (qs[0]?.sort_order || 0) + 1,
+    parent_id: body.parentId ? Number(body.parentId) : null,
+    marks: qType === 'comprehension' ? 0 : (body.marks || 1), sort_order: (qs[0]?.sort_order || 0) + 1,
   });
   return { id, ...body };
 }
@@ -1152,6 +1169,7 @@ async function gradeAttempt(_dbv: any, tid: string, aref: any, a: any, scores: a
   const manual: any = {};
   const answers = JSON.parse(a.answers_json || '{}');
   for (const q of questions) {
+    if (q.type === 'comprehension') continue; // passage container
     total += q.marks || 1;
     const given = answers[q.id];
     if (q.type === 'subjective') {

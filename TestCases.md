@@ -737,3 +737,40 @@
 - **Steps:** Click People; click Free Material submenu chip.
 - **Expected:** /people and /content/free-material.
 - **Status:** PASS.
+
+## Module 30 - Comprehension (Phase 13o)
+
+### TC-30.1 Create passage
+- **Steps:** Test editor -> Add Question -> type Comprehension -> passage text -> Add.
+- **Expected:** Passage container (marks 0) banega.
+- **Status:** PASS (qid 9).
+
+### TC-30.2 Add sub-question under passage
+- **Steps:** Add Question -> MCQ -> "Passage (Comprehension)" select -> Add.
+- **Expected:** Sub-question parent_id = passage id.
+- **Status:** PASS (qid 10, parent 9).
+
+### TC-30.3 Editor grouping
+- **Steps:** Questions list.
+- **Expected:** "📖 Passage: ..." header + indented sub-question, numbering 1.
+- **Status:** PASS.
+
+### TC-30.4 Public player passage box
+- **Steps:** /test/2 -> Start.
+- **Expected:** Sub-question ke upar passage box (text + Hide/Show).
+- **Status:** PASS.
+
+### TC-30.5 Count excludes passage
+- **Steps:** Start screen + palette.
+- **Expected:** "1 questions", palette mein 1 tile.
+- **Status:** PASS.
+
+### TC-30.6 Scoring excludes passage
+- **Steps:** Answer sub-question -> Submit.
+- **Expected:** Score 1/1 (100%), 1 Correct; passage review mein nahi.
+- **Status:** PASS.
+
+### TC-30.7 Delete passage ungroups children
+- **Steps:** Delete passage (batch update).
+- **Expected:** Sub-question parent_id = null; test cleanup.
+- **Status:** PASS.

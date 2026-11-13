@@ -370,3 +370,29 @@
 ### Notes
 - Progress data wahi hai jo Phase 13m mein save hota hai; koi migration nahi.
 - Next: trial enforcement / payments.
+
+---
+
+## Phase 13o - Comprehension (passage + sub-questions)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/test/2
+
+### What was done
+- New question type `comprehension` = passage container (`marks: 0`, no options/correct), `parent_id` se sub-questions attach.
+- fbRouter `addQuestion`: comprehension branch + `parent_id`; scoring loops skip passages (submit + grading); delete passage → batch ungroup children.
+- Editor: type "Comprehension (passage + sub-questions)", passage fields (EN/HI), "Passage (Comprehension)" select for sub-questions, grouped list (passage header + indented children, answerable numbering).
+- Player: passage context box (Show/Hide) above sub-question, bilingual fallback; passages excluded from question count, palette, summary, scoring and review.
+
+### Live E2E verified
+1. Create passage (marks 0) - PASS
+2. Attach MCQ sub-question - PASS
+3. Editor grouping + numbering - PASS
+4. Player passage box - PASS
+5. Count = 1 (passage excluded) - PASS
+6. Score 1/1 (100%), 1 Correct - PASS
+7. Delete passage -> child ungrouped, cleanup - PASS
+
+### Notes
+- Bulk import mein comprehension support nahi (docx format se passage parsing complex) — documented.
+- Next: trial enforcement / payments.

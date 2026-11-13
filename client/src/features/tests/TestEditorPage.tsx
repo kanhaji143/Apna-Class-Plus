@@ -14,7 +14,7 @@ import GradeIcon from '@mui/icons-material/Grade';
 import { get, post, del, put } from '../../api/client';
 
 interface Question {
-  id: number; section_id: number | null; type: string; question: string; question_hi?: string | null;
+  id: number; section_id: number | null; parent_id?: number | null; type: string; question: string; question_hi?: string | null;
   option_a: string | null; option_b: string | null; option_c: string | null; option_d: string | null;
   correct: string; accepted_answers: string | null; explanation: string | null;
   marks: number; sort_order: number;
@@ -31,6 +31,7 @@ interface Test {
 }
 
 const Q_TYPES = [
+  { value: 'comprehension', label: 'Comprehension (passage + sub-questions)', icon: '📖' },
   { value: 'mcq', label: 'MCQ (single correct)', icon: 'ðŸ”˜' },
   { value: 'truefalse', label: 'True / False', icon: 'âœ…' },
   { value: 'objective', label: 'Objective (short answer)', icon: 'âœï¸' },
@@ -39,7 +40,7 @@ const Q_TYPES = [
 const typeIcon = (t: string) => Q_TYPES.find((x) => x.value === t)?.icon ?? 'â“';
 const OPTS = ['a', 'b', 'c', 'd'] as const;
 
-const blankForm = { type: 'mcq', question: '', a: '', b: '', c: '', d: '', correct: 'a', marks: 1, explanation: '', sectionId: '', accepted: '', qHi: '', aHi: '', bHi: '', cHi: '', dHi: '', explHi: '' };
+const blankForm = { type: 'mcq', question: '', a: '', b: '', c: '', d: '', correct: 'a', marks: 1, explanation: '', sectionId: '', parentId: '', accepted: '', qHi: '', aHi: '', bHi: '', cHi: '', dHi: '', explHi: '' };
 
 export default function TestEditorPage() {
   const { id } = useParams();
@@ -75,9 +76,10 @@ export default function TestEditorPage() {
     setCreating(true);
     try {
       const body: any = {
-        question: form.question, type: form.type, marks: form.marks,
+        question: form.question, type: form.type, marks: form.type === 'comprehension' ? 0 : form.marks,
         explanation: form.explanation || undefined,
         sectionId: form.sectionId ? Number(form.sectionId) : undefined,
+        parentId: form.parentId ? Number(form.parentId) : undefined,
         questionHi: form.qHi || undefined, explanationHi: form.explHi || undefined,
       };
       if (form.type === 'mcq') {
@@ -165,6 +167,7 @@ export default function TestEditorPage() {
   };
 
   const sectionNameOf = (sid: number | null) => sections.find((s) => s.id === sid)?.name || 'â€”';
+  const passages = questions.filter((q) => q.type === 'comprehension');
 
   const pendingSubj = (att: Attempt) =>
     questions.filter((q) => q.type === 'subjective' && att.manual[q.id] === undefined);
@@ -244,27 +247,58 @@ export default function TestEditorPage() {
                   <Button size="small" variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Add Question</Button>
                 </Box>
                 {questions.length === 0 && <Typography color="text.secondary">Koi question nahi â€” publish se pehle add karo.</Typography>}
-                {questions.map((q, i) => (
-                  <Box key={q.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, mb: 1, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-                    <Typography sx={{ width: 28, fontWeight: 800 }}>{i + 1}.</Typography>
-                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                      <Typography variant="body2" fontWeight={700}>{q.question}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {q.type === 'mcq' && OPTS.map((o) => `(${o}) ${q[`option_${o}` as keyof Question] ?? '-'} `).join('  ')}
-                        {q.type === 'truefalse' && '(True / False)'}
-                        {q.type === 'objective' && `Accepted: ${q.accepted_answers}`}
-                        {q.type === 'subjective' && '(teacher grading)'}
-                        {q.section_id ? ` Â· ðŸ“ ${sectionNameOf(q.section_id)}` : ''}
-                        {q.question_hi ? ' Â· ðŸŒ à¤¹à¤¿à¤‚à¤¦à¥€' : ''}
-                      </Typography>
-                      {q.explanation && <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>ðŸ’¡ {q.explanation}</Typography>}
+                {(() => {
+                  const answerable = questions.filter((qq) => qq.type !== 'comprehension');
+                  const numOf = (qid: number) => answerable.findIndex((qq) => qq.id === qid) + 1;
+                  const renderRow = (q: Question, num: number) => (
+                    <Box key={q.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, mb: 1, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                      <Typography sx={{ width: 28, fontWeight: 800 }}>{num}.</Typography>
+                      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Typography variant="body2" fontWeight={700}>{q.question}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {q.type === 'mcq' && OPTS.map((o) => `(${o}) ${q[`option_${o}` as keyof Question] ?? '-'} `).join('  ')}
+                          {q.type === 'truefalse' && '(True / False)'}
+                          {q.type === 'objective' && `Accepted: ${q.accepted_answers}`}
+                          {q.type === 'subjective' && '(teacher grading)'}
+                          {q.section_id ? ` Â· ðŸ“ ${sectionNameOf(q.section_id)}` : ''}
+                          {q.parent_id ? ' Â· ðŸ“– Passage' : ''}
+                          {q.question_hi ? ' Â· ðŸŒ à¤¹à¤¿à¤‚à¤¦à¥€' : ''}
+                        </Typography>
+                        {q.explanation && <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>ðŸ’¡ {q.explanation}</Typography>}
+                      </Box>
+                      <Chip size="small" variant="outlined" label={q.type} />
+                      {q.type !== 'subjective' && q.correct && <Chip size="small" label={`âœ“ ${q.correct.toUpperCase()}`} color="primary" variant="outlined" />}
+                      <Chip size="small" label={`${q.marks}m`} variant="outlined" />
+                      <IconButton size="small" color="error" onClick={() => deleteQuestion(q.id)}><DeleteIcon fontSize="small" /></IconButton>
                     </Box>
-                    <Chip size="small" variant="outlined" label={q.type} />
-                    {q.type !== 'subjective' && q.correct && <Chip size="small" label={`âœ“ ${q.correct.toUpperCase()}`} color="primary" variant="outlined" />}
-                    <Chip size="small" label={`${q.marks}m`} variant="outlined" />
-                    <IconButton size="small" color="error" onClick={() => deleteQuestion(q.id)}><DeleteIcon fontSize="small" /></IconButton>
-                  </Box>
-                ))}
+                  );
+                  return questions.map((q) => {
+                    if (q.type === 'comprehension') {
+                      const children = questions.filter((c) => c.parent_id === q.id);
+                      return (
+                        <Box key={q.id} sx={{ mb: 1 }}>
+                          <Box sx={{ p: 1.5, borderRadius: 1, border: '1px solid', borderColor: 'primary.light', bgcolor: 'primary.lighter' }}>
+                            <Typography variant="body2" fontWeight={800}>ðŸ“– Passage: {q.question}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {children.length} sub-questions Â· marks 0 {q.question_hi ? 'Â· ðŸŒ à¤¹à¤¿à¤‚à¤¦à¥€' : ''}
+                            </Typography>
+                          </Box>
+                          {children.length === 0 && (
+                            <Typography variant="caption" color="warning.main" sx={{ display: 'block', pl: 1, py: 0.5 }}>
+                              Abhi koi sub-question nahi â€” "Add Question" se Passage select karke add karo.
+                            </Typography>
+                          )}
+                          {children.map((c) => renderRow(c, numOf(c.id)))}
+                          <Box sx={{ textAlign: 'right', mt: 0.5 }}>
+                            <IconButton size="small" color="error" onClick={() => deleteQuestion(q.id)}><DeleteIcon fontSize="small" /></IconButton>
+                          </Box>
+                        </Box>
+                      );
+                    }
+                    if (q.parent_id) return null; // passage ke neeche render hota hai
+                    return renderRow(q, numOf(q.id));
+                  });
+                })()}
               </CardContent>
             </Card>
           )}
@@ -335,6 +369,15 @@ export default function TestEditorPage() {
               </Select>
             </FormControl>
           )}
+          {form.type !== 'comprehension' && passages.length > 0 && (
+            <FormControl fullWidth>
+              <InputLabel>Passage (Comprehension)</InputLabel>
+              <Select label="Passage (Comprehension)" value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })}>
+                <MenuItem value="">â€” Ungrouped â€”</MenuItem>
+                {passages.map((p) => <MenuItem key={p.id} value={p.id}>ðŸ“– {String(p.question).slice(0, 50)}</MenuItem>)}
+              </Select>
+            </FormControl>
+          )}
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={qLang} onChange={(_, v: number) => setQLang(v)}>
               <Tab label="English" /><Tab label="à¤¹à¤¿à¤‚à¤¦à¥€" />
@@ -342,7 +385,14 @@ export default function TestEditorPage() {
           </Box>
 
           {qLang === 0 ? (<>
-            <TextField label="Question" multiline rows={2} value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} fullWidth />
+            <TextField label={form.type === 'comprehension' ? 'Passage (English)' : 'Question'}
+              multiline rows={form.type === 'comprehension' ? 5 : 2} value={form.question}
+              onChange={(e) => setForm({ ...form, question: e.target.value })} fullWidth />
+            {form.type === 'comprehension' && (
+              <Typography variant="caption" color="text.secondary">
+                ðŸ“– Ye passage container hai (marks 0). Sub-questions alag se add karo aur "Passage (Comprehension)" select karo.
+              </Typography>
+            )}
 
             {form.type === 'mcq' && (<>
               {(['a', 'b', 'c', 'd'] as const).map((o) => (
@@ -393,7 +443,7 @@ export default function TestEditorPage() {
             }))}>
               Copy English to Hindi (phir translate karo)
             </Button>
-            <TextField label="à¤ªà¥à¤°à¤¶à¥à¤¨ (Hindi)" multiline rows={2} value={form.qHi}
+            <TextField label={form.type === 'comprehension' ? 'à¤—à¤¦à¥à¤¯à¤¾à¤‚à¤¶ (Hindi)' : 'à¤ªà¥à¤°à¤¶à¥à¤¨ (Hindi)'} multiline rows={form.type === 'comprehension' ? 5 : 2} value={form.qHi}
               onChange={(e) => setForm({ ...form, qHi: e.target.value })} fullWidth
               helperText="Khali chhoda toh English text hi dikhega (fallback)" />
 
@@ -418,8 +468,10 @@ export default function TestEditorPage() {
               onChange={(e) => setForm({ ...form, explHi: e.target.value })} fullWidth />
           </>)}
 
-          <TextField label="Marks" type="number" value={form.marks} sx={{ width: 140 }}
-            onChange={(e) => setForm({ ...form, marks: Number(e.target.value) })} />
+          {form.type !== 'comprehension' && (
+            <TextField label="Marks" type="number" value={form.marks} sx={{ width: 140 }}
+              onChange={(e) => setForm({ ...form, marks: Number(e.target.value) })} />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>

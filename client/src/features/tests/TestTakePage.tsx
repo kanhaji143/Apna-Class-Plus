@@ -28,7 +28,7 @@ const pubCall = async (method: 'get' | 'post', path: string, body?: any) => {
  * 4 question types: mcq | truefalse | objective | subjective
  */
 interface PubQuestion {
-  id: number; section_id: number | null; type: string; question: string; question_hi?: string | null;
+  id: number; section_id: number | null; parent_id?: number | null; type: string; question: string; question_hi?: string | null;
   option_a: string | null; option_b: string | null; option_c: string | null; option_d: string | null;
   option_a_hi?: string | null; option_b_hi?: string | null; option_c_hi?: string | null; option_d_hi?: string | null;
   marks: number;
@@ -65,6 +65,7 @@ export default function TestTakePage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [lang, setLang] = useState<'en' | 'hi'>('en'); // English default (user choice)
+  const [showPassage, setShowPassage] = useState(true);
   const qRef = useRef<number | null>(null);
 
   // bilingual text helper — lang=hi pe Hindi field, warna English (fallback English)
@@ -91,6 +92,7 @@ export default function TestTakePage() {
     const cur = questions[idx]?.id;
     if (!cur) return;
     qRef.current = cur;
+    setShowPassage(true);
     const t = setInterval(() => {
       setTimes((prev) => ({ ...prev, [cur]: (prev[cur] || 0) + 1 }));
     }, 1000);
@@ -143,17 +145,23 @@ export default function TestTakePage() {
     { bg: '#fff', label: 'Not Attempted' },
   ];
 
-  // section filtering
+  // section filtering — comprehension passages answerable nahi (sirf context)
+  const answerable = useMemo(() => questions.filter((q) => q.type !== 'comprehension'), [questions]);
+  const passageById = useMemo(() => {
+    const m: Record<number, PubQuestion> = {};
+    questions.forEach((q) => { if (q.type === 'comprehension') m[q.id] = q; });
+    return m;
+  }, [questions]);
   const curSection = sections.length ? sections[secTab] : null;
-  const visibleQs = curSection ? questions.filter((q) => q.section_id === curSection.id) : questions;
-  const allAnswered = questions.every((q) => !!answers[q.id]);
-  const answeredCount = questions.filter((q) => !!answers[q.id]).length;
+  const visibleQs = curSection ? answerable.filter((q) => q.section_id === curSection.id) : answerable;
+  const allAnswered = answerable.every((q) => !!answers[q.id]);
+  const answeredCount = answerable.filter((q) => !!answers[q.id]).length;
   const markedCount = marked.size;
 
   const avgTime = useMemo(() => {
-    const vals = questions.map((q) => times[q.id] || 0);
-    return Math.round(vals.reduce((a, b) => a + b, 0) / Math.max(questions.length, 1));
-  }, [times, questions]);
+    const vals = answerable.map((q) => times[q.id] || 0);
+    return Math.round(vals.reduce((a, b) => a + b, 0) / Math.max(answerable.length, 1));
+  }, [times, answerable]);
 
   if (error) {
     return <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', bgcolor: '#F7F8FC' }}>
@@ -195,17 +203,17 @@ export default function TestTakePage() {
           {/* Counters (Classplus pattern) */}
           <Box sx={{ display: 'flex', gap: 1, my: 2, flexWrap: 'wrap' }}>
             {[
-              { label: 'Correct', val: questions.filter((q) => result.review[q.id]?.ok === true).length, color: 'success' },
-              { label: 'Incorrect', val: questions.filter((q) => result.review[q.id]?.ok === false && result.review[q.id]?.given).length, color: 'error' },
-              { label: 'Unattempted', val: questions.filter((q) => !result.review[q.id]?.given).length, color: 'default' },
-              { label: 'Pending Grade', val: questions.filter((q) => result.review[q.id]?.type === 'subjective').length, color: 'warning' },
+              { label: 'Correct', val: answerable.filter((q) => result.review[q.id]?.ok === true).length, color: 'success' },
+              { label: 'Incorrect', val: answerable.filter((q) => result.review[q.id]?.ok === false && result.review[q.id]?.given).length, color: 'error' },
+              { label: 'Unattempted', val: answerable.filter((q) => !result.review[q.id]?.given).length, color: 'default' },
+              { label: 'Pending Grade', val: answerable.filter((q) => result.review[q.id]?.type === 'subjective').length, color: 'warning' },
             ].map((c) => (
               <Chip key={c.label} label={`${c.val} ${c.label}`} color={c.color as any} variant="outlined" />
             ))}
           </Box>
 
           <Typography variant="h6" fontWeight={800} sx={{ mt: 2, mb: 1 }}>Answer Review</Typography>
-          {questions.map((q, i) => {
+          {answerable.map((q, i) => {
             const rv = result.review[q.id];
             const sol = solutions[q.id];
             return (
@@ -252,7 +260,7 @@ export default function TestTakePage() {
             <Typography variant="h3">📝</Typography>
             <Typography variant="h5" fontWeight={900} sx={{ mt: 1 }}>{test.title}</Typography>
             {test.description && <Typography color="text.secondary" sx={{ mt: 1 }}>{test.description}</Typography>}
-            <Typography sx={{ mt: 2 }}>⏱ {test.duration_min} min · 📝 {questions.length} questions
+            <Typography sx={{ mt: 2 }}>⏱ {test.duration_min} min · 📝 {answerable.length} questions
               {sections.length > 0 && ` · 📑 ${sections.length} sections`}</Typography>
             {test.reattempt_mode ? <Chip size="small" label="🔄 Re-attempt mode: ON" color="info" sx={{ mt: 1 }} /> : null}
             <TextField label="Aapka naam" value={name} onChange={(e) => setName(e.target.value)} fullWidth sx={{ mt: 3 }} />
@@ -267,7 +275,7 @@ export default function TestTakePage() {
   }
 
   const q = visibleQs[idx] || visibleQs[0];
-  const gi = questions.indexOf(q);
+  const gi = answerable.indexOf(q);
 
   // ================= SUMMARY DIALOG =================
   if (showSummary) {
@@ -278,12 +286,12 @@ export default function TestTakePage() {
             <Typography variant="h6" fontWeight={900} sx={{ mb: 2 }}>📋 Summary — Submit karein?</Typography>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
               <Chip label={`✅ ${answeredCount} answered`} color="success" variant="outlined" />
-              <Chip label={`⬜ ${questions.length - answeredCount} unanswered`} variant="outlined" />
+              <Chip label={`⬜ ${answerable.length - answeredCount} unanswered`} variant="outlined" />
               <Chip label={`🚩 ${markedCount} marked`} color="warning" variant="outlined" />
             </Box>
             {/* mini palette */}
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
-              {questions.map((pq, i) => {
+              {answerable.map((pq, i) => {
                 const st = qStatus(pq);
                 return (
                   <Box key={pq.id} onClick={() => { setShowSummary(false); const sIdx = curSection ? visibleQs.indexOf(pq) : i; if (sIdx >= 0) setIdx(Math.max(sIdx, 0)); }}
@@ -341,7 +349,7 @@ export default function TestTakePage() {
                 {sections.map((s) => <Tab key={s.id} label={s.name} />)}
               </Tabs>
             )}
-            <LinearProgress variant="determinate" value={(answeredCount / Math.max(questions.length, 1)) * 100} />
+            <LinearProgress variant="determinate" value={(answeredCount / Math.max(answerable.length, 1)) * 100} />
           </Card>
 
           {q && (
@@ -366,6 +374,28 @@ export default function TestTakePage() {
                   ) : null}
                 </Box>
                 <Typography variant="body1" fontWeight={700}>{L(q.question, q.question_hi)}</Typography>
+                {/* Comprehension passage — sub-question ke saath context */}
+                {q.parent_id && passageById[q.parent_id] && (() => {
+                  const pq = passageById[q.parent_id];
+                  return (
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box sx={{ p: 1.25, borderRadius: 1, bgcolor: 'grey.100', border: '1px solid', borderColor: 'divider' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="caption" fontWeight={800}>📖 Passage</Typography>
+                          <Box sx={{ flexGrow: 1 }} />
+                          <Button size="small" onClick={() => setShowPassage((s) => !s)}>
+                            {showPassage ? 'Hide' : 'Show'}
+                          </Button>
+                        </Box>
+                        {showPassage && (
+                          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mt: 0.5 }}>
+                            {L(pq.question, pq.question_hi)}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  );
+                })()}
                 {solutions[q.id] && (() => {
                   const solQ = solutions[q.id];
                   const ansTxt = solQ.correct == null ? '' : Array.isArray(solQ.correct)
@@ -423,7 +453,7 @@ export default function TestTakePage() {
             <CardContent>
               <Typography variant="caption" fontWeight={800} color="text.secondary">QUESTIONS</Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-                {questions.map((pq, i) => {
+                {answerable.map((pq, i) => {
                   const st = qStatus(pq);
                   return (
                     <Box key={pq.id} onClick={() => {
