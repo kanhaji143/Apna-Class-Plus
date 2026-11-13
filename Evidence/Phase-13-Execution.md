@@ -292,3 +292,31 @@
 ### Notes
 - Link = capability URL; no login needed.
 - Next: trial enforcement / payments.
+
+---
+
+## Phase 13l - Landing Page Templates (real sections)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/lp-preview/lead-magnet-2
+
+### What was done
+- 4 templates with real `defaultSection` content: Blank (0), Course Landing (9), Lead Magnet (7), Test Series (7); har template ka apna primary color.
+- Gallery: thumb + description + "N sections ready" + CTA.
+- Course wizard: HERO headline/subheadline + PRICING plan (price, strike 2x, Enroll Now) course data se customize.
+- **Bugfix 1:** single page GET (`/v1/diy/landingPages/:id`) se `_id` missing tha → builder `pageId` undefined → UI Publish/Save fail. Ab `{...data, _id: id}` return hota hai.
+- **Bugfix 2:** builder save route path `/v1/diy/section/form` galat block mein tha (seg[2] check) → ab standalone route; Save sach mein Firestore mein persist hota hai.
+- Free Material section public page par live published list dikhata hai (pehle fetch ke through, ab snapshot + live).
+
+### Live E2E verified
+1. Gallery 4 templates + counts - PASS
+2. Create Lead page (7 sections) - PASS
+3. Public page full render + live free material - PASS
+4. Course wizard customization (hero/pricing ₹998→₹499) - PASS
+5. Save title persisted - PASS
+6. UI Publish (toast + alert) - PASS
+7. Public course landing - PASS
+
+### Notes
+- Templates snapshot id se bante hain (naye page create hone par hi sections aate hain).
+- Next: trial enforcement / payments.

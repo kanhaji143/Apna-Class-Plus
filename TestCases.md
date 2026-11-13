@@ -636,3 +636,45 @@
 - **Steps:** Compare link page with course content.
 - **Expected:** Lesson title/type/URL + folder grouping included.
 - **Status:** PASS (Chapter 1 Chemical Reactions, video + folder).
+
+## Module 27 - Landing Page Templates (Phase 13l)
+
+### TC-27.1 Template gallery
+- **Steps:** /landing-pages/create.
+- **Expected:** 4 templates with thumb, description, sections count, CTA.
+- **Status:** PASS (Blank 0, Course 9, Lead 7, Test 7 sections).
+
+### TC-27.2 Create Lead page
+- **Steps:** Create Lead Page -> editor.
+- **Expected:** 7 sections ready (Banner, Hero, Features, Free Material, FAQ, Testimonials, Footer).
+- **Status:** PASS.
+
+### TC-27.3 Public landing render
+- **Steps:** Publish -> open /lp-preview/lead-magnet-2.
+- **Expected:** All sections + lead form; Free Material live list.
+- **Status:** PASS (Class 10 Science Notes live + Enroll form).
+
+### TC-27.4 Course wizard customization
+- **Steps:** Create Course Page -> select course -> editor.
+- **Expected:** Hero = course title/description; Pricing = course name + ₹499 (strike ₹998) + Enroll Now.
+- **Status:** PASS.
+
+### TC-27.5 Save
+- **Steps:** Change title -> Save.
+- **Expected:** Title persisted in Firestore.
+- **Status:** PASS ("Lead Magnet Pro").
+
+### TC-27.6 Publish via UI
+- **Steps:** Publish button.
+- **Expected:** Toast + "Published at" alert, status published.
+- **Status:** PASS.
+
+### TC-27.7 Public course landing
+- **Steps:** Open course landing public URL.
+- **Expected:** Custom hero + pricing + sections.
+- **Status:** PASS (/lp-preview/class-10-science-complete-course-3).
+
+### TC-27.8 Bugfix — builder publish/save
+- **Steps:** Edit page -> Save/Publish.
+- **Expected:** pageId resolved, section/form route matched.
+- **Status:** PASS (fixes `_id` + `/v1/diy/section/form` path).

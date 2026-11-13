@@ -194,3 +194,18 @@
 5. Invalid/expired link par friendly message; empty content state.
 6. Firestore rules: `courseLinks` public `get`, owner-only list/create/delete.
 7. Spark note: content snapshot link banate waqt — content update ke liye naya link generate karna hoga.
+
+---
+
+## Phase 13l - Landing Page Templates (real sections)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Templates mein **real sections** ho — abhi "Course Landing" khali tha.
+2. 4 templates: Blank, Course Landing, Lead Magnet, Test Series Landing (apna-apna primary color).
+3. Gallery mein thumb, description, sections count, CTA button dikhe.
+4. Course wizard se course select karo → Hero (title/description) + Pricing (₹price, strike 2x, Enroll Now) customize ho.
+5. Builder **Save** aur **Publish** UI se kaam kare (FB mode).
+6. Public landing page saare sections + lead form render kare; Free Material live published list se aaye.
+7. Rules: pages `status == published` public read (unchanged).

@@ -7,6 +7,7 @@ import {
   db, auth, nextId, qGet, doc, getDoc, setDoc, updateDoc, deleteDoc,
   collection, query, where, getDocs, tsNow, writeBatch,
 } from './fb';
+import { defaultSection, DEFAULT_THEME } from '../features/builder/types';
 
 // ---------- auth ----------
 export interface FbUser { uid: string; name: string; email: string; role: string; phone: string; plan: string; trialEnd: string | null; }
@@ -71,28 +72,68 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
   const ownerUid = getOwnerUid();
   const seg = path.split('?')[0].split('/').filter(Boolean);
 
+  // ---------- builder save (section/form) ----------
+  if (seg[2] === 'section' && seg[3] === 'form' && method === 'PUT') {
+    await updateDoc(doc(dbv, 'pages', String(body.pageId)), {
+      sections: body.sections || [], theme: body.theme || null, title: body.title || '',
+    });
+    return { saved: true };
+  }
+
   // ---------- landing pages ----------
-  if (seg[2] === 'landingPages') {
-    if (method === 'GET' && seg.length === 3) {
+  if (seg[2] === 'landingPages') {    if (method === 'GET' && seg.length === 3) {
       const pages = await qGet<any>('pages', { wheres: [['ownerUid', '==', ownerUid]] });
       pages.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
       return { data: pages.map((p: any) => ({ _id: p.id, id: p.id, title: p.title, slug: p.slug, status: p.status, createdAt: p.createdAt })) };
     }
     if (method === 'POST' && seg.length === 3) {
-      const tpl = getTemplates().find((t: any) => t.id === (body?.templateId ?? 1)) || getTemplates()[0];
+      const tplId = String(body?.templateId ?? 'blank');
+      const tpl = getTemplates().find((t: any) => t.id === tplId) || getTemplates()[0];
       const id = await nextId(dbv, 'pages');
       const title = body?.title || tpl?.name || 'Untitled Page';
+      let sections = (tpl?.sections || []).map((s: any) => ({ ...s, props: { ...s.props } }));
+      let theme = tpl?.theme || null;
+      const courseId = body?.courseId ?? null;
+      // Course wizard: template ko actual course data se customize karo
+      if (tplId === 'course' && courseId) {
+        try {
+          const c = await getDoc(doc(dbv, 'courses', String(courseId)));
+          if (c.exists()) {
+            const cd: any = c.data();
+            sections = sections.map((s: any) => {
+              if (s.type === 'HERO') {
+                return { ...s, props: { ...s.props, headline: cd.title || s.props.headline, subheadline: cd.description || s.props.subheadline } };
+              }
+              if (s.type === 'PRICING') {
+                const price = Number(cd.price || 499);
+                return {
+                  ...s,
+                  props: {
+                    ...s.props,
+                    plans: [{
+                      name: cd.title || 'Full Course', price, strike: price * 2,
+                      features: cd.description ? [cd.description] : (s.props.plans?.[0]?.features || []),
+                      ctaText: 'Enroll Now',
+                    }],
+                  },
+                };
+              }
+              return s;
+            });
+          }
+        } catch { /* ignore */ }
+      }
       await setDoc(doc(dbv, 'pages', String(id)), {
         id, ownerUid, title, slug: null, status: 'draft',
-        sections: tpl?.sections || [], theme: tpl?.theme || null, courseId: body?.courseId || null,
-        createdAt: tsNow(),
+        sections, theme, courseId, createdAt: tsNow(),
       });
-      return { _id: id, title, slug: null, status: 'draft' };
+      return { _id: id, title, slug: null, status: 'draft', sections: sections.length };
     }
     if (method === 'GET' && seg.length === 4) {
       const snap = await getDoc(doc(dbv, 'pages', seg[3]));
       if (!snap.exists()) throw new Error('Page not found');
-      return snap.data();
+      const d: any = snap.data();
+      return { ...d, _id: d.id ?? Number(seg[3]) };
     }
     if (method === 'PUT' && seg[3] === 'section' && seg[4] === 'form') {
       await updateDoc(doc(dbv, 'pages', String(body.pageId)), {
@@ -1173,9 +1214,53 @@ export function parseBulkText(text: string) {
 let _templates: any[] | null = null;
 export function getTemplates(): any[] {
   if (_templates) return _templates;
+  const theme = (primary: string) => ({ ...DEFAULT_THEME, colors: { ...DEFAULT_THEME.colors, primary } });
   _templates = [
-    { id: 1, name: 'Blank Page', description: 'Khali page — khud banao', sections: [], theme: null, thumb: '📄' },
-    { id: 2, name: 'Course Landing', description: 'Hero + features + pricing + FAQ', sections: [], theme: null, thumb: '🎓' },
+    {
+      id: 'blank', name: 'Blank Page', description: 'Khali page — khud se sab sections banao',
+      ctaText: 'Start Blank', sections: [], theme: DEFAULT_THEME, thumb: '📄',
+    },
+    {
+      id: 'course', name: 'Course Landing', description: 'Hero + features + video + pricing + testimonials + FAQ',
+      ctaText: 'Create Course Page', thumb: '🎓', theme: theme('#0B7A75'),
+      sections: [
+        defaultSection('BANNER_STRIP'),
+        defaultSection('HERO'),
+        defaultSection('FEATURES'),
+        defaultSection('VIDEO'),
+        defaultSection('PRICING'),
+        defaultSection('TESTIMONIALS'),
+        defaultSection('FAQ'),
+        defaultSection('FREE_MATERIAL'),
+        defaultSection('FOOTER'),
+      ],
+    },
+    {
+      id: 'lead', name: 'Lead Magnet', description: 'Free material + FAQ se leads collect karo',
+      ctaText: 'Create Lead Page', thumb: '🎁', theme: theme('#D6336C'),
+      sections: [
+        defaultSection('BANNER_STRIP'),
+        defaultSection('HERO'),
+        defaultSection('FEATURES'),
+        defaultSection('FREE_MATERIAL'),
+        defaultSection('FAQ'),
+        defaultSection('TESTIMONIALS'),
+        defaultSection('FOOTER'),
+      ],
+    },
+    {
+      id: 'test', name: 'Test Series Landing', description: 'Exam/test promo: results + plans + features + FAQ',
+      ctaText: 'Create Test Page', thumb: '📝', theme: theme('#3B4FD8'),
+      sections: [
+        defaultSection('BANNER_STRIP'),
+        defaultSection('HERO'),
+        defaultSection('TESTIMONIALS'),
+        defaultSection('PRICING'),
+        defaultSection('FEATURES'),
+        defaultSection('FAQ'),
+        defaultSection('FOOTER'),
+      ],
+    },
   ];
   return _templates;
 }

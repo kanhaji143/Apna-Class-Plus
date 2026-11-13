@@ -4,7 +4,7 @@ import { Box, Button, Card, CardContent, Typography, Grid } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { get, post } from '../../api/client';
 
-interface Template { id: string; name: string; description: string; ctaText: string; }
+interface Template { id: string; name: string; description: string; ctaText: string; sections?: any[]; thumb?: string; }
 
 export default function TemplateGalleryPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -39,11 +39,13 @@ export default function TemplateGalleryPage() {
           <Grid item xs={12} md={4} key={t.id}>
             <Card elevation={4} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ flexGrow: 1 }}>
+                <Typography sx={{ fontSize: 46, mb: 1 }}>{t.thumb || '📄'}</Typography>
                 <Typography variant="h5" fontWeight={800} gutterBottom>{t.name}</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>{t.description}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{t.description}</Typography>
+                <Typography variant="caption" color="text.secondary">{t.sections?.length || 0} sections ready</Typography>
               </CardContent>
               <CardContent>
-                <Button variant="contained" fullWidth onClick={() => choose(t)}>{t.ctaText}</Button>
+                <Button variant="contained" fullWidth onClick={() => choose(t)}>{t.ctaText || 'Create'}</Button>
               </CardContent>
             </Card>
           </Grid>
