@@ -176,3 +176,33 @@
 ### Notes
 - Batches are contact-groupings; no student login yet.
 - Next: Analytics (real counts), Chat, Campaigns.
+
+---
+
+## Phase 13h - Analytics (Firestore)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/analytics
+
+### What was done
+- fbRouter `GET /v3/analytics/overview?range=7d|30d|90d` — Firestore se real counts, zero-filled daily series, top pages by leads, conversion rate.
+- Dashboard cards via `/v1/diy/analytcs/stats?day=7` — New Leads + Page Views (range, % change vs previous), Students + Courses totals.
+- `events` collection: public page-view tracking (`POST /v1/diy/events/track`), rules: public create, owner read/delete.
+- LpPreviewPage: page-view event + ownerUid lead attribution (postMessage handler).
+- Leads route: slug se ownerUid resolve (published page), taaki public lead owner ke People mein aaye.
+- Rules-safe queries: `pages where slug == X and status == 'published'` (Firestore "rules are not filters" — signed-out list query ke liye provable filter zaroori).
+- **Bugfix:** public `/lp/api/:slug` aur `/lp/api/free-materials` routes ka seg index galat tha (`seg[1]` instead of `seg[0]`) — isliye public page kabhi sections/ownerUid nahi load karta tha aur page views track nahi hote the.
+
+### Live E2E verified
+1. Analytics summary: 2 leads, 2 page views, 1 landing page, 1 course, 0 campaigns, 100% conversion - PASS
+2. Range 7d/30d buckets - PASS
+3. Daily charts 11-13: leads/views - PASS
+4. Top pages: Science Demo Landing - 1 lead - PASS
+5. Page-view tracking (public page open) - PASS
+6. Dashboard cards: 2 / 2 / 3 / 1 - PASS
+7. Public landing lead "Anjali Sharma" -> People (owner) - PASS
+
+### Notes
+- Campaigns = 0 (campaign feature abhi placeholder).
+- Students = total contacts (batch/manual/store/landing), not auth users.
+- Next: Chat, Campaigns.

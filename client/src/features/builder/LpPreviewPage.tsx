@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { get, post } from '../../api/client';
@@ -15,18 +15,22 @@ export default function LpPreviewPage() {
   const { slug } = useParams();
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const ownerUidRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!slug) return;
     const FB = (window as any).runConfig?.FIREBASE_MODE === true;
     const load = async () => {
       try {
-        const d = await get<{ title: string; sections: BaseSection[]; theme: Theme }>(`/lp/api/${slug}`);
+        const d = await get<{ title: string; sections: BaseSection[]; theme: Theme; ownerUid?: string }>(`/lp/api/${slug}`);
+        ownerUidRef.current = d.ownerUid || null;
         let materials: any[] = [];
         if (FB) {
           try { const m = await get<any>('/lp/api/free-materials?teacher=me'); materials = m.items || []; } catch { /* ignore */ }
         }
         setHtml(renderPageHTML(d.sections || [], d.theme?.colors ? d.theme : DEFAULT_THEME, slug, { fbMode: FB, materials }));
+        // public page-view tracking (owner-scoped analytics)
+        try { await post('/v1/diy/events/track', { type: 'page_view', slug, ownerUid: d.ownerUid || undefined }); } catch { /* ignore */ }
       } catch (e: any) {
         setError(e?.response?.data?.message || e?.message || 'Page load fail hua');
       }
@@ -37,7 +41,7 @@ export default function LpPreviewPage() {
       const onMsg = async (ev: MessageEvent) => {
         if (ev.data?.type !== 'apna-lead') return;
         try {
-          await post('/v1/diy/leads', { slug: ev.data.slug, name: ev.data.name, phone: ev.data.phone });
+          await post('/v1/diy/leads', { slug: ev.data.slug, name: ev.data.name, phone: ev.data.phone, ownerUid: ownerUidRef.current || undefined });
         } catch { /* ignore */ }
       };
       window.addEventListener('message', onMsg);

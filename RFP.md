@@ -130,3 +130,20 @@
 5. Duplicate student in same batch block.
 6. Firestore rules: batches + batchStudents owner-only.
 7. Delete student from batch via query-param route (FB mode compatible).
+
+---
+
+## Phase 13h - Analytics (Firestore, real counts)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. `/analytics` page ko Firestore se real data do — koi placeholder/sample nahi.
+2. Summary cards: Total Leads, Page Views, Landing Pages, Courses, Campaigns, Conversion Rate.
+3. Range selector (7d / 30d / 90d / all) — daily series continuous (zero-filled).
+4. Daily Leads + Daily Page Views charts (recharts) + Top Landing Pages by leads.
+5. Dashboard analytics cards (last 7 days): New Leads, Page Views, Students, Courses + % change.
+6. Public landing page par page-view event track karo (owner-scoped).
+7. Public landing page se aaye lead ka owner resolve karo (slug se), taaki People + analytics mein dikhe.
+8. Firestore rules: `events` public create, owner-only read/delete.
+9. Bugfix: public `/lp/api/:slug` route match (seg index) + rules-safe published filter.

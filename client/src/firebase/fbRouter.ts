@@ -120,8 +120,26 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
   }
 
   // ---------- public landing by slug ----------
-  if (seg[1] === 'lp' && seg[2] === 'api' && method === 'GET' && seg.length === 4) {
-    const snap = await getDocs(query(collection(dbv, 'pages'), where('slug', '==', seg[3])));
+  if (seg[0] === 'lp' && seg[1] === 'api' && seg[2] === 'free-materials' && method === 'GET') {
+    const items = await qGet<any>('freeMaterials', { wheres: [['status', '==', 'published']] });
+    items.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+    const first = items[0];
+    let teacherName = 'Apna Class Plus';
+    if (first) {
+      try {
+        const u = await getDoc(doc(dbv, 'users', first.ownerUid));
+        if (u.exists() && u.data()?.name) teacherName = u.data().name;
+      } catch { /* public visitor — brand name */ }
+    }
+    return { teacherName, items };
+  }
+
+  if (seg[0] === 'lp' && seg[1] === 'api' && method === 'GET' && seg.length === 3) {
+    const snap = await getDocs(query(
+      collection(dbv, 'pages'),
+      where('slug', '==', seg[2]),
+      where('status', '==', 'published'),
+    ));
     const d = snap.docs[0]?.data();
     if (!d) throw new Error('Page not found');
     return { title: d.title, sections: d.sections || [], theme: d.theme, ownerUid: d.ownerUid };
@@ -151,20 +169,6 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     }
     if (method === 'PUT' && seg.length === 3) { await updateDoc(doc(dbv, 'freeMaterials', seg[2]), body); return { updated: true }; }
     if (method === 'DELETE' && seg.length === 3) { await deleteDoc(doc(dbv, 'freeMaterials', seg[2])); return { deleted: true }; }
-  }
-
-  if (seg[1] === 'lp' && seg[2] === 'api' && seg[3] === 'free-materials' && method === 'GET') {
-    const items = await qGet<any>('freeMaterials', { wheres: [['status', '==', 'published']] });
-    items.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
-    const first = items[0];
-    let teacherName = 'Apna Class Plus';
-    if (first) {
-      try {
-        const u = await getDoc(doc(dbv, 'users', first.ownerUid));
-        if (u.exists() && u.data()?.name) teacherName = u.data().name;
-      } catch { /* public visitor — brand name */ }
-    }
-    return { teacherName, items };
   }
 
   // ---------- tests ----------
@@ -348,10 +352,84 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
 
   // ---------- leads ----------
   if (seg[0] === 'v1' && seg[1] === 'diy' && seg[2] === 'leads' && method === 'POST') {
-    const id = await nextId(dbv, 'leads');
     const b = body || {};
-    await setDoc(doc(dbv, 'leads', String(id)), { id, ownerUid: b.ownerUid || 'public', ...b, createdAt: tsNow() });
+    let resolvedOwner = b.ownerUid || '';
+    if (!resolvedOwner && b.slug) {
+      try {
+        const psnap = await getDocs(query(
+          collection(dbv, 'pages'),
+          where('slug', '==', b.slug),
+          where('status', '==', 'published'),
+        ));
+        resolvedOwner = psnap.docs[0]?.data()?.ownerUid || '';
+      } catch { /* ignore */ }
+    }
+    const id = await nextId(dbv, 'leads');
+    await setDoc(doc(dbv, 'leads', String(id)), { id, ...b, ownerUid: resolvedOwner || 'public', createdAt: tsNow() });
     return { id };
+  }
+
+  // ---------- public event tracking (page views) ----------
+  if (path.startsWith('/v1/diy/events/track') && method === 'POST') {
+    const b = body || {};
+    let resolvedOwner = b.ownerUid || '';
+    if (!resolvedOwner && b.slug) {
+      try {
+        const psnap = await getDocs(query(
+          collection(dbv, 'pages'),
+          where('slug', '==', b.slug),
+          where('status', '==', 'published'),
+        ));
+        resolvedOwner = psnap.docs[0]?.data()?.ownerUid || '';
+      } catch { /* ignore */ }
+    }
+    const id = await nextId(dbv, 'events');
+    await setDoc(doc(dbv, 'events', String(id)), {
+      id, ownerUid: resolvedOwner || 'public', type: b.type || 'page_view',
+      slug: b.slug || null, pageId: b.pageId ?? null, meta: b.meta ?? null, createdAt: tsNow(),
+    });
+    return { tracked: true };
+  }
+
+  // ---------- analytics overview ----------
+  if (path.startsWith('/v3/analytics/overview')) {
+    const qs = new URLSearchParams(path.split('?')[1] || '');
+    const range = qs.get('range') || '30d';
+    const days = Number(range.replace(/[^0-9]/g, '')) || 30;
+    const leads = await qGet<any>('leads', { wheres: [['ownerUid', '==', ownerUid]] });
+    const pages = await qGet<any>('pages', { wheres: [['ownerUid', '==', ownerUid]] });
+    const courses = await qGet<any>('courses', { wheres: [['ownerUid', '==', ownerUid]] });
+    const events = await qGet<any>('events', { wheres: [['ownerUid', '==', ownerUid], ['type', '==', 'page_view']] });
+    const toDate = (v: any): Date | null => (v && typeof v.toDate === 'function') ? v.toDate() : (v ? new Date(v) : null);
+    const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (days - 1));
+    const dayKey = (d: Date) => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const buckets: Record<string, { day: string; leads: number; views: number }> = {};
+    for (let i = 0; i < days; i++) {
+      const d = new Date(start); d.setDate(start.getDate() + i);
+      buckets[dayKey(d)] = { day: dayKey(d), leads: 0, views: 0 };
+    }
+    leads.forEach((l: any) => { const d = toDate(l.createdAt); if (d && d >= start) { const k = dayKey(d); if (buckets[k]) buckets[k].leads += 1; } });
+    events.forEach((e: any) => { const d = toDate(e.createdAt); if (d && d >= start) { const k = dayKey(d); if (buckets[k]) buckets[k].views += 1; } });
+    const daily = Object.values(buckets).sort((a, b) => a.day.localeCompare(b.day));
+    const totalLeads = leads.length;
+    const totalPageViews = events.length;
+    const topPages = pages.map((p: any) => ({
+      title: p.title, slug: p.slug,
+      leads: leads.filter((l: any) => l.slug === p.slug).length,
+    })).sort((a: any, b: any) => b.leads - a.leads).slice(0, 5);
+    return {
+      range,
+      summary: {
+        totalLeads, totalPageViews, totalPages: pages.length, totalCourses: courses.length, totalCampaigns: 0,
+        conversionRate: totalPageViews > 0 ? ((totalLeads / totalPageViews) * 100).toFixed(1) + '%' : '0%',
+      },
+      charts: {
+        dailyLeads: daily.map((d) => ({ day: d.day, value: d.leads })),
+        dailyViews: daily.map((d) => ({ day: d.day, value: d.views })),
+        revenue: daily.map((d) => ({ day: d.day, revenue: 0 })),
+      },
+      topPages,
+    };
   }
 
   // ---------- dashboard stats ----------
@@ -362,7 +440,31 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     const courses = await qGet<any>('courses', { wheres: [['ownerUid', '==', ownerUid]] });
     return { landingPageCount: pages.length, publishedCourseCount: courses.filter((c: any) => c.status === 'active').length, couponCount: 0, campaignCount: tests.length + materials.length };
   }
-  if (path.startsWith('/v1/diy/analytcs/stats')) return { data: [] };
+  if (path.startsWith('/v1/diy/analytcs/stats')) {
+    const qs = new URLSearchParams(path.split('?')[1] || '');
+    const days = Number(qs.get('day') || 7);
+    const leads = await qGet<any>('leads', { wheres: [['ownerUid', '==', ownerUid]] });
+    const events = await qGet<any>('events', { wheres: [['ownerUid', '==', ownerUid], ['type', '==', 'page_view']] });
+    const students = await qGet<any>('students', { wheres: [['ownerUid', '==', ownerUid]] });
+    const courses = await qGet<any>('courses', { wheres: [['ownerUid', '==', ownerUid]] });
+    const toDate = (v: any): Date | null => (v && typeof v.toDate === 'function') ? v.toDate() : (v ? new Date(v) : null);
+    const now = new Date();
+    const start = new Date(now.getTime() - days * 86400000);
+    const prevStart = new Date(now.getTime() - 2 * days * 86400000);
+    const created = (x: any) => x.createdAt || x.created_at;
+    const inRange = (arr: any[], a: Date, b: Date) => arr.filter((x) => { const d = toDate(created(x)); return !!d && d >= a && d < b; }).length;
+    const pct = (cur: number, prev: number) => prev === 0 ? (cur > 0 ? '+100%' : '0%') : `${((cur - prev) / prev * 100).toFixed(1)}%`;
+    const curLeads = inRange(leads, start, now); const prevLeads = inRange(leads, prevStart, start);
+    const curViews = inRange(events, start, now); const prevViews = inRange(events, prevStart, start);
+    const activeCourses = courses.filter((c: any) => c.status === 'active').length;
+    const data = [
+      { id: 1, points: curLeads, text: 'New Leads', percent: pct(curLeads, prevLeads), flag: curLeads >= prevLeads ? 1 : 0, subtext: `last ${days} days` },
+      { id: 2, points: curViews, text: 'Page Views', percent: pct(curViews, prevViews), flag: curViews >= prevViews ? 1 : 0, subtext: `last ${days} days` },
+      { id: 3, points: students.length, text: 'Students', percent: '0%', flag: 1, subtext: 'total contacts' },
+      { id: 4, points: activeCourses, text: 'Courses', percent: '0%', flag: 1, subtext: 'active' },
+    ];
+    return { data };
+  }
 
   // ---------- templates ----------
   if (path.startsWith('/v1/diy/templatePages')) return getTemplates();

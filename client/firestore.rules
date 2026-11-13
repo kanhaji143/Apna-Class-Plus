@@ -76,6 +76,11 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
     }
 
+    match /events/{eid} {
+      allow create: if true;   // public page-view tracking
+      allow read, delete: if isOwner(resource.data);
+    }
+
     match /courses/{cid} {
       allow read: if resource.data.status == 'active' || isOwner(resource.data);
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;

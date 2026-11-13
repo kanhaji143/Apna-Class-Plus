@@ -483,3 +483,45 @@
 - **Steps:** Batch students list.
 - **Expected:** Date shown as dd/mm/yyyy, not raw ISO.
 - **Status:** PASS (13/11/2026).
+
+## Module 23 - Analytics (Phase 13h)
+
+### TC-23.1 Analytics summary
+- **Steps:** Login -> /analytics (Last 30 Days).
+- **Expected:** Real Firestore counts (leads, page views, landing pages, courses, campaigns, conversion).
+- **Status:** PASS (2 leads, 2 views, 1 page, 1 course, 0 campaigns, 100%).
+
+### TC-23.2 Range filter
+- **Steps:** Switch range 7d / 30d / 90d.
+- **Expected:** Daily series length + buckets change; zero-filled days.
+- **Status:** PASS (30d = 30 buckets, 7d = 7 buckets; 11-13 shows values).
+
+### TC-23.3 Daily charts
+- **Steps:** Analytics page charts.
+- **Expected:** Daily Leads + Daily Page Views render with real values.
+- **Status:** PASS (11-13: leads 1, views 2 -> after lead 2/2).
+
+### TC-23.4 Top landing pages
+- **Steps:** Publish a landing page, open its public URL, submit lead.
+- **Expected:** Top pages list shows page title + lead count.
+- **Status:** PASS (Science Demo Landing - 1 lead).
+
+### TC-23.5 Page-view tracking
+- **Steps:** Open /lp-preview/:slug (public).
+- **Expected:** `events` doc with type page_view, correct ownerUid; analytics count +1.
+- **Status:** PASS (Page Views 1 -> 2).
+
+### TC-23.6 Dashboard analytics cards
+- **Steps:** Dashboard -> Analytics section (Last 7 Days).
+- **Expected:** New Leads, Page Views, Students, Courses cards with % change.
+- **Status:** PASS (2, 2, 3, 1; +100% / 0%).
+
+### TC-23.7 Public landing lead owner
+- **Steps:** Submit lead on public landing page while signed out.
+- **Expected:** Lead appears in People (Leads) for the page owner, source landing.
+- **Status:** PASS (Anjali Sharma / 9876501234).
+
+### TC-23.8 Public landing route fix
+- **Steps:** GET /lp/api/:slug.
+- **Expected:** Returns title, sections, theme, ownerUid (published only).
+- **Status:** PASS (ownerUid + 0 sections blank template).
