@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<title>Apna Class Plus — Project Chat History Book</title>
+<style>
+@page { size: A4; margin: 14mm 12mm; }
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Nirmala UI', 'Noto Sans Devanagari', system-ui, sans-serif; color: #1c1c28; line-height: 1.55; margin: 0; font-size: 12px; }
+h1 { font-size: 26px; color: #4a3fd6; border-bottom: 3px solid #6C5CE7; padding-bottom: 8px; margin: 0 0 16px; }
+h2 { font-size: 18px; color: #4a3fd6; margin: 22px 0 8px; border-bottom: 1px solid #e3e1f5; padding-bottom: 4px; }
+h3 { font-size: 14px; color: #33334d; margin: 14px 0 6px; }
+h4 { font-size: 12.5px; color: #33334d; margin: 10px 0 4px; }
+p { margin: 6px 0; }
+table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11px; }
+th, td { border: 1px solid #d8d5ee; padding: 6px 8px; text-align: left; vertical-align: top; }
+th { background: #f1efff; color: #3b2fbf; font-weight: 700; }
+tr:nth-child(even) td { background: #faf9ff; }
+ul, ol { margin: 6px 0 6px 20px; padding: 0; }
+li { margin: 3px 0; }
+code { background: #f1efff; padding: 1px 4px; border-radius: 4px; font-family: Consolas, monospace; font-size: 11px; }
+blockquote { border-left: 4px solid #6C5CE7; margin: 12px 0; padding: 8px 12px; background: #f7f6ff; color: #444; }
+hr { border: 0; border-top: 1px solid #e3e1f5; margin: 18px 0; }
+a { color: #4a3fd6; text-decoration: none; }
+h2, h3, tr { page-break-after: avoid; }
+</style>
+</head>
+<body>
+<h1>अपना क्लास प्लस — संपूर्ण कार्य इतिहास और चैट बुक</h1>
+<blockquote>इस बुक में प्रोजेक्ट के सभी कार्यों (tasks) का संपूर्ण अभिलेख है — उपयोगकर्ता का अनुरोध, किया गया काम, परिणाम और प्रमाण।</blockquote>
+<blockquote>लाइव URL: https://apna-class-plus.web.app | Firebase project: <code>apna-class-plus</code> | तारीख: 13 नवंबर 2026</blockquote>
+<hr>
+<h2>1. प्रस्तावना</h2>
+<p>यह बुक "अपना क्लास प्लस" प्रोजेक्ट की पूरी यात्रा दर्ज करती है — शुरू से लेकर आज तक जितने कार्य किए गए, उन सब का क्रमबद्ध विवरण। हर अध्याय में तीन चीज़ें हैं:</p>
+<ul>
+<li><strong>अनुरोध</strong> — उपयोगकर्ता ने क्या माँगा</li>
+<li><strong>कार्य</strong> — क्या किया गया</li>
+<li><strong>परिणाम</strong> — टेस्ट/स्क्रीन/प्रमाण के साथ नतीजा</li>
+</ul>
+<p>प्रोजेक्ट का संदर्भ: Classplus DIY (https://classplusapp.com/diy/) — केवल आर्किटेक्चर और फीचर्स सीखे गए, कोई proprietary कोड या assets कॉपी नहीं किए गए।</p>
+<p><strong>तकनीकी ढाँचा:</strong> React 18 + TypeScript + Vite (client), Firebase Auth + Firestore (डेटा), Firebase Hosting (Spark)। लोकल डेव के लिए Node/Express + SQLite।</p>
+<hr>
+<h2>2. शुरुआत: लोकल ऐप (चरण 1–12)</h2>
+<h3>अनुरोध</h3>
+<p>पहले लोकल मशीन पर पूरा ऐप बनाना था — स्कैफोल्ड से लेकर सभी मुख्य फीचर्स तक।</p>
+<h3>कार्य</h3>
+<ul>
+<li>प्रोजेक्ट स्कैफोल्ड, ऑथ (OTP फ्लो), राउटिंग, रेडक्स</li>
+<li>लैंडिंग पेज बिल्डर (सेक्शन, थीम, प्रॉप्स)</li>
+<li>कोर्स, बैच, चैट, कैंपेन, एनालिटिक्स</li>
+<li>टेस्ट पोर्टल और प्रश्न प्रकार (MCQ, True/False, Objective, Subjective)</li>
+<li>कलर पैलेट, द्विभाषी (English/हिंदी), बल्क इम्पोर्ट</li>
+<li>कार्यप्रवाह: RFP.md → TestCases.md → Build → Execute → Evidence</li>
+</ul>
+<h3>परिणाम</h3>
+<p>लोकल ऐप पूरा चलता रहा; server :4000 और Vite :5173 पर OTP लॉगिन (phone <code>9999999999</code>) सहित सभी फीचर्स टेस्ट किए गए।</p>
+<hr>
+<h2>3. Firebase Spark लाइव माइग्रेशन (चरण 13 शृंखला)</h2>
+<p>इसके बाद लाइव ऐप को Firebase Spark (मुफ्त) पर ले जाने का निर्णय हुआ। मुख्य रणनीति: <code>fbRouter.ts</code> में हर REST endpoint को Firestore पर मैप करना, ताकि पेजों का कोड अपरिवर्तित रहे।</p>
+<h3>3.1 मूल माइग्रेशन (Phase 13)</h3>
+<p><strong>अनुरोध:</strong> पहले एक गैर-ज़रूरी फीचर चुनकर प्रोजेक्ट को Spark प्लान पर लाइव करना, फिर बचे हुए को core-first करना।</p>
+<p><strong>कार्य:</strong> Email/Password ऑथ, टेस्ट्स CRUD + client-side स्कोरिंग, बल्क इम्पोर्ट, द्विभाषी प्लेयर, फ्री मटेरियल, लैंडिंग पेज, Firestore rules, Hosting deploy।</p>
+<p><strong>परिणाम:</strong> https://apna-class-plus.web.app पर लाइव; स्पार्क प्लान में Cloud Functions नहीं, इसलिए स्कोरिंग client-side।</p>
+<h3>3.2 भूमिकाएँ और ट्रायल (Phase 13c)</h3>
+<p><strong>अनुरोध:</strong> 3-tier भूमिकाएँ (teacher, admin, superadmin), 7-दिन ट्रायल, और <code>/admin</code> यूज़र/ट्रायल मैनेजमेंट।</p>
+<p><strong>कार्य:</strong> भूमिका मॉडल, सुपरएडमिन bootstrap, ट्रायल expiry (soft banner), Admin पेज।</p>
+<p><strong>परिणाम:</strong> पहला साइनअप superadmin बना; नए teachers को 7-दिवसीय ट्रायल मिला।</p>
+<h3>3.3 स्टूडेंट स्टोर (Phase 13d)</h3>
+<p><strong>अनुरोध:</strong> Classplus जैसा या बेहतर public student store।</p>
+<p><strong>कार्य:</strong> <code>/store</code> + <code>/store/:teacherId</code>, कोर्स/टेस्ट/फ्री मटेरियल टैब, एनरॉल डायलॉग → लीड।</p>
+<p><strong>परिणाम:</strong> डैशबोर्ड "My Student Store" कार्ड; लाइव में कोर्स ₹499 एनरॉल → लीड।</p>
+<h3>3.4 कोर्स Firestore में (Phase 13e)</h3>
+<p><strong>अनुरोध:</strong> कोर्स और उनकी contents/folders को Firestore पर ले जाना।</p>
+<p><strong>कार्य:</strong> <code>courses</code>, <code>courseContents</code>, <code>courseFolders</code> कलेक्शन; कोर्स टैब में कीमत + एनरॉल।</p>
+<p><strong>परिणाम:</strong> लाइव कोर्स "Class 10 Science Complete Course" ₹499, content + folder, एनरॉल → लीड।</p>
+<h3>3.5 People पेज (Phase 13f)</h3>
+<p><strong>अनुरोध:</strong> लीड्स और स्टूडेंट्स का पूरा पेज।</p>
+<p><strong>कार्य:</strong> <code>/v2/people</code>, लीड → स्टूडेंट कन्वर्ट, स्टूडेंट जोड़ना, खोज।</p>
+<p><strong>परिणाम:</strong> Rahul Sharma कन्वर्ट, Priya Verma जोड़ा गया, खोज/हटाना कार्गर।</p>
+<h3>3.6 बैच (Phase 13g)</h3>
+<p><strong>अनुरोध:</strong> बैच बनाना, स्टूडेंट जोड़ना/हटाना।</p>
+<p><strong>कार्य:</strong> <code>batches</code> + <code>batchStudents</code> कलेक्शन; फ़ोन से स्टूडेंट जोड़ना (मौजूदा लिंक या नया बनाना); डुप्लिकेट रोक।</p>
+<p><strong>परिणाम:</strong> "Morning Batch A" बना; Priya जुड़ी, Amit ऑटो-बना, हटाने पर काउंट घटा।</p>
+<h3>3.7 एनालिटिक्स (Phase 13h)</h3>
+<p><strong>अनुरोध:</strong> एनालिटिक्स में असली आँकड़े, कोई डमी नहीं।</p>
+<p><strong>कार्य:</strong> <code>/v3/analytics/overview</code>, डेडिकेटेड रेंज, पेज-व्यू ट्रैकिंग (<code>events</code>), डैशबोर्ड कार्ड।</p>
+<p><strong>परिणाम:</strong> 2 लीड्स, 10 पेज-व्यूज़, 70% कन्वर्ज़न; सब लाइव।</p>
+<h3>3.8 कैंपेन (Phase 13i)</h3>
+<p><strong>अनुरोध:</strong> ऑडियंस-बेस्ड मैसेजिंग (WhatsApp/SMS)।</p>
+<p><strong>कार्य:</strong> कैंपेन क्रिएटर, ऑडियंस ऑप्शन (All/Leads/Students/Course/Batch), डुप्लिकेट-मुक्त रिसीवर, पब्लिश (मॉक सेंड)।</p>
+<p><strong>परिणाम:</strong> "Diwali Offer Broadcast" 4 रिसीवर; बैच कैंपेन 1 रिसीवर।</p>
+<h3>3.9 चैट (Phase 13j)</h3>
+<p><strong>अनुरोध:</strong> टीचर-स्टूडेंट चैट, बिना स्टूडेंट लॉगिन के।</p>
+<p><strong>कार्य:</strong> <code>chats</code> + <code>messages</code>, शेयरेबल <code>/chat/:token</code>, अनरीड बैज, 3-सेकंड पोलिंग।</p>
+<p><strong>परिणाम:</strong> Priya का चैट; स्टूडेंट जवाब देते ही टीचर को दिखा; अनरीड बैज कार्गर।</p>
+<h3>3.10 स्टूडेंट कोर्स व्यूअर (Phase 13k)</h3>
+<p><strong>अनुरोध:</strong> एनरॉल के बाद स्टूडेंट को कोर्स एक्सेस।</p>
+<p><strong>कार्य:</strong> <code>/learn/:token</code> पब्लिक व्यूअर, कोर्स कॉन्टेंट स्नैपशॉट, फ़ोल्डर-वाइज़ लेसन, "For &lt;student&gt;"।</p>
+<p><strong>परिणाम:</strong> राहुल के लिए पर्सनलाइज़्ड लिंक; पब्लिक पेज पर लेसन + ओपन बटन।</p>
+<h3>3.11 लैंडिंग टेम्पलेट (Phase 13l)</h3>
+<p><strong>अनुरोध:</strong> असली सेक्शन वाले टेम्पलेट (अभी खाली थे)।</p>
+<p><strong>कार्य:</strong> 4 टेम्पलेट (Blank, Course Landing, Lead Magnet, Test Series), कोर्स विज़ार्ड कस्टमाइज़ेशन, बिल्डर सेव/पब्लिश ठीक।</p>
+<p><strong>परिणाम:</strong> Lead Magnet पेज पूरा रेंडर; कोर्स लैंडिंग पर ₹998 → ₹499 प्राइसिंग।</p>
+<h3>3.12 प्रोग्रेस ट्रैकिंग (Phase 13m)</h3>
+<p><strong>अनुरोध:</strong> स्टूडेंट की प्रगति ट्रैक करना।</p>
+<p><strong>कार्य:</strong> "Mark done" टॉगल, प्रोग्रेस बार, localStorage + Firestore सिंक।</p>
+<p><strong>परिणाम:</strong> 100% प्रोग्रेस; लोकल स्टोरेज हटाने पर भी सर्वर से प्रगति मिली।</p>
+<h3>3.13 टीचर प्रोग्रेस डैशबोर्ड + साइडबार (Phase 13n)</h3>
+<p><strong>अनुरोध:</strong> टीचर को स्टूडेंट-वार कम्पलीशन देखना है।</p>
+<p><strong>कार्य:</strong> <code>/progress</code> पेज, सारांश कार्ड, प्रति-लिंक प्रोग्रेस; साइडबार टैब ठीक (अभी खाली थे)।</p>
+<p><strong>परिणाम:</strong> 3 लिंक, औसत 50%, पूर्ण 1; साइडबार में 12 टैब।</p>
+<h3>3.14 कॉम्प्रिहेंशन (Phase 13o)</h3>
+<p><strong>अनुरोध:</strong> पैसेज + उप-प्रश्न (comprehension)।</p>
+<p><strong>कार्य:</strong> <code>comprehension</code> प्रश्न प्रकार, पैसेज कॉन्टेक्स्ट बॉक्स, पैसेज को काउंट/स्कोरिंग से बाहर।</p>
+<p><strong>परिणाम:</strong> <code>/test/2</code> पर पैसेज + MCQ; स्कोर 1/1 (100%)।</p>
+<h3>3.15 ऑटो एक्सेस लिंक (Phase 13p)</h3>
+<p><strong>अनुरोध:</strong> लीड कन्वर्ट पर ऑटोमैटिक कोर्स एक्सेस लिंक।</p>
+<p><strong>कार्य:</strong> कन्वर्ट रूट में <code>courseLinks</code> स्नैपशॉट; डायलॉग ऑटो-ओपन।</p>
+<p><strong>परिणाम:</strong> "Auto Link Student" कन्वर्ट होते ही लिंक मिला।</p>
+<h3>3.16 ऑनबोर्डिंग लिंक (Phase 13q)</h3>
+<p><strong>अनुरोध:</strong> कन्वर्ट पर लर्निंग + चैट दोनों लिंक।</p>
+<p><strong>कार्य:</strong> <code>ensureChatForContact</code> हेल्पर, ऑनबोर्डिंग डायलॉग।</p>
+<p><strong>परिणाम:</strong> "Onboard Student" के लिए 📚 + 💬 दोनों लिंक; टीचर चैट में कन्वर्सेशन।</p>
+<h3>3.17 कूपन (Phase 13r)</h3>
+<p><strong>अनुरोध:</strong> कोर्स डिस्काउंट कोड।</p>
+<p><strong>कार्य:</strong> कूपन CRUD, स्टोर एप्लाई, डिस्काउंटेड कीमत, यूसेज काउंट।</p>
+<p><strong>परिणाम:</strong> <code>DIWALI20</code> → ₹499 से ₹399; यूसेज 1x।</p>
+<h3>3.18 अंतिम QA + README + सीड (Phase 13s)</h3>
+<p><strong>अनुरोध:</strong> फाइनल पॉलिश, README, डेमो सीड।</p>
+<p><strong>कार्य:</strong> README.md, "Seed Demo Data" बटन, 20-पेज QA स्वीप; लैंडिंग लिस्ट क्रैश फिक्स।</p>
+<p><strong>परिणाम:</strong> 20 पेज पास, 0 कंसोल एरर; क्रैश ठीक।</p>
+<h3>3.19 मोबाइल रिस्पॉन्सिव (Phase 13t)</h3>
+<p><strong>अनुरोध:</strong> मोबाइल पॉलिश।</p>
+<p><strong>कार्य:</strong> मोबाइल हैम्बर्गर ड्रॉअर, डायलॉग मार्जिन, रो रैप, <code>type="tel"</code>।</p>
+<p><strong>परिणाम:</strong> मोबाइल पर हैम्बर्गर → ड्रॉअर; डेस्कटॉप रिग्रेशन पास।</p>
+<h3>3.20 पेमेंट्स (Phase 13u)</h3>
+<p><strong>अनुरोध:</strong> पेमेंट्स (बाद में, लेकिन WIP मिला तो साथ जोड़ा)।</p>
+<p><strong>कार्य:</strong> ऑर्डर्स कलेक्शन, चेकआउट डायलॉग (Razorpay रियल/मॉक), <code>/orders</code> पेज, एनालिटिक्स रेवेन्यू; 2 बग फिक्स।</p>
+<p><strong>परिणाम:</strong> ₹499 मॉक पेमेंट → ऑर्डर पेड; रेवेन्यू ₹499।</p>
+<h3>3.21 ट्रेनिंग मैनुअल + ऑडिट</h3>
+<p><strong>अनुरोध:</strong> ट्रेनिंग के लिए मैनुअल और पूरा ऑडिट (PDF)।</p>
+<p><strong>कार्य:</strong> Training Manual (22 अनुभाग), Audit Report, PDF जनरेशन (Chrome headless)।</p>
+<p><strong>परिणाम:</strong> <code>Training/</code> फ़ोल्डर — Training-Manual.pdf, Audit-Report.pdf + sources।</p>
+<h3>3.22 डेमो स्क्रिप्ट</h3>
+<p><strong>अनुरोध:</strong> मैनुअल में डेमो कैसे देना है, वो हो?</p>
+<p><strong>कार्य:</strong> "Demo Kaise Dena Hai — Live Demo Script (15 min)" सेक्शन, चेकलिस्ट, सवाल-जवाब।</p>
+<p><strong>परिणाम:</strong> 10-स्टेप डेमो फ़्लो; PDF अपडेट।</p>
+<h3>3.23 फाइनल लाइव ऑडिट</h3>
+<p><strong>अनुरोध:</strong> अभी पूरा फाइनल ऑडिट करो।</p>
+<p><strong>कार्य:</strong> 23-पेज स्वीप, डेटा स्नैपशॉट, सुरक्षा जाँच (signed-out)।</p>
+<p><strong>परिणाम:</strong> 23/23 पेज पास, 0 कंसोल एरर; सुरक्षा जाँच पास।</p>
+<hr>
+<h2>4. प्रमुख सीख और रुझाव</h2>
+<table><thead><tr><th>क्रम</th><th>सीख</th></tr></thead><tbody><tr><td>1</td><td>Firestore rules "फ़िल्टर नहीं होती" — owner-scoped queries में <code>ownerUid</code> फ़िल्टर ज़रूरी</td></tr><tr><td>2</td><td>Hosting cache से पुराना chunk मिल सकता है — fresh tab + <code>?cb=&lt;ts&gt;</code></td></tr><tr><td>3</td><td>Spark में Cloud Functions नहीं — स्कोरिंग/चैट client-side</td></tr><tr><td>4</td><td>Capability links (token) से बिना-लॉगिन एक्सेस मिलता है, पर गोपनीय रखने चाहिए</td></tr><tr><td>5</td><td>PowerShell <code>Set-Content</code> BOM डालता है — rules deploy के लिए <code>WriteAllText</code> + UTF8(no BOM)</td></tr><tr><td>6</td><td>Parallel WIP (जैसे पेमेंट्स) को पहचानना और सावधानी से मर्ज करना ज़रूरी</td></tr></tbody></table>
+<hr>
+<h2>5. लाइव जानकारी सारांश</h2>
+<table><thead><tr><th>चीज़</th><th>मान</th></tr></thead><tbody><tr><td>लाइव URL</td><td>https://apna-class-plus.web.app</td></tr><tr><td>सुपरएडमिन</td><td>teacher@apnatest.in / secret123</td></tr><tr><td>ट्रायल टीचर</td><td>trial@apnatest.in / secret123</td></tr><tr><td>यूज़र्स</td><td>2</td></tr><tr><td>कोर्स</td><td>1 (₹499)</td></tr><tr><td>टेस्ट</td><td>3 (पब्लिश्ड)</td></tr><tr><td>लैंडिंग पेज</td><td>4 (पब्लिश्ड)</td></tr><tr><td>कूपन</td><td>2 (DIWALI20, WELCOME20)</td></tr><tr><td>ऑर्डर</td><td>1 पेड (₹499) + 1 पेंडिंग</td></tr><tr><td>लीड्स / स्टूडेंट्स</td><td>7 / 5</td></tr><tr><td>बैच</td><td>1 (1 स्टूडेंट)</td></tr><tr><td>चैट</td><td>3 कन्वर्सेशन</td></tr><tr><td>एक्सेस लिंक</td><td>4 (1 पर 100%)</td></tr><tr><td>एनालिटिक्स (7 दिन)</td><td>7 लीड्स, 10 पेज-व्यूज़, 70% कन्वर्ज़न</td></tr></tbody></table>
+<hr>
+<h2>6. भविष्य की योजना (Roadmap)</h2>
+<table><thead><tr><th>प्राथमिकता</th><th>कार्य</th></tr></thead><tbody><tr><td>P0</td><td>असली Razorpay keys + सर्वर-साइड सत्यापन (Blaze)</td></tr><tr><td>P0</td><td>पेमेंट वेबहुक / ऑर्डर रिकॉनसिलिएशन</td></tr><tr><td>P1</td><td>असली SMS/WhatsApp गेटवे (कैंपेन)</td></tr><tr><td>P1</td><td>लिंक रिवोकेशन + ऑडिट लॉग</td></tr><tr><td>P2</td><td>ऑटोमेटेड E2E टेस्ट सूट</td></tr><tr><td>P2</td><td>Composite indexes + पेजिनेशन (स्केल)</td></tr><tr><td>P3</td><td>PWA / ऑफ़लाइन सपोर्ट</td></tr></tbody></table>
+<hr>
+<h2>7. सारांश</h2>
+<p>"अपना क्लास प्लस" एक ऐसा प्लेटफ़ॉर्म है जिसमें एक टीचर अपना पूरा इंस्टीट्यूट डिजिटल कर सकता है — स्टोर, लैंडिंग पेज, कोर्स, टेस्ट, बैच, चैट, कैंपेन, पेमेंट्स, एनालिटिक्स और प्रोग्रेस ट्रैकिंग तक। यह बुक इस पूरी यात्रा का अभिलेख है — हर काम, हर अनुरोध, हर परिणाम।</p>
+<hr>
+<p><em>बुक संस्करण: 13 नवंबर 2026 | अपना क्लास प्लस — ट्रेनिंग एंड ऑडिट पैक</em></p>
+</body>
+</html>

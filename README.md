@@ -157,3 +157,9 @@ aur `TestCases.md` mein hain.
 - `Training-Manual.pdf` — admin/teacher/student workflows, step-by-step training guide
 - `Audit-Report.pdf` — feature audit matrix, security review, issues, roadmap
 - Sources (`.md`), print-ready HTML, aur `build-pdfs.mjs` (regenerate PDFs)
+
+## Project History Book
+
+`Book/` folder mein प्रोजेक्ट की संपूर्ण कार्य-सूची और चैट इतिहास की बुक है (देवनागरी हिंदी में):
+- `Project-Chat-History.pdf` — हर task के अनुरोध, कार्य और परिणाम का क्रमबद्ध विवरण
+- Source (`.md`) + print-ready HTML

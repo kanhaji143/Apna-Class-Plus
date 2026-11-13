@@ -91,7 +91,7 @@ const template = (title, body) => `<!doctype html>
 <style>
 @page { size: A4; margin: 14mm 12mm; }
 * { box-sizing: border-box; }
-body { font-family: 'Segoe UI', 'Noto Sans Devanagari', system-ui, sans-serif; color: #1c1c28; line-height: 1.55; margin: 0; font-size: 12px; }
+body { font-family: 'Segoe UI', 'Nirmala UI', 'Noto Sans Devanagari', system-ui, sans-serif; color: #1c1c28; line-height: 1.55; margin: 0; font-size: 12px; }
 h1 { font-size: 26px; color: #4a3fd6; border-bottom: 3px solid #6C5CE7; padding-bottom: 8px; margin: 0 0 16px; }
 h2 { font-size: 18px; color: #4a3fd6; margin: 22px 0 8px; border-bottom: 1px solid #e3e1f5; padding-bottom: 4px; }
 h3 { font-size: 14px; color: #33334d; margin: 14px 0 6px; }
@@ -118,6 +118,7 @@ ${body}
 const jobs = [
   { md: 'Training-Manual.md', title: 'Apna Class Plus — Training Manual' },
   { md: 'Audit-Report.md', title: 'Apna Class Plus — Complete Audit Report' },
+  { md: '../Book/Project-Chat-History.md', title: 'Apna Class Plus — Project Chat History Book' },
 ];
 
 for (const job of jobs) {
