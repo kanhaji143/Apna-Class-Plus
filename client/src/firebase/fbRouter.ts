@@ -747,6 +747,12 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
           out.courseTitle = link.courseTitle;
         } catch { /* course missing — ignore */ }
       }
+      // chat onboarding link (student ↔ teacher)
+      try {
+        const chat = await ensureChatForContact(dbv, ownerUid, id);
+        out.chatToken = chat.token;
+        out.chatUrl = '/chat/' + chat.token;
+      } catch { /* ignore */ }
       return out;
     }
     if (method === 'DELETE' && seg[2] === 'leads' && seg[3]) {
@@ -849,41 +855,11 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
 
   // ---------- chat ----------
   if (seg[0] === 'v2' && seg[1] === 'chat') {
-    const makeToken = () => {
-      const part = () => Math.random().toString(36).slice(2, 10);
-      return (part() + part() + part()).slice(0, 24);
-    };
     const findChatByContact = async (contactId: number) => {
       const list = await qGet<any>('chats', { wheres: [['ownerUid', '==', ownerUid], ['contactId', '==', contactId]] });
       return list[0] || null;
     };
-    const ensureChat = async (contactId: number) => {
-      const existing = await findChatByContact(contactId);
-      if (existing) return existing;
-      let name = 'Student';
-      let phone = '';
-      try {
-        const s = await getDoc(doc(dbv, 'students', String(contactId)));
-        if (s.exists()) { name = s.data()?.name || name; phone = s.data()?.phone || ''; }
-        else {
-          const l = await getDoc(doc(dbv, 'leads', String(contactId)));
-          if (l.exists()) { name = l.data()?.name || name; phone = l.data()?.phone || ''; }
-        }
-      } catch { /* ignore */ }
-      let teacherName = 'Teacher';
-      try {
-        const t = await getDoc(doc(dbv, 'users', ownerUid));
-        if (t.exists()) teacherName = t.data()?.name || teacherName;
-      } catch { /* ignore */ }
-      const token = makeToken();
-      const chat = {
-        token, ownerUid, contactId, name, phone, teacherName,
-        lastMessage: '', lastMessageAt: null as string | null, lastSender: null as string | null,
-        teacherUnread: 0, studentUnread: 0, createdAt: new Date().toISOString(),
-      };
-      await setDoc(doc(dbv, 'chats', token), chat);
-      return chat;
-    };
+    const ensureChat = async (contactId: number) => ensureChatForContact(dbv, ownerUid, contactId);
 
     if (seg[2] === 'users' && method === 'GET') {
       const students = await qGet<any>('students', { wheres: [['ownerUid', '==', ownerUid]] });
@@ -1094,6 +1070,35 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     return [];
   }
   return { placeholder: true, feature: path };
+}
+
+// ---------- chat helper (shared: chat routes + lead convert onboarding) ----------
+async function ensureChatForContact(dbv: any, ownerUid: string, contactId: number) {
+  const found = await qGet<any>('chats', { wheres: [['ownerUid', '==', ownerUid], ['contactId', '==', contactId]] });
+  if (found[0]) return found[0];
+  let name = 'Student';
+  let phone = '';
+  try {
+    const s = await getDoc(doc(dbv, 'students', String(contactId)));
+    if (s.exists()) { name = s.data()?.name || name; phone = s.data()?.phone || ''; }
+    else {
+      const l = await getDoc(doc(dbv, 'leads', String(contactId)));
+      if (l.exists()) { name = l.data()?.name || name; phone = l.data()?.phone || ''; }
+    }
+  } catch { /* ignore */ }
+  let teacherName = 'Teacher';
+  try {
+    const t = await getDoc(doc(dbv, 'users', ownerUid));
+    if (t.exists()) teacherName = t.data()?.name || teacherName;
+  } catch { /* ignore */ }
+  const token = (Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10)).slice(0, 24);
+  const chat = {
+    token, ownerUid, contactId, name, phone, teacherName,
+    lastMessage: '', lastMessageAt: null as string | null, lastSender: null as string | null,
+    teacherUnread: 0, studentUnread: 0, createdAt: new Date().toISOString(),
+  };
+  await setDoc(doc(dbv, 'chats', token), chat);
+  return chat;
 }
 
 // ---------- course access link (share / auto on convert) ----------

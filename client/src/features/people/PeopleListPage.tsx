@@ -8,6 +8,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import LinkIcon from '@mui/icons-material/Link';
 import AccessLinkDialog from '../courses/AccessLinkDialog';
+import OnboardingDialog from './OnboardingDialog';
 import { get, post, del } from '../../api/client';
 
 interface Lead {
@@ -35,6 +36,7 @@ export default function PeopleListPage() {
   const [form, setForm] = useState({ name: '', phone: '' });
   const [busy, setBusy] = useState(false);
   const [access, setAccess] = useState<{ courseId: number; courseTitle?: string; studentName?: string; initialLink?: string } | null>(null);
+  const [onboard, setOnboard] = useState<{ studentName: string; learnLink?: string; chatLink?: string } | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -67,14 +69,13 @@ export default function PeopleListPage() {
   const convertLead = async (l: Lead) => {
     setBusy(true);
     try {
-      const res = await post<{ id: number; learnUrl?: string; courseId?: number; courseTitle?: string }>(`/v2/people/leads/${l.id}/convert`);
+      const res = await post<{ id: number; learnUrl?: string; chatUrl?: string; courseId?: number; courseTitle?: string }>(`/v2/people/leads/${l.id}/convert`);
       flash(`${l.name} student ban gaya 🎉`);
-      if (res?.learnUrl) {
-        setAccess({
-          courseId: Number(res.courseId || l.courseId),
-          courseTitle: res.courseTitle || l.courseTitle,
+      if (res?.learnUrl || res?.chatUrl) {
+        setOnboard({
           studentName: l.name,
-          initialLink: window.location.origin + res.learnUrl,
+          learnLink: res?.learnUrl ? window.location.origin + res.learnUrl : undefined,
+          chatLink: res?.chatUrl ? window.location.origin + res.chatUrl : undefined,
         });
       }
       load();
@@ -220,6 +221,14 @@ export default function PeopleListPage() {
         courseTitle={access?.courseTitle}
         defaultStudentName={access?.studentName}
         initialLink={access?.initialLink}
+      />
+
+      <OnboardingDialog
+        open={!!onboard}
+        onClose={() => setOnboard(null)}
+        studentName={onboard?.studentName}
+        learnLink={onboard?.learnLink}
+        chatLink={onboard?.chatLink}
       />
     </Box>
   );

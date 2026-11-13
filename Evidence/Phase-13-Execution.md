@@ -420,3 +420,26 @@
 - Sirf leads with courseId ke saath convert hoti hain (manual leads par koi link nahi).
 - Link regenerate = naya token (purana progress reset).
 - Next: trial enforcement / payments.
+
+---
+
+## Phase 13q - Onboarding Links (learning + chat)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/people
+
+### What was done
+- `ensureChatForContact()` helper module-level extract (chat routes + convert dono).
+- Convert route: learning link (courseId ho to) + chat link dono banata hai; response mein `learnUrl`/`chatUrl`.
+- New `OnboardingDialog`: student name + dono links (copy / open), auto-open convert ke baad.
+- Chat page teacher name ke saath; learning page "For <student>".
+
+### Live E2E verified
+1. Convert -> dialog with both links - PASS
+2. Learning link "For Onboard Student" - PASS
+3. Chat link public view (Demo Teacher Live) - PASS
+4. Teacher /chat mein naya conversation - PASS
+
+### Notes
+- Manual leads (no course) convert par sirf chat link dilati hai.
+- Next: trial enforcement / payments.

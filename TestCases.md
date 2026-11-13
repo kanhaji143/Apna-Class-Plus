@@ -796,3 +796,25 @@
 - **Steps:** /progress after convert.
 - **Expected:** Naya link list mein dikhe (0%).
 - **Status:** PASS (3 links, avg 33%).
+
+## Module 32 - Onboarding Links (Phase 13q)
+
+### TC-32.1 Convert → onboarding dialog
+- **Steps:** Lead (courseId) convert.
+- **Expected:** Dialog mein 📚 Course Access + 💬 Chat dono links.
+- **Status:** PASS (/learn/dueqcufi62foqo71oocvokos + /chat/6sdzmd73mc4xoblbieibuy0n).
+
+### TC-32.2 Learning link personalized
+- **Steps:** Open learning link.
+- **Expected:** "For Onboard Student" + course content.
+- **Status:** PASS.
+
+### TC-32.3 Chat link public view
+- **Steps:** Open chat link.
+- **Expected:** Teacher name header + empty state.
+- **Status:** PASS (Demo Teacher Live).
+
+### TC-32.4 Teacher chat conversation
+- **Steps:** /chat after convert.
+- **Expected:** Naya conversation list mein.
+- **Status:** PASS (Onboard Student).

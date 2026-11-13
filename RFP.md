@@ -265,3 +265,16 @@
 3. Link wahi snapshot flow (`courseLinks`) use kare — student bina login course dekhe.
 4. Share route aur convert route ek hi helper (`createCourseLink`) se chale.
 5. Store enroll → lead → teacher convert → learning link ka flow documented.
+
+---
+
+## Phase 13q - Onboarding Links (learning + chat)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Lead convert ke baad **Onboarding Dialog** — 📚 Course access link + 💬 Chat link dono.
+2. Chat link auto-create (student ↔ teacher), student view mein teacher ka naam.
+3. Dono links copy/open; learning page "For <student>"; chat page teacher name ke saath.
+4. Teacher chat page par naya conversation dikhe.
+5. Shared helper (`ensureChatForContact`) chat routes + convert dono mein.
