@@ -222,3 +222,18 @@
 3. Progress **localStorage** (device) + Firestore `courseLinks.progress` (cross-device) dono mein sync.
 4. Rules: public update sirf `progress` key allowed (baaki fields locked).
 5. Purane links ke liye bhi kaam kare (no migration).
+
+---
+
+## Phase 13n - Teacher Progress Dashboard + Sidebar Tabs
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Teacher ko student-wise completion dikhani hai — `/progress` page.
+2. Summary cards: shared links count, average completion %, 100% completed links.
+3. Har link: course title, student name (ya "General link"), `X/Y lessons`, progress bar, %, date.
+4. "Open" se student view preview.
+5. Empty state.
+6. **Sidebar tabs FB mode mein** — `/v1/diy/configuration/tabs` abhi fallback `[]` de raha tha (sidebar khaali). Original DIY jaisa tab set return karo.
+7. Rules unchanged (`courseLinks` list owner-only already).

@@ -705,3 +705,35 @@
 - **Steps:** Fresh link without any toggle.
 - **Expected:** 0% · 0/N done, bar empty.
 - **Status:** PASS.
+
+## Module 29 - Teacher Progress + Sidebar Tabs (Phase 13n)
+
+### TC-29.1 Progress page loads
+- **Steps:** /progress.
+- **Expected:** Shared links listed with completion.
+- **Status:** PASS (2 links).
+
+### TC-29.2 Summary cards
+- **Steps:** Progress page header.
+- **Expected:** Shared Links, Average Completion, Completed counts.
+- **Status:** PASS (2, 50%, 1).
+
+### TC-29.3 Per-link completion
+- **Steps:** Compare with LearnPage toggles.
+- **Expected:** 1/1 -> 100%, 0/1 -> 0%.
+- **Status:** PASS.
+
+### TC-29.4 Open student view
+- **Steps:** Card "Open" button.
+- **Expected:** Student view opens in new tab.
+- **Status:** PASS.
+
+### TC-29.5 Sidebar tabs (fix)
+- **Steps:** Reload app -> sidebar.
+- **Expected:** Dashboard, Landing Pages, Courses, Content (+ submenu), Batches, People, Chats, Campaigns, Analytics, Student Progress.
+- **Status:** PASS.
+
+### TC-29.6 Sidebar navigation
+- **Steps:** Click People; click Free Material submenu chip.
+- **Expected:** /people and /content/free-material.
+- **Status:** PASS.

@@ -345,3 +345,28 @@
 ### Notes
 - Cross-device progress ke liye Firestore map; concurrent writes last-write-wins (demo).
 - Next: trial enforcement / payments.
+
+---
+
+## Phase 13n - Teacher Progress Dashboard + Sidebar Tabs
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/progress
+
+### What was done
+- fbRouter `GET /v2/course-links` — owner ke saare shared links + completion (items ∩ progress).
+- New page `/progress` ("Student Progress"): summary cards (links / avg % / completed) + per-link cards (course, student/general, X/Y lessons, bar, %, Open preview).
+- **Bugfix:** `/v1/diy/configuration/tabs` FB mode mein fallback `[]` de raha tha → sidebar bilkul khaali. Ab original DIY tab set (Dashboard, Landing Pages, Courses, Content+submenu, Batches, People, Chats, Campaigns, Analytics, Student Progress) return hota hai.
+- Sidebar navigation verified (People, Content submenu).
+
+### Live E2E verified
+1. Progress page 2 links - PASS
+2. Summary: 2 / 50% / 1 - PASS
+3. Per-link: Rahul 0/1 (0%), General 1/1 (100%) - PASS
+4. Open student view - PASS
+5. Sidebar tabs visible - PASS
+6. Sidebar navigation (People, Free Material) - PASS
+
+### Notes
+- Progress data wahi hai jo Phase 13m mein save hota hai; koi migration nahi.
+- Next: trial enforcement / payments.

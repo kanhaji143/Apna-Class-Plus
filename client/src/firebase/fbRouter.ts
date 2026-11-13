@@ -80,6 +80,46 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     return { saved: true };
   }
 
+  // ---------- sidebar tabs (original DIY pattern) ----------
+  if (path.startsWith('/v1/diy/configuration/tabs') && method === 'GET') {
+    const tab = (title: string, slug: string, order: number, subMenu?: { title: string; slug: string }[]) => ({
+      icon: '', activeIcon: '', title, slug, isActive: true, order,
+      isAddOnEnabled: 0, addOnKey: undefined, subMenu,
+    });
+    return [
+      tab('Dashboard', '', 1),
+      tab('Landing Pages', 'landing-pages/list', 2),
+      tab('Courses', 'courses', 3),
+      tab('Content', 'content', 4, [
+        { title: 'Test Portal', slug: 'content/test-portal' },
+        { title: 'Free Material', slug: 'content/free-material' },
+      ]),
+      tab('Batches', 'batches', 5),
+      tab('People', 'people', 6),
+      tab('Chats', 'chat', 7),
+      tab('Campaigns', 'campaigns', 8),
+      tab('Analytics', 'analytics/sales-traffic', 9),
+      tab('Student Progress', 'progress', 10),
+    ];
+  }
+
+  // ---------- course share links + progress ----------
+  if (path.startsWith('/v2/course-links') && method === 'GET') {
+    const links = await qGet<any>('courseLinks', { wheres: [['ownerUid', '==', ownerUid]] });
+    links.sort((a: any, b: any) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    return links.map((l: any) => {
+      const items: any[] = l.items || [];
+      const progress: Record<string, boolean> = l.progress || {};
+      const done = items.filter((it) => progress[String(it.id)]).length;
+      return {
+        token: l.token, courseId: l.courseId, courseTitle: l.courseTitle || 'Course',
+        studentName: l.studentName || '', total: items.length, done,
+        pct: items.length ? Math.round((done / items.length) * 100) : 0,
+        createdAt: l.createdAt || '',
+      };
+    });
+  }
+
   // ---------- landing pages ----------
   if (seg[2] === 'landingPages') {    if (method === 'GET' && seg.length === 3) {
       const pages = await qGet<any>('pages', { wheres: [['ownerUid', '==', ownerUid]] });
