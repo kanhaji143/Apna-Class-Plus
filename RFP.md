@@ -83,3 +83,19 @@
 6. Hero header with teacher name + branding.
 7. Mobile-first, Nunito Sans + Noto Sans Devanagari fonts.
 8. Teacher apne dashboard se store link copy kar sake.
+
+---
+
+## Phase 13e - Courses in Firestore + Store Courses Tab (user requirements, chat)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Courses ko Firestore pe migrate karo (abhi sirf SQLite/local mode mein the, FB mode mein placeholder).
+2. Courses page: Create New Course, list, archive (status = archived), Manage Content.
+3. Content Manager: content add/delete + folders add + drag reorder — sab Firestore pe.
+4. Public store mein Courses tab: title, description, price (₹/FREE), Enroll CTA.
+5. Enroll = lead capture (payments Phase 5 skipped) — naam + phone → `leads` collection (owner-scoped).
+6. Dashboard "Published Courses" count = active courses.
+7. Firestore rules: courses public read when active; contents/folders owner-only.
+8. Store dismiss-free (no composite indexes) — client-side sorting.

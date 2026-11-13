@@ -358,7 +358,8 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     const pages = await qGet<any>('pages', { wheres: [['ownerUid', '==', ownerUid]] });
     const tests = await qGet<any>('tests', { wheres: [['ownerUid', '==', ownerUid]] });
     const materials = await qGet<any>('freeMaterials', { wheres: [['ownerUid', '==', ownerUid]] });
-    return { landingPageCount: pages.length, publishedCourseCount: 0, couponCount: 0, campaignCount: tests.length + materials.length };
+    const courses = await qGet<any>('courses', { wheres: [['ownerUid', '==', ownerUid]] });
+    return { landingPageCount: pages.length, publishedCourseCount: courses.filter((c: any) => c.status === 'active').length, couponCount: 0, campaignCount: tests.length + materials.length };
   }
   if (path.startsWith('/v1/diy/analytcs/stats')) return { data: [] };
 
@@ -402,8 +403,10 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     // Composite-index se bachne ke liye: sirf status filter, sorting client-side
     const tests = await qGet<any>('tests', { wheres: [['status', '==', 'published']] });
     const materials = await qGet<any>('freeMaterials', { wheres: [['status', '==', 'published']] });
+    const courses = await qGet<any>('courses', { wheres: [['status', '==', 'active']] });
     tests.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
     materials.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+    courses.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
     // question counts per test (demo-scale N+1, theek hai)
     const withCounts = [];
     for (const t of tests) {
@@ -413,17 +416,93 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     }
     // public visitor users/{uid} nahi padh sakta — isliye getDoc optional (try/catch)
     let teacherName = 'Apna Class Plus';
-    const ownerUid = tests[0]?.ownerUid || materials[0]?.ownerUid;
+    const ownerUid = tests[0]?.ownerUid || materials[0]?.ownerUid || courses[0]?.ownerUid;
     if (ownerUid) {
       try {
         const usnap = await getDoc(doc(dbv, 'users', ownerUid));
         if (usnap.exists() && usnap.data().name) teacherName = usnap.data().name;
       } catch { /* unauthenticated visitor — default brand name */ }
     }
-    return { teacherName, tests: withCounts, materials };
+    const courseCards = courses.map((c: any) => ({
+      id: c.id, title: c.title, description: c.description || null,
+      price: Number(c.price || 0), currency: c.currency || 'INR', ownerUid: c.ownerUid,
+    }));
+    return { teacherName, tests: withCounts, materials, courses: courseCards };
   }
 
-  // ---------- baaki (courses/batches/chat/campaigns/analytics/people) — FB mode core nahi ----------
+  // ---------- courses (admin) ----------
+  if (path.startsWith('/v2/courses')) {
+    if (method === 'GET' && seg.length === 2) {
+      const list = await qGet<any>('courses', { wheres: [['ownerUid', '==', ownerUid]] });
+      list.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+      return { data: list };
+    }
+    if (method === 'POST' && seg.length === 2) {
+      const id = await nextId(dbv, 'courses');
+      await setDoc(doc(dbv, 'courses', String(id)), {
+        id, ownerUid, title: body.title || 'Untitled Course',
+        price: Number(body.price || 0), currency: 'INR',
+        description: body.description || '', status: 'active', created_at: tsNow(),
+      });
+      return { id, ...body, currency: 'INR', status: 'active' };
+    }
+    if (method === 'GET' && seg.length === 3) {
+      const snap = await getDoc(doc(dbv, 'courses', seg[2]));
+      if (!snap.exists()) throw new Error('Course not found');
+      return snap.data();
+    }
+    if (method === 'DELETE' && seg.length === 3) {
+      await updateDoc(doc(dbv, 'courses', seg[2]), { status: 'archived' });
+      return { archived: true, id: Number(seg[2]) };
+    }
+  }
+
+  // ---------- course content & folders ----------
+  if (seg[0] === 'v2' && seg[1] === 'course') {
+    if (method === 'GET' && seg[2] === 'content' && seg[3] === 'get') {
+      const cid = Number(new URLSearchParams(path.split('?')[1] || '').get('courseId') || 0);
+      const contents = await qGet<any>('courseContents', { wheres: [['course_id', '==', cid], ['ownerUid', '==', ownerUid]] });
+      const folders = await qGet<any>('courseFolders', { wheres: [['course_id', '==', cid], ['ownerUid', '==', ownerUid]] });
+      contents.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+      folders.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+      return { contents, folders };
+    }
+    if (method === 'POST' && seg[2] === 'content' && seg[3] === 'add') {
+      const courseId = Number(body.courseId);
+      const existing = await qGet<any>('courseContents', { wheres: [['course_id', '==', courseId], ['ownerUid', '==', ownerUid]] });
+      const id = await nextId(dbv, 'courseContents');
+      await setDoc(doc(dbv, 'courseContents', String(id)), {
+        id, course_id: courseId, ownerUid, folder_id: body.folderId ?? null,
+        type: body.type || 'video', title: body.title || 'Untitled',
+        url: body.url || '', description: body.description || '',
+        duration: 0, sort_order: existing.length + 1, createdAt: tsNow(),
+      });
+      return { id };
+    }
+    if (method === 'DELETE' && seg[2] === 'content' && seg[3] === 'delete' && seg[4]) {
+      await deleteDoc(doc(dbv, 'courseContents', seg[4]));
+      return { deleted: true, id: Number(seg[4]) };
+    }
+    if (method === 'POST' && seg[2] === 'folder' && seg[3] === 'add') {
+      const courseId = Number(body.courseId);
+      const existing = await qGet<any>('courseFolders', { wheres: [['course_id', '==', courseId], ['ownerUid', '==', ownerUid]] });
+      const id = await nextId(dbv, 'courseFolders');
+      await setDoc(doc(dbv, 'courseFolders', String(id)), {
+        id, course_id: courseId, ownerUid, parent_id: body.parentId ?? null,
+        name: body.name || 'Folder', sort_order: existing.length + 1, createdAt: tsNow(),
+      });
+      return { id };
+    }
+    if (method === 'POST' && seg[2] === 'reorder' && seg[3] === 'contents') {
+      const items = Array.isArray(body) ? body : [];
+      for (const it of items) {
+        await updateDoc(doc(dbv, 'courseContents', String(it.id)), { sort_order: Number(it.order) || 0 });
+      }
+      return { reordered: items.length };
+    }
+  }
+
+  // ---------- baaki (batches/chat/campaigns/analytics/people) — FB mode core nahi ----------
   if (method === 'GET') {
     if (path.includes('campaignList') || path.includes('analytcs/stats')) return { data: [] };
     return [];

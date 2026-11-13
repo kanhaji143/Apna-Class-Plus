@@ -387,3 +387,35 @@
 - **Steps:** Free Material page -> Add Material -> Save; toggle Published/Draft; edit/delete.
 - **Expected:** Material saved to Firestore, listed in admin, reflected on public store.
 - **Status:** PASS (composite-index error fixed by client-side sorting).
+
+## Module 20 - Courses in Firestore + Store Courses Tab (Phase 13e)
+
+### TC-20.1 Create course (Firebase)
+- **Steps:** /courses -> Create New Course -> title + price + description -> Create.
+- **Expected:** Course doc in Firestore (status active), listed on Courses page.
+- **Status:** PASS (Class 10 Science Complete Course, INR 499).
+
+### TC-20.2 Course content + folder
+- **Steps:** Manage Content -> Add Content (video + URL); New Folder.
+- **Expected:** Content and folder persisted; counts update.
+- **Status:** PASS (1 item + folder "Chapter 1 - Chemical Reactions").
+
+### TC-20.3 Owner-scoped queries
+- **Steps:** Load Content Manager while logged in.
+- **Expected:** content/folder list loads (ownerUid filter satisfies Firestore rules).
+- **Status:** PASS (permission-denied fixed by adding ownerUid filter).
+
+### TC-20.4 Store Courses tab
+- **Steps:** Open /store.
+- **Expected:** COURSES (n) tab first; cards show title, description, price, Enroll.
+- **Status:** PASS (COURSES (1), ₹499).
+
+### TC-20.5 Enroll lead capture
+- **Steps:** Store -> Enroll -> name + phone -> Enroll.
+- **Expected:** Success message; lead doc created with ownerUid, courseId, courseTitle, source=store.
+- **Status:** PASS (Rahul Sharma / 9876543210).
+
+### TC-20.6 Dashboard course count
+- **Steps:** Dashboard -> Published Courses card.
+- **Expected:** Count of active courses.
+- **Status:** PASS (1).

@@ -81,7 +81,7 @@ export default function DashboardPage() {
             <Box>
               <Typography variant="h6" fontWeight={900}>🛍️ My Student Store</Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Apne students ko ye link bhejo — wo bina login ke published tests aur free material dekh sakte hain.
+                Apne students ko ye link bhejo — wo bina login ke courses, tests aur free material dekh sakte hain.
               </Typography>
               <Typography variant="body2" sx={{ mt: 0.5, fontFamily: 'monospace', wordBreak: 'break-all' }}>{storeUrl}</Typography>
             </Box>

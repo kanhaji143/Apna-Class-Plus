@@ -89,3 +89,33 @@
 - Courses tab deferred (Phase 13b - courses not yet in Firestore).
 - Store is single-tenant; `/store/:teacherId` accepted but ignored (brand-level store).
 - Font: Noto Sans Devanagari loaded alongside Nunito Sans for Hindi.
+
+---
+
+## Phase 13e - Courses in Firestore + Store Courses Tab
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/store
+
+### What was done
+- Firestore collections: `courses` (owner-scoped, status active/archived), `courseContents`, `courseFolders`.
+- fbRouter endpoints: GET/POST /v2/courses, GET/DELETE /v2/courses/:id (archive), GET /v2/course/content/get, POST /v2/course/content/add, DELETE /v2/course/content/delete/:id, POST /v2/course/folder/add, POST /v2/course/reorder/contents.
+- Store: Courses tab first (COURSES / TESTS / FREE MATERIAL), price chips (₹ / FREE), Enroll dialog.
+- Enroll = public lead capture to `leads` (ownerUid, courseId, courseTitle, source=store) — payments Phase 5 pending.
+- Dashboard Published Courses = active course count.
+- Firestore rules: courses readable when active (public) or by owner; contents/folders owner-only.
+- Bugfix: Firestore list queries on owner-only collections must include `ownerUid` filter (rules cannot infer ownership otherwise).
+
+### Live E2E verified
+1. Create course "Class 10 Science Complete Course" (INR 499) -> appears in /courses - PASS
+2. Manage Content -> Add video content -> "Course Content (1 items)" - PASS
+3. New Folder -> "Chapter 1 - Chemical Reactions (0)" - PASS
+4. /store -> COURSES (1) with ₹499 + Enroll - PASS
+5. Enroll dialog (Rahul Sharma / 9876543210) -> "Enrolled! Teacher contact karega" - PASS
+6. Lead doc verified in Firestore (courseTitle + source=store) - PASS
+7. Dashboard Published Courses = 1 - PASS
+
+### Notes
+- No payments (Phase 5): Enroll stores a lead only.
+- Student course viewer (post-enrollment video access) not built yet.
+- Still placeholder in FB mode: Batches, People, Chat, Campaigns, Analytics.

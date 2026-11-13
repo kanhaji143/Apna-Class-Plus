@@ -60,6 +60,22 @@ service cloud.firestore {
       allow create: if true;   // public landing page lead capture
       allow read, update, delete: if isOwner(resource.data);
     }
+
+    match /courses/{cid} {
+      allow read: if resource.data.status == 'active' || isOwner(resource.data);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    match /courseContents/{did} {
+      allow read, update, delete: if isOwner(resource.data);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /courseFolders/{fid} {
+      allow read, update, delete: if isOwner(resource.data);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+    }
   }
 }
 
