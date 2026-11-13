@@ -163,3 +163,19 @@
 6. Firestore rules: campaigns owner-only.
 7. Dashboard "Campaigns" count real campaigns se aaye (tests+materials mix nahi).
 8. Spark plan note: publish = **mock send** (real SMS/Email/WhatsApp gateway nahi — Blaze/Cloud Functions ke bina).
+
+---
+
+## Phase 13j - Chat (Firestore + public student link)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Chat ko Firestore pe migrate karo: conversations + messages.
+2. Teacher ke contacts: students + leads (phone se dedupe).
+3. Contact select → chat start → **shareable public link** (`/chat/<token>`).
+4. Teacher message bheje, conversation list mein last message + **unread badge** dikhe.
+5. Student bina login public link se reply kar sake (random token = capability URL).
+6. Thread khulte hi unread clear ho.
+7. Rules: chat doc `get` public (token secret), `list` owner-only; messages public via path; owner update.
+8. Spark note: realtime = 3s polling (Cloud Functions/listeners ke bina bhi kaam).

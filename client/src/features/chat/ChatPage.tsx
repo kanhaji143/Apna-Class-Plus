@@ -1,16 +1,19 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Box, Typography, Card, CardContent, TextField, Button, Avatar, Chip, List, ListItem, ListItemAvatar, ListItemText, Divider } from '@mui/material';
+import { Box, Typography, Card, CardContent, TextField, Button, Avatar, Chip, List, ListItem, ListItemAvatar, ListItemText, Divider, IconButton } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { get, post } from '../../api/client';
 
 interface ChatUser { id: number; name: string; phone: string; role: string; }
 interface Message { id: number; sender_id: number; receiver_id: number; message: string; read_at: string | null; created_at: string; }
-interface Conversation { id: number; name: string; phone: string; role: string; lastMessage: string; lastMessageAt: string; unreadCount: number; isMine: boolean; }
+interface Conversation { id: number; name: string; phone: string; role: string; lastMessage: string; lastMessageAt: string; unreadCount: number; isMine: boolean; token?: string; }
 
 export default function ChatPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [users, setUsers] = useState<ChatUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
+  const [chatToken, setChatToken] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -78,8 +81,27 @@ export default function ChatPage() {
     } finally { setSending(false); }
   };
 
-  const startChat = (u: ChatUser) => {
+  const startChat = async (u: ChatUser) => {
     setSelectedUser(u);
+    // FB mode: chat doc (shareable token) ensure karo
+    if ((window as any).runConfig?.FIREBASE_MODE === true) {
+      try {
+        const res = await post<{ token: string }>('/v2/chat/start', { contactId: u.id });
+        setChatToken(res.token);
+      } catch { setChatToken(null); }
+    }
+  };
+
+  const shareLink = chatToken ? `${window.location.origin}/chat/${chatToken}` : '';
+
+  const copyLink = async () => {
+    if (!shareLink) return;
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      window.alert('Chat link copy ho gaya — student ko bhej do:\n' + shareLink);
+    } catch {
+      window.prompt('Chat link (copy karo):', shareLink);
+    }
   };
 
   return (
@@ -96,6 +118,7 @@ export default function ChatPage() {
                   <ListItem key={c.id} button selected={selectedUser?.id === c.id} onClick={() => {
                     const u = users.find((u) => u.id === c.id) || { id: c.id, name: c.name, phone: c.phone, role: c.role };
                     setSelectedUser(u);
+                    setChatToken(c.token || null);
                   }}>
                     <ListItemAvatar><Avatar>{c.name?.[0]}</Avatar></ListItemAvatar>
                     <ListItemText
@@ -127,9 +150,22 @@ export default function ChatPage() {
       <Card elevation={3} sx={{ display: 'flex', flexDirection: 'column' }}>
         {selectedUser ? (
           <>
-            <CardContent sx={{ borderBottom: 1, borderColor: 'divider', py: 1.5 }}>
-              <Typography fontWeight={800}>{selectedUser.name}</Typography>
-              <Typography variant="caption" color="text.secondary">{selectedUser.phone}</Typography>
+            <CardContent sx={{ borderBottom: 1, borderColor: 'divider', py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography fontWeight={800}>{selectedUser.name}</Typography>
+                <Typography variant="caption" color="text.secondary">{selectedUser.phone}</Typography>
+                {shareLink && (
+                  <Typography variant="caption" color="primary" sx={{ display: 'block', maxWidth: 340, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {shareLink}
+                  </Typography>
+                )}
+              </Box>
+              {shareLink && (
+                <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
+                  <IconButton size="small" title="Copy chat link" onClick={copyLink}><ContentCopyIcon fontSize="small" /></IconButton>
+                  <IconButton size="small" title="Open student view" onClick={() => window.open(shareLink, '_blank')}><OpenInNewIcon fontSize="small" /></IconButton>
+                </Box>
+              )}
             </CardContent>
             <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
               {messages.map((m) => {

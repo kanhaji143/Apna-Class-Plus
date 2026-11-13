@@ -86,6 +86,19 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
     }
 
+    match /chats/{token} {
+      allow get: if true;                // capability link (random unguessable token)
+      allow list: if isOwner(resource.data);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isOwner(resource.data) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['teacherUnread', 'studentUnread', 'lastMessage', 'lastMessageAt', 'lastSender']);
+      allow delete: if isOwner(resource.data);
+
+      match /messages/{mid} {
+        allow get, list: if true;        // reachable only via chat token
+        allow create: if true;           // public student reply
+      }
+    }
+
     match /courses/{cid} {
       allow read: if resource.data.status == 'active' || isOwner(resource.data);
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;

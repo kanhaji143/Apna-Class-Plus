@@ -19,6 +19,7 @@ import BatchesListPage from './features/batches/BatchesListPage';
 import BatchStudentsPage from './features/batches/BatchStudentsPage';
 import PeopleListPage from './features/people/PeopleListPage';
 import ChatPage from './features/chat/ChatPage';
+import PublicChatPage from './features/chat/PublicChatPage';
 import CampaignsListPage from './features/campaigns/CampaignsListPage';
 import AnalyticsPage from './features/analytics/AnalyticsPage';
 import TestPortalPage from './features/tests/TestPortalPage';
@@ -62,6 +63,7 @@ export default function App() {
         <Route path="/free/:teacherId" element={<PublicFreeMaterialsPage />} />
         <Route path="/store" element={<StorePage />} />
         <Route path="/store/:teacherId" element={<StorePage />} />
+        <Route path="/chat/:token" element={<PublicChatPage />} />
 
         {/* ---------- protected (teacher dashboard) ---------- */}
         <Route

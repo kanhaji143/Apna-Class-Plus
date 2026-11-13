@@ -739,6 +739,123 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     }
   }
 
+  // ---------- chat ----------
+  if (seg[0] === 'v2' && seg[1] === 'chat') {
+    const makeToken = () => {
+      const part = () => Math.random().toString(36).slice(2, 10);
+      return (part() + part() + part()).slice(0, 24);
+    };
+    const findChatByContact = async (contactId: number) => {
+      const list = await qGet<any>('chats', { wheres: [['ownerUid', '==', ownerUid], ['contactId', '==', contactId]] });
+      return list[0] || null;
+    };
+    const ensureChat = async (contactId: number) => {
+      const existing = await findChatByContact(contactId);
+      if (existing) return existing;
+      let name = 'Student';
+      let phone = '';
+      try {
+        const s = await getDoc(doc(dbv, 'students', String(contactId)));
+        if (s.exists()) { name = s.data()?.name || name; phone = s.data()?.phone || ''; }
+        else {
+          const l = await getDoc(doc(dbv, 'leads', String(contactId)));
+          if (l.exists()) { name = l.data()?.name || name; phone = l.data()?.phone || ''; }
+        }
+      } catch { /* ignore */ }
+      let teacherName = 'Teacher';
+      try {
+        const t = await getDoc(doc(dbv, 'users', ownerUid));
+        if (t.exists()) teacherName = t.data()?.name || teacherName;
+      } catch { /* ignore */ }
+      const token = makeToken();
+      const chat = {
+        token, ownerUid, contactId, name, phone, teacherName,
+        lastMessage: '', lastMessageAt: null as string | null, lastSender: null as string | null,
+        teacherUnread: 0, studentUnread: 0, createdAt: new Date().toISOString(),
+      };
+      await setDoc(doc(dbv, 'chats', token), chat);
+      return chat;
+    };
+
+    if (seg[2] === 'users' && method === 'GET') {
+      const students = await qGet<any>('students', { wheres: [['ownerUid', '==', ownerUid]] });
+      const leads = await qGet<any>('leads', { wheres: [['ownerUid', '==', ownerUid]] });
+      const seen = new Set<string>();
+      const out: any[] = [];
+      [...students, ...leads].forEach((p: any) => {
+        const phone = String(p.phone || '');
+        const key = phone || String(p.id);
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push({ id: p.id, name: p.name || 'Student', phone, role: 'student' });
+      });
+      out.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+      return out;
+    }
+
+    if (seg[2] === 'conversations' && method === 'GET') {
+      const chats = await qGet<any>('chats', { wheres: [['ownerUid', '==', ownerUid]] });
+      chats.sort((a: any, b: any) => String(b.lastMessageAt || '').localeCompare(String(a.lastMessageAt || '')));
+      return chats.map((c: any) => ({
+        id: c.contactId, name: c.name, phone: c.phone, role: 'student',
+        lastMessage: c.lastMessage || '', lastMessageAt: c.lastMessageAt || '',
+        unreadCount: c.teacherUnread || 0, isMine: c.lastSender === 'teacher',
+        token: c.token,
+      }));
+    }
+
+    if (seg[2] === 'start' && method === 'POST') {
+      const chat = await ensureChat(Number(body?.contactId));
+      return { token: chat.token, contactId: chat.contactId };
+    }
+
+    if (seg[2] === 'messages' && method === 'GET') {
+      const qs = new URLSearchParams(path.split('?')[1] || '');
+      const withId = Number(qs.get('with'));
+      const since = qs.get('since') || '';
+      const chat = await findChatByContact(withId);
+      if (!chat) return [];
+      const msgs = await qGet<any>(`chats/${chat.token}/messages`, {});
+      msgs.sort((a: any, b: any) => String(a.created_at || '').localeCompare(String(b.created_at || '')));
+      const filtered = since && since !== '1970-01-01'
+        ? msgs.filter((m: any) => String(m.created_at || '') > since)
+        : msgs;
+      if ((chat.teacherUnread || 0) !== 0) {
+        try { await updateDoc(doc(dbv, 'chats', chat.token), { teacherUnread: 0 }); } catch { /* ignore */ }
+      }
+      return filtered.map((m: any) => ({
+        id: m.id,
+        sender_id: m.sender === 'student' ? withId : 0,
+        receiver_id: m.sender === 'student' ? 0 : withId,
+        message: m.text,
+        read_at: m.readAt || null,
+        created_at: m.created_at,
+      }));
+    }
+
+    if (seg[2] === 'send' && method === 'POST') {
+      const receiverId = Number(body?.receiverId);
+      const text = String(body?.message || '').trim();
+      if (!receiverId || !text) throw new Error('receiverId, message required');
+      const chat = await ensureChat(receiverId);
+      const id = await nextId(dbv, 'chatMessages');
+      const now = new Date().toISOString();
+      await setDoc(doc(dbv, 'chats', chat.token, 'messages', String(id)), {
+        id, sender: 'teacher', text, readAt: null, created_at: now,
+      });
+      await updateDoc(doc(dbv, 'chats', chat.token), {
+        lastMessage: text, lastMessageAt: now, lastSender: 'teacher',
+        studentUnread: (Number(chat.studentUnread) || 0) + 1,
+      });
+      return { id, sender_id: 0, receiver_id: receiverId, message: text, read_at: null, created_at: now };
+    }
+
+    if (seg[2] === 'unread-count' && method === 'GET') {
+      const chats = await qGet<any>('chats', { wheres: [['ownerUid', '==', ownerUid]] });
+      return { count: chats.reduce((n: number, c: any) => n + (Number(c.teacherUnread) || 0), 0) };
+    }
+  }
+
   // ---------- campaigns ----------
   if (seg[0] === 'v1' && seg[1] === 'diy' && (seg[2] === 'campaign' || seg[2] === 'campaignList')) {
     const audienceLabelOf = async (audience: any): Promise<string> => {

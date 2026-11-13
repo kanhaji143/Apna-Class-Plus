@@ -236,3 +236,33 @@
 ### Notes
 - Mock send: sentCount/publishedAt/recipients Firestore mein; real delivery gateway Phase 8.5 (Blaze).
 - Next: Chat.
+
+---
+
+## Phase 13j - Chat (Firestore + public student link)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/chat
+
+### What was done
+- Firestore `chats/{token}` (random 24-char capability id): ownerUid, contactId, name, phone, teacherName, lastMessage, lastMessageAt, lastSender, teacherUnread, studentUnread.
+- Messages subcollection `chats/{token}/messages/{id}`: sender (teacher/student), text, created_at ISO, readAt.
+- fbRouter: GET /v2/chat/users (students+leads dedupe), GET /v2/chat/conversations, GET /v2/chat/messages (marks teacherUnread=0), POST /v2/chat/send, POST /v2/chat/start, GET /v2/chat/unread-count.
+- ChatPage: contact select -> start chat -> share link (copy/open), message thread, polling.
+- New public page `/chat/:token` (no login): teacher name header, thread, send reply, invalid-link handling.
+- Rules: chat `get` public (token secret), `list` owner-only, create owner, update owner OR public limited keys; messages `get/list/create` public via path.
+- Spark: 3s polling (no Cloud Functions).
+
+### Live E2E verified
+1. Contacts list (students + leads) - PASS
+2. Start chat + share link - PASS
+3. Teacher send - PASS
+4. Public student view - PASS
+5. Student reply -> teacher (poll) - PASS
+6. Unread badge + clear - PASS
+7. Reload persistence - PASS
+8. Invalid token error - PASS
+
+### Notes
+- Student side capability URL hai (token secret) — demo trade-off, documented.
+- Next: payments (blocked), student course viewer, trial enforcement.

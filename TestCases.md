@@ -567,3 +567,45 @@
 - **Steps:** Dashboard overview.
 - **Expected:** Campaigns = actual campaigns count.
 - **Status:** PASS (2).
+
+## Module 25 - Chat (Phase 13j)
+
+### TC-25.1 Contact list
+- **Steps:** /chat.
+- **Expected:** Students + leads listed (phone dedupe).
+- **Status:** PASS (Amit, Anjali, Priya, Rahul).
+
+### TC-25.2 Start chat + share link
+- **Steps:** Select contact.
+- **Expected:** Chat doc created, shareable `/chat/<token>` link shown + copy button.
+- **Status:** PASS (token pjn6uavypo93nft9oc8e14b5).
+
+### TC-25.3 Teacher sends message
+- **Steps:** Type message -> Send.
+- **Expected:** Message bubble + conversation list last message update.
+- **Status:** PASS.
+
+### TC-25.4 Public student view
+- **Steps:** Open /chat/<token> (no login).
+- **Expected:** Teacher name header + thread visible.
+- **Status:** PASS (Demo Teacher Live).
+
+### TC-25.5 Student reply reaches teacher
+- **Steps:** Student sends reply; teacher thread open.
+- **Expected:** Reply appears within polling interval; conversation list updates.
+- **Status:** PASS (~3-6s).
+
+### TC-25.6 Unread badge
+- **Steps:** Student message while another contact open.
+- **Expected:** Unread count chip on conversation; clears when opened.
+- **Status:** PASS (chip 1 -> clear).
+
+### TC-25.7 Persistence
+- **Steps:** Reload teacher /chat.
+- **Expected:** Conversations + messages persisted.
+- **Status:** PASS.
+
+### TC-25.8 Invalid link
+- **Steps:** Open /chat/invalidtoken.
+- **Expected:** Friendly "link valid nahi" message.
+- **Status:** PASS.
