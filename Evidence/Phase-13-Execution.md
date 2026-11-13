@@ -443,3 +443,30 @@
 ### Notes
 - Manual leads (no course) convert par sirf chat link dilati hai.
 - Next: trial enforcement / payments.
+
+---
+
+## Phase 13r - Coupons (discount codes)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/coupons
+
+### What was done
+- Firestore `coupons` collection + rules (public read sirf active; owner write).
+- fbRouter: GET/POST/PUT/DELETE `/v1/diy/coupons` + public `POST /apply` (code+course validation, percent/flat discount, expiry check, case-insensitive).
+- New `/coupons` page (create, enable/disable, delete, used count) + sidebar tab.
+- Store enroll dialog: coupon field + Apply + discounted price display; lead mein `couponCode`.
+- Dashboard couponCount real.
+
+### Live E2E verified
+1. Create DIWALI20 (20%, course) - PASS
+2. Store apply -> ₹499 -> ₹399 - PASS
+3. Enroll -> Used 1x - PASS
+4. Invalid code -> "Invalid coupon" - PASS
+5. Dashboard couponCount = 1 - PASS
+6. Sidebar Coupons tab - PASS
+
+### Notes
+- Coupons public active-only readable (codes enumerate ho sakte hain — demo trade-off).
+- Payments skip ki wajah se discounted price lead par rely karta hai.
+- Next: trial enforcement / payments.

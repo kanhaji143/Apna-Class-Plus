@@ -24,6 +24,7 @@ import PublicChatPage from './features/chat/PublicChatPage';
 import CampaignsListPage from './features/campaigns/CampaignsListPage';
 import AnalyticsPage from './features/analytics/AnalyticsPage';
 import ProgressPage from './features/progress/ProgressPage';
+import CouponsPage from './features/coupons/CouponsPage';
 import TestPortalPage from './features/tests/TestPortalPage';
 import TestEditorPage from './features/tests/TestEditorPage';
 import TestTakePage from './features/tests/TestTakePage';
@@ -92,6 +93,7 @@ export default function App() {
           <Route path="analytics/sales-traffic" element={<AnalyticsPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="progress" element={<ProgressPage />} />
+          <Route path="coupons" element={<CouponsPage />} />
           <Route path="content/test-portal" element={<TestPortalPage />} />
           <Route path="content/test-portal/:id" element={<TestEditorPage />} />
           <Route path="content/free-material" element={<FreeMaterialPage />} />

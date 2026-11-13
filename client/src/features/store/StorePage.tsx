@@ -40,9 +40,12 @@ export default function StorePage() {
   const navigate = useNavigate();
 
   const [enrollCourse, setEnrollCourse] = useState<StoreCourse | null>(null);
-  const [enrollForm, setEnrollForm] = useState({ name: '', phone: '' });
+  const [enrollForm, setEnrollForm] = useState({ name: '', phone: '', coupon: '' });
   const [enrolling, setEnrolling] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
+  const [couponInfo, setCouponInfo] = useState<any | null>(null);
+  const [couponMsg, setCouponMsg] = useState<string | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
 
   useEffect(() => {
     pubGet('/store').then((d: any) => {
@@ -55,8 +58,24 @@ export default function StorePage() {
 
   const openEnroll = (c: StoreCourse) => {
     setEnrollCourse(c);
-    setEnrollForm({ name: '', phone: '' });
+    setEnrollForm({ name: '', phone: '', coupon: '' });
+    setCouponInfo(null);
+    setCouponMsg(null);
     setEnrolled(false);
+  };
+
+  const applyCoupon = async () => {
+    const code = enrollForm.coupon.trim();
+    if (!code || !enrollCourse) return;
+    setCouponBusy(true);
+    setCouponMsg(null);
+    try {
+      const r = await pubPost('/v1/diy/coupons/apply', { code, courseId: enrollCourse.id, price: enrollCourse.price });
+      setCouponInfo(r);
+    } catch (e: any) {
+      setCouponInfo(null);
+      setCouponMsg(e?.message || 'Invalid coupon');
+    } finally { setCouponBusy(false); }
   };
 
   const submitEnroll = async () => {
@@ -69,6 +88,7 @@ export default function StorePage() {
         courseTitle: enrollCourse.title,
         name: enrollForm.name,
         phone: enrollForm.phone,
+        couponCode: couponInfo?.code || (enrollForm.coupon.trim() || undefined),
         source: 'store',
       });
       setEnrolled(true);
@@ -199,6 +219,22 @@ export default function StorePage() {
               </Typography>
               <TextField label="Aapka naam" value={enrollForm.name} onChange={(e) => setEnrollForm({ ...enrollForm, name: e.target.value })} fullWidth autoFocus />
               <TextField label="Phone number" value={enrollForm.phone} onChange={(e) => setEnrollForm({ ...enrollForm, phone: e.target.value })} fullWidth />
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <TextField label="Coupon code (optional)" value={enrollForm.coupon}
+                  onChange={(e) => setEnrollForm({ ...enrollForm, coupon: e.target.value })} fullWidth size="small" />
+                <Button variant="outlined" onClick={applyCoupon} disabled={couponBusy || !enrollForm.coupon.trim()} sx={{ mt: 0.5 }}>
+                  {couponBusy ? '…' : 'Apply'}
+                </Button>
+              </Box>
+              {couponMsg && <Typography variant="caption" color="error">{couponMsg}</Typography>}
+              {couponInfo?.valid && (
+                <Alert severity="success" sx={{ py: 0 }}>
+                  ✅ {couponInfo.code} applied — {couponInfo.discountType === 'flat' ? `₹${couponInfo.discount}` : `${couponInfo.value}%`} off.
+                  {enrollCourse && enrollCourse.price > 0 && (
+                    <> Price: <s>₹{enrollCourse.price}</s> → <b>₹{couponInfo.finalPrice}</b></>
+                  )}
+                </Alert>
+              )}
             </Box>
           )}
         </DialogContent>

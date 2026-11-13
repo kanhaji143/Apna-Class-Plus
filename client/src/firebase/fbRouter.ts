@@ -100,6 +100,7 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
       tab('Campaigns', 'campaigns', 8),
       tab('Analytics', 'analytics/sales-traffic', 9),
       tab('Student Progress', 'progress', 10),
+      tab('Coupons', 'coupons', 11),
     ];
   }
 
@@ -118,6 +119,72 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
         createdAt: l.createdAt || '',
       };
     });
+  }
+
+  // ---------- coupons ----------
+  if (seg[0] === 'v1' && seg[1] === 'diy' && seg[2] === 'coupons') {
+    if (method === 'GET' && seg.length === 3) {
+      const list = await qGet<any>('coupons', { wheres: [['ownerUid', '==', ownerUid]] });
+      list.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+      const leads = await qGet<any>('leads', { wheres: [['ownerUid', '==', ownerUid]] });
+      return list.map((c: any) => ({
+        _id: c.id, code: c.code, discountType: c.discountType, value: c.value,
+        courseId: c.courseId || null, courseTitle: c.courseTitle || null,
+        status: c.status, expiry: c.expiry || null, createdAt: c.createdAt,
+        usedCount: leads.filter((l: any) => String(l.couponCode || '').toLowerCase() === String(c.code || '').toLowerCase()).length,
+      }));
+    }
+    if (method === 'POST' && seg.length === 3) {
+      const code = String(body?.code || '').trim().toUpperCase();
+      if (!code) throw new Error('code required');
+      const id = await nextId(dbv, 'coupons');
+      await setDoc(doc(dbv, 'coupons', String(id)), {
+        id, ownerUid, code,
+        discountType: body?.discountType === 'flat' ? 'flat' : 'percent',
+        value: Number(body?.value || 0),
+        courseId: body?.courseId ?? null, courseTitle: body?.courseTitle || null,
+        status: 'active', expiry: body?.expiry || null, createdAt: tsNow(),
+      });
+      return { _id: id, code, status: 'active' };
+    }
+    if (method === 'POST' && seg[3] === 'apply') {
+      const code = String(body?.code || '').trim().toUpperCase();
+      if (!code) throw new Error('code required');
+      const snaps = await getDocs(query(
+        collection(dbv, 'coupons'),
+        where('code', '==', code),
+        where('status', '==', 'active'),
+      ));
+      const c: any = snaps.docs[0]?.data();
+      if (!c) throw new Error('Invalid coupon');
+      if (c.expiry && new Date(c.expiry) < new Date()) throw new Error('Coupon expired');
+      const cid = Number(body?.courseId || 0);
+      if (c.courseId && cid && Number(c.courseId) !== cid) throw new Error('Coupon is for a different course');
+      const price = Number(body?.price || 0);
+      const discount = c.discountType === 'flat'
+        ? Math.min(price, Number(c.value || 0))
+        : Math.round((price * Number(c.value || 0)) / 100);
+      return {
+        valid: true, code: c.code, discountType: c.discountType, value: Number(c.value || 0),
+        discount, finalPrice: Math.max(0, price - discount),
+      };
+    }
+    if (method === 'PUT' && seg.length === 4) {
+      const upd: any = {};
+      if (body?.code !== undefined) upd.code = String(body.code).trim().toUpperCase();
+      if (body?.discountType !== undefined) upd.discountType = body.discountType === 'flat' ? 'flat' : 'percent';
+      if (body?.value !== undefined) upd.value = Number(body.value);
+      if (body?.courseId !== undefined) upd.courseId = body.courseId ?? null;
+      if (body?.courseTitle !== undefined) upd.courseTitle = body.courseTitle;
+      if (body?.status !== undefined) upd.status = body.status === 'disabled' ? 'disabled' : 'active';
+      if (body?.expiry !== undefined) upd.expiry = body.expiry || null;
+      await updateDoc(doc(dbv, 'coupons', seg[3]), upd);
+      return { updated: true };
+    }
+    if (method === 'DELETE' && seg.length === 4) {
+      await deleteDoc(doc(dbv, 'coupons', seg[3]));
+      return { deleted: true };
+    }
   }
 
   // ---------- landing pages ----------
@@ -530,7 +597,8 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     const pages = await qGet<any>('pages', { wheres: [['ownerUid', '==', ownerUid]] });
     const courses = await qGet<any>('courses', { wheres: [['ownerUid', '==', ownerUid]] });
     const campaigns = await qGet<any>('campaigns', { wheres: [['ownerUid', '==', ownerUid]] });
-    return { landingPageCount: pages.length, publishedCourseCount: courses.filter((c: any) => c.status === 'active').length, couponCount: 0, campaignCount: campaigns.length };
+    const coupons = await qGet<any>('coupons', { wheres: [['ownerUid', '==', ownerUid]] });
+    return { landingPageCount: pages.length, publishedCourseCount: courses.filter((c: any) => c.status === 'active').length, couponCount: coupons.length, campaignCount: campaigns.length };
   }
   if (path.startsWith('/v1/diy/analytcs/stats')) {
     const qs = new URLSearchParams(path.split('?')[1] || '');

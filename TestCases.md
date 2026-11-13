@@ -818,3 +818,35 @@
 - **Steps:** /chat after convert.
 - **Expected:** Naya conversation list mein.
 - **Status:** PASS (Onboard Student).
+
+## Module 33 - Coupons (Phase 13r)
+
+### TC-33.1 Create coupon
+- **Steps:** /coupons -> Create Coupon -> code DIWALI20, 20%, course.
+- **Expected:** Coupon active list mein.
+- **Status:** PASS.
+
+### TC-33.2 Store coupon apply
+- **Steps:** /store -> Enroll -> coupon DIWALI20 -> Apply.
+- **Expected:** "20% off. Price: ₹499 → ₹399".
+- **Status:** PASS.
+
+### TC-33.3 Enroll with coupon
+- **Steps:** Enroll submit.
+- **Expected:** Lead mein couponCode; coupon Used 1x.
+- **Status:** PASS.
+
+### TC-33.4 Invalid coupon
+- **Steps:** Apply WRONGCODE.
+- **Expected:** "Invalid coupon" error.
+- **Status:** PASS.
+
+### TC-33.5 Dashboard coupon count
+- **Steps:** Dashboard overview.
+- **Expected:** Coupons = real count (1).
+- **Status:** PASS.
+
+### TC-33.6 Sidebar Coupons tab
+- **Steps:** Sidebar.
+- **Expected:** "Coupons" tab + navigation.
+- **Status:** PASS.

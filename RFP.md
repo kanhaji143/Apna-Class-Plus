@@ -278,3 +278,17 @@
 3. Dono links copy/open; learning page "For <student>"; chat page teacher name ke saath.
 4. Teacher chat page par naya conversation dikhe.
 5. Shared helper (`ensureChatForContact`) chat routes + convert dono mein.
+
+---
+
+## Phase 13r - Coupons (discount codes)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Teacher coupon bana sake: code, discount (percent/flat), course (ya all), expiry, status.
+2. Coupons page `/coupons` + sidebar tab; list mein usage count.
+3. Store enroll dialog mein **coupon code field + Apply** → discounted price turant dikhe.
+4. Lead mein `couponCode` save; usage count leads se.
+5. Rules: coupons public read sirf `status == 'active'` (store validation ke liye); owner-only write.
+6. Dashboard "Coupons" count real.
