@@ -99,6 +99,13 @@ service cloud.firestore {
       }
     }
 
+    match /courseLinks/{token} {
+      allow get: if true;                // capability link (shared course access)
+      allow list: if isOwner(resource.data);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isOwner(resource.data);
+    }
+
     match /courses/{cid} {
       allow read: if resource.data.status == 'active' || isOwner(resource.data);
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;

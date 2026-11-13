@@ -1,0 +1,151 @@
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import {
+  Box, Typography, Card, CardContent, Chip, Divider, Button, CircularProgress, Paper, Avatar,
+} from '@mui/material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { db, FB_MODE, doc, getDoc } from '../../firebase/fb';
+
+interface Item { id: number; title: string; type: string; url: string; description?: string; folderId: number | null; sortOrder: number; }
+interface Folder { id: number; name: string; parentId: number | null; sortOrder: number; }
+
+const typeIcon = (t: string) => ({ video: '▶️', pdf: '📄', audio: '🎧', link: '🔗', image: '🖼️' } as Record<string, string>)[t] || '📎';
+
+/**
+ * PUBLIC course viewer — teacher ke share link (/learn/<token>) se khulta hai.
+ * Bina login: token hi capability URL hai; content snapshot `courseLinks` doc mein hai.
+ */
+export default function LearnPage() {
+  const { token } = useParams();
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!FB_MODE) { setErr('Course access live app mein available hai.'); setLoading(false); return; }
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db(), 'courseLinks', token || ''));
+        if (!snap.exists()) {
+          setErr('Ye course link valid nahi hai. Teacher se naya link maango.');
+          setLoading(false);
+          return;
+        }
+        setData(snap.data());
+      } catch {
+        setErr('Course load nahi hua. Internet check karke retry karo.');
+      } finally { setLoading(false); }
+    })();
+  }, [token]);
+
+  if (loading) {
+    return <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><CircularProgress /></Box>;
+  }
+
+  if (err) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 3, bgcolor: 'grey.100' }}>
+        <Paper sx={{ p: 4, maxWidth: 420, textAlign: 'center' }}>
+          <Typography variant="h6" fontWeight={800} gutterBottom>Course Access</Typography>
+          <Typography color="text.secondary">{err}</Typography>
+        </Paper>
+      </Box>
+    );
+  }
+
+  const items: Item[] = (data.items || []).slice().sort((a: Item, b: Item) => a.sortOrder - b.sortOrder);
+  const folders: Folder[] = (data.folders || []).slice().sort((a: Folder, b: Folder) => a.sortOrder - b.sortOrder);
+  const rootItems = items.filter((i) => !i.folderId);
+  const folderItems = (fid: number) => items.filter((i) => i.folderId === fid);
+  const topFolders = folders.filter((f) => !f.parentId);
+
+  const renderItem = (it: Item) => (
+    <Box key={it.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25 }}>
+      <Avatar sx={{ bgcolor: 'grey.100', color: 'text.primary', fontWeight: 800 }}>{typeIcon(it.type)}</Avatar>
+      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={700} noWrap>{it.title}</Typography>
+        <Typography variant="caption" color="text.secondary" noWrap display="block">
+          {it.description || it.url || ''}
+        </Typography>
+      </Box>
+      <Chip size="small" label={it.type} variant="outlined" />
+      {it.url && (
+        <Button size="small" variant="contained" endIcon={<OpenInNewIcon />} onClick={() => window.open(it.url, '_blank')}>
+          Open
+        </Button>
+      )}
+    </Box>
+  );
+
+  return (
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100', pb: 6 }}>
+      <Box sx={{ bgcolor: 'primary.main', color: '#fff', px: 2, py: 4 }}>
+        <Box sx={{ maxWidth: 760, mx: 'auto' }}>
+          <Typography variant="overline" sx={{ opacity: 0.85 }}>{data.teacherName || 'Teacher'} · Apna Class Plus</Typography>
+          <Typography variant="h4" fontWeight={900}>{data.courseTitle || 'Course'}</Typography>
+          {data.studentName && (
+            <Chip
+              size="small" label={`For ${data.studentName}`}
+              sx={{ mt: 1, bgcolor: 'rgba(255,255,255,0.22)', color: '#fff', fontWeight: 700 }}
+            />
+          )}
+          {data.courseDescription && (
+            <Typography sx={{ mt: 1, opacity: 0.92, maxWidth: 620 }}>{data.courseDescription}</Typography>
+          )}
+          <Typography variant="caption" sx={{ display: 'block', mt: 1.5, opacity: 0.8 }}>
+            {items.length} lessons{data.price ? ` · ₹${data.price}` : ''}
+          </Typography>
+        </Box>
+      </Box>
+
+      <Box sx={{ maxWidth: 760, mx: 'auto', p: 2 }}>
+        <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 1 }}>Course Content</Typography>
+
+        {items.length === 0 && (
+          <Paper sx={{ p: 3 }}>
+            <Typography color="text.secondary">Teacher ne abhi is course mein content add nahi kiya.</Typography>
+          </Paper>
+        )}
+
+        {rootItems.length > 0 && (
+          <Card elevation={2} sx={{ mb: 2 }}>
+            <CardContent>
+              {rootItems.map((it, idx) => (
+                <Box key={it.id}>
+                  {idx > 0 && <Divider />}
+                  {renderItem(it)}
+                </Box>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {topFolders.map((f) => {
+          const children = folderItems(f.id);
+          return (
+            <Card elevation={2} key={f.id} sx={{ mb: 2 }}>
+              <CardContent>
+                <Typography fontWeight={800} sx={{ mb: children.length ? 0.5 : 0 }}>📁 {f.name}</Typography>
+                <Typography variant="caption" color="text.secondary">{children.length} lessons</Typography>
+                {children.length > 0 && (
+                  <Box sx={{ mt: 1 }}>
+                    {children.map((it, idx) => (
+                      <Box key={it.id}>
+                        {idx > 0 && <Divider />}
+                        {renderItem(it)}
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 4 }}>
+          Powered by Apna Class Plus
+        </Typography>
+      </Box>
+    </Box>
+  );
+}

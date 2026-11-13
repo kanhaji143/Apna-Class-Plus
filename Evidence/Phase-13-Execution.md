@@ -266,3 +266,29 @@
 ### Notes
 - Student side capability URL hai (token secret) — demo trade-off, documented.
 - Next: payments (blocked), student course viewer, trial enforcement.
+
+---
+
+## Phase 13k - Student Course Viewer (share link)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/learn/&lt;token&gt;
+
+### What was done
+- POST `/v2/courses/:id/share` -> snapshot `courseLinks/{token}` (course info + lessons + folders + teacher name + optional student name).
+- Public page `/learn/:token` (no login): hero (teacher, title, description, price, "For <student>"), lessons grouped by folders, Open buttons, empty state, invalid link message.
+- Courses page: share icon per course -> AccessLinkDialog (generate / copy / open / new link).
+- People page: access icon on leads/students with courseId -> dialog prefilled with student name.
+- Rules: courseLinks `get` public, list/create/delete owner-only.
+- Spark: snapshot link (content changes ke liye new link).
+
+### Live E2E verified
+1. Generate course link (Courses) - PASS
+2. Public page renders lessons + folder - PASS
+3. Personalized link from People ("For Rahul Sharma") - PASS
+4. Invalid link error - PASS
+5. Snapshot includes lesson type/URL - PASS
+
+### Notes
+- Link = capability URL; no login needed.
+- Next: trial enforcement / payments.

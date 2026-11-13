@@ -6,15 +6,17 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import LinkIcon from '@mui/icons-material/Link';
+import AccessLinkDialog from '../courses/AccessLinkDialog';
 import { get, post, del } from '../../api/client';
 
 interface Lead {
   id: number; name: string; phone: string; source?: string; slug?: string;
-  courseTitle?: string; converted?: boolean; createdAt?: any;
+  courseId?: number; courseTitle?: string; converted?: boolean; createdAt?: any;
 }
 interface Student {
   id: number; name: string; phone: string; source?: string;
-  courseTitle?: string; createdAt?: any;
+  courseId?: number; courseTitle?: string; createdAt?: any;
 }
 
 const fmtDate = (v: any) => {
@@ -32,6 +34,7 @@ export default function PeopleListPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '' });
   const [busy, setBusy] = useState(false);
+  const [access, setAccess] = useState<{ courseId: number; courseTitle?: string; studentName?: string } | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -131,6 +134,15 @@ export default function PeopleListPage() {
                         )}
                       </Box>
                     </Box>
+                    <Tooltip title="Course access link">
+                      <span>
+                        {l.courseId ? (
+                          <IconButton size="small" color="primary" onClick={() => setAccess({ courseId: Number(l.courseId), courseTitle: l.courseTitle, studentName: l.name })}>
+                            <LinkIcon fontSize="small" />
+                          </IconButton>
+                        ) : null}
+                      </span>
+                    </Tooltip>
                     <Tooltip title="Delete lead">
                       <IconButton size="small" color="error" onClick={() => removeLead(l)}><DeleteIcon fontSize="small" /></IconButton>
                     </Tooltip>
@@ -158,6 +170,15 @@ export default function PeopleListPage() {
                         <Chip size="small" variant="outlined" label={`📚 ${s.courseTitle}`} sx={{ mt: 0.5, maxWidth: '100%' }} />
                       )}
                     </Box>
+                    <Tooltip title="Course access link">
+                      <span>
+                        {s.courseId ? (
+                          <IconButton size="small" color="primary" onClick={() => setAccess({ courseId: Number(s.courseId), courseTitle: s.courseTitle, studentName: s.name })}>
+                            <LinkIcon fontSize="small" />
+                          </IconButton>
+                        ) : null}
+                      </span>
+                    </Tooltip>
                     <Tooltip title="Delete student">
                       <IconButton size="small" color="error" onClick={() => removeStudent(s)}><DeleteIcon fontSize="small" /></IconButton>
                     </Tooltip>
@@ -183,6 +204,14 @@ export default function PeopleListPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <AccessLinkDialog
+        open={!!access}
+        onClose={() => setAccess(null)}
+        courseId={access?.courseId ?? null}
+        courseTitle={access?.courseTitle}
+        defaultStudentName={access?.studentName}
+      />
     </Box>
   );
 }

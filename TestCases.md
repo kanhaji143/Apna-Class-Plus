@@ -609,3 +609,30 @@
 - **Steps:** Open /chat/invalidtoken.
 - **Expected:** Friendly "link valid nahi" message.
 - **Status:** PASS.
+
+## Module 26 - Student Course Viewer (Phase 13k)
+
+### TC-26.1 Generate course link (Courses page)
+- **Steps:** /courses -> share icon -> Generate Link.
+- **Expected:** `/learn/<token>` link generated + copy/open.
+- **Status:** PASS (etyt2a28wz3iwigfqxtle97x).
+
+### TC-26.2 Public course page
+- **Steps:** Open /learn/<token> (no login).
+- **Expected:** Teacher name, course title, description, lessons + folders, Open action.
+- **Status:** PASS (1 lesson + folder, YouTube URL).
+
+### TC-26.3 Personalized link (People page)
+- **Steps:** /people -> enrolled student access icon -> Generate.
+- **Expected:** Student name prefilled; page shows "For <name>".
+- **Status:** PASS (Rahul Sharma, token 3p7kfoofx...).
+
+### TC-26.4 Invalid course link
+- **Steps:** Open /learn/badtoken123.
+- **Expected:** Friendly "link valid nahi" message.
+- **Status:** PASS.
+
+### TC-26.5 Content snapshot
+- **Steps:** Compare link page with course content.
+- **Expected:** Lesson title/type/URL + folder grouping included.
+- **Status:** PASS (Chapter 1 Chemical Reactions, video + folder).

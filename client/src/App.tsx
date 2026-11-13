@@ -15,6 +15,7 @@ import BuilderEditorPage from './features/builder/BuilderEditorPage';
 import LpPreviewPage from './features/builder/LpPreviewPage';
 import CoursesListPage from './features/courses/CoursesListPage';
 import ContentManagerPage from './features/courses/ContentManagerPage';
+import LearnPage from './features/courses/LearnPage';
 import BatchesListPage from './features/batches/BatchesListPage';
 import BatchStudentsPage from './features/batches/BatchStudentsPage';
 import PeopleListPage from './features/people/PeopleListPage';
@@ -64,6 +65,7 @@ export default function App() {
         <Route path="/store" element={<StorePage />} />
         <Route path="/store/:teacherId" element={<StorePage />} />
         <Route path="/chat/:token" element={<PublicChatPage />} />
+        <Route path="/learn/:token" element={<LearnPage />} />
 
         {/* ---------- protected (teacher dashboard) ---------- */}
         <Route

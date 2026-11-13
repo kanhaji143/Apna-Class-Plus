@@ -179,3 +179,18 @@
 6. Thread khulte hi unread clear ho.
 7. Rules: chat doc `get` public (token secret), `list` owner-only; messages public via path; owner update.
 8. Spark note: realtime = 3s polling (Cloud Functions/listeners ke bina bhi kaam).
+
+---
+
+## Phase 13k - Student Course Viewer (share link)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Teacher course ka **access link** bana sake — `/learn/<token>` (student bina login).
+2. Link par course ka **content snapshot**: lessons (type, title, URL) + folders.
+3. Courses page pe share button; People page pe enrolled contact ke liye access button (naam prefilled).
+4. Public viewer: teacher name, course title/description/price, lessons folder-wise, "Open" action, "For <student>" badge.
+5. Invalid/expired link par friendly message; empty content state.
+6. Firestore rules: `courseLinks` public `get`, owner-only list/create/delete.
+7. Spark note: content snapshot link banate waqt — content update ke liye naya link generate karna hoga.

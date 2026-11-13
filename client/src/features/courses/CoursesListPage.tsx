@@ -6,6 +6,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import LinkIcon from '@mui/icons-material/Link';
+import AccessLinkDialog from './AccessLinkDialog';
 import { get, post, del } from '../../api/client';
 
 interface Course { id: number; title: string; price: number; currency: string; description: string; status: string; created_at: string; }
@@ -18,6 +20,7 @@ export default function CoursesListPage() {
   const [price, setPrice] = useState('0');
   const [desc, setDesc] = useState('');
   const [creating, setCreating] = useState(false);
+  const [shareCourse, setShareCourse] = useState<Course | null>(null);
   const navigate = useNavigate();
 
   const load = () => {
@@ -71,11 +74,14 @@ export default function CoursesListPage() {
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                     {c.currency} {c.price} · {c.description?.slice(0, 60)}
                   </Typography>
-                  <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                  <Box sx={{ mt: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
                     <Button size="small" variant="outlined" startIcon={<EditIcon />}
                       onClick={() => navigate(`/courses/${c.id}/content`)}>
                       Manage Content
                     </Button>
+                    <IconButton size="small" title="Share course access link" onClick={() => setShareCourse(c)}>
+                      <LinkIcon fontSize="small" />
+                    </IconButton>
                     <IconButton size="small" onClick={() => archive(c.id)}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
@@ -101,6 +107,13 @@ export default function CoursesListPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <AccessLinkDialog
+        open={!!shareCourse}
+        onClose={() => setShareCourse(null)}
+        courseId={shareCourse?.id ?? null}
+        courseTitle={shareCourse?.title}
+      />
     </Box>
   );
 }
