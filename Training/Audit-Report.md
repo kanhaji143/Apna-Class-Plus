@@ -5,6 +5,80 @@
 
 ---
 
+# FINAL AUDIT — Live Execution (2026-11-13)
+
+Ye section **audit ke din live execute** kiya gaya — fresh QA sweep, data snapshot aur security checks ke saath. Neeche wala detailed report static analysis + cumulative E2E evidence se hai.
+
+## A. Fresh QA Sweep — 23 Pages
+
+| Page | Result |
+|---|---|
+| / dashboard | PASS |
+| /landing-pages/list | PASS |
+| /landing-pages/create | PASS |
+| /courses, /courses/1/content | PASS |
+| /batches, /batches/1/students | PASS |
+| /people | PASS |
+| /chat | PASS |
+| /campaigns | PASS |
+| /analytics | PASS |
+| /progress | PASS |
+| /coupons | PASS |
+| /orders | PASS |
+| /content/test-portal, /content/test-portal/2 | PASS |
+| /content/free-material | PASS |
+| /admin | PASS |
+| /store (public) | PASS |
+| /lp-preview/lead-magnet-2 | PASS (iframe content verified) |
+| /learn/<token> (public) | PASS |
+| /chat/<token> (public) | PASS |
+| /test/2 (public) | PASS |
+
+**Result: 23/23 pages render, 0 console errors.**
+
+## B. Live Data Snapshot
+
+| Area | Count | Details |
+|---|---|---|
+| Users | 2 | superadmin + trial teacher |
+| Courses | 1 | Class 10 Science Complete Course (active, ₹499) |
+| Tests | 3 | sab published (Live Firebase Test, Comprehension Demo, Demo Sample) |
+| Landing pages | 4 | sab published |
+| Free materials | 1 | published |
+| Coupons | 2 | DIWALI20 (used 1x), WELCOME20 (used 0x) — active |
+| Orders | 2 | 1 paid (₹499), 1 pending → **Revenue ₹499** |
+| Campaigns | 2 | published (Diwali Offer, Batch Launch) |
+| Chats | 3 | Priya Verma, Amit Kumar, Onboard Student |
+| Batches | 1 | Morning Batch A (1 student) |
+| People | 7 leads, 5 students | |
+| Course access links | 4 | 1 at 100%, 3 at 0% |
+| Analytics (7d) | 7 leads, 10 page views, 70% conversion | |
+
+## C. Security Checks (live, signed-out state)
+
+| Check | Result |
+|---|---|
+| Protected route (`/people`) signed-out → `/login` redirect | PASS |
+| Public `/store` signed-out | PASS |
+| Public `/learn/<token>` signed-out | PASS |
+| Public `/chat/<token>` signed-out | PASS |
+| Public `/test/<id>` signed-out | PASS |
+| Invalid learn token → friendly error | PASS |
+| Invalid coupon → "Invalid coupon" | PASS |
+| Mobile drawer (hamburger, ≤768px) | PASS (matchMedia emulation) |
+
+## D. Observations
+
+- **Session persistence:** audit ke dauran ek tab mein logout mila (staleness/token refresh) — re-login turant kaam karta hai. Recommendation: fresh browser par auth persistence test.
+- **Order #1 pending** — pre-fix test order, demo data ke roop mein harmless.
+- **Hosting cache:** deploy ke baad stale chunk serve ho sakta hai — fresh tab + `?cb=<ts>` best practice hai.
+
+## E. Final Verdict
+
+**Apna Class Plus live app 23/23 pages, 0 console errors ke saath pass hua.** Saare core flows (store → enroll → coupon → payment → lead → convert → onboarding links → learning + progress + chat) E2E verified. Payments Test Mode mein hain. Demo/training ke liye **production-ready**; real payments ke liye keys + server-side verification recommended.
+
+---
+
 ## 1. Executive Summary
 
 Apna Class Plus ek **feature-complete** coaching/institute platform hai jo Classplus DIY ke architecture ko follow karta hai. Firebase Spark plan pe live hai — Auth (email/password) + Firestore + Hosting. Client React 18 + TypeScript + Vite hai; local mode ke liye Node/Express + SQLite bhi maintain hai.
