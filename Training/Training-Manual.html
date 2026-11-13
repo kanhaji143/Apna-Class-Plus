@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<title>Apna Class Plus — Training Manual</title>
+<style>
+@page { size: A4; margin: 14mm 12mm; }
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Noto Sans Devanagari', system-ui, sans-serif; color: #1c1c28; line-height: 1.55; margin: 0; font-size: 12px; }
+h1 { font-size: 26px; color: #4a3fd6; border-bottom: 3px solid #6C5CE7; padding-bottom: 8px; margin: 0 0 16px; }
+h2 { font-size: 18px; color: #4a3fd6; margin: 22px 0 8px; border-bottom: 1px solid #e3e1f5; padding-bottom: 4px; }
+h3 { font-size: 14px; color: #33334d; margin: 14px 0 6px; }
+h4 { font-size: 12.5px; color: #33334d; margin: 10px 0 4px; }
+p { margin: 6px 0; }
+table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11px; }
+th, td { border: 1px solid #d8d5ee; padding: 6px 8px; text-align: left; vertical-align: top; }
+th { background: #f1efff; color: #3b2fbf; font-weight: 700; }
+tr:nth-child(even) td { background: #faf9ff; }
+ul, ol { margin: 6px 0 6px 20px; padding: 0; }
+li { margin: 3px 0; }
+code { background: #f1efff; padding: 1px 4px; border-radius: 4px; font-family: Consolas, monospace; font-size: 11px; }
+blockquote { border-left: 4px solid #6C5CE7; margin: 12px 0; padding: 8px 12px; background: #f7f6ff; color: #444; }
+hr { border: 0; border-top: 1px solid #e3e1f5; margin: 18px 0; }
+a { color: #4a3fd6; text-decoration: none; }
+h2, h3, tr { page-break-after: avoid; }
+</style>
+</head>
+<body>
+<h1>Apna Class Plus — Training Manual</h1>
+<blockquote>Complete training guide for Admin, Teacher aur Student workflows.</blockquote>
+<blockquote>Live app: https://apna-class-plus.web.app | Firebase project: <code>apna-class-plus</code></blockquote>
+<hr>
+<h2>1. Introduction</h2>
+<p><strong>Apna Class Plus</strong> ek all-in-one coaching/institute management platform hai — Classplus DIY ke architecture aur features ko follow karta hai. Ek teacher/apne institute ko digital banane ke liye:</p>
+<ul>
+<li>apna <strong>public student store</strong> (courses, tests, free material)</li>
+<li><strong>landing pages</strong> (leads collect karne ke liye)</li>
+<li><strong>online tests</strong> (multiple question types + comprehension)</li>
+<li><strong>batches &amp; students</strong> management</li>
+<li><strong>chat</strong> (teacher ↔ student, bina student login)</li>
+<li><strong>campaigns</strong> (audience-based messaging)</li>
+<li><strong>payments</strong> (Razorpay checkout — Test Mode / real keys)</li>
+<li><strong>analytics</strong> (leads, views, revenue, progress)</li>
+</ul>
+<p><strong>Tech stack:</strong> React 18 + TypeScript + Vite (client), Firebase Auth + Firestore (data), Firebase Hosting (Spark plan). Local mode ke liye Node/Express + SQLite bhi available hai.</p>
+<hr>
+<h2>2. Roles &amp; Access</h2>
+<table><thead><tr><th>Role</th><th>Kaun</th><th>Login</th><th>Kya kar sakta hai</th></tr></thead><tbody><tr><td><strong>Superadmin</strong></td><td>Platform owner (pehla signup)</td><td>Email/password</td><td>Sab kuch + Admin page (users/trials)</td></tr><tr><td><strong>Admin</strong></td><td>Institute owner</td><td>Email/password</td><td>Sab kuch + Admin page</td></tr><tr><td><strong>Teacher</strong></td><td>Staff/teacher</td><td>Email/password</td><td>Apna dashboard, content, students, store, analytics (Admin page nahi)</td></tr><tr><td><strong>Student</strong></td><td>Student/parent</td><td><strong>Login nahi</strong></td><td>Public store, course learning link, chat link ke through</td></tr></tbody></table>
+<p><strong>Important points:</strong></p>
+<ul>
+<li>Pehla signup <strong>superadmin</strong> ban jata hai (<code>config/roles.superAdminUid</code>), trial exempt.</li>
+<li>Baaki har teacher ko <strong>7-day trial</strong> milta hai (soft banner — lockout nahi, product decision).</li>
+<li>Student ke paas koi account nahi hota — teacher shareable links deta hai:</li>
+<li><code>/learn/&lt;token&gt;</code> — course learning (capability URL, token secret)</li>
+<li><code>/chat/&lt;token&gt;</code> — chat (capability URL)</li>
+<li>Link kisi ko bhi mile to wo us student ke roop mein access le sakta hai — isliye links private rakho.</li>
+</ul>
+<h3>Login</h3>
+<ol>
+<li>https://apna-class-plus.web.app/login kholo</li>
+<li>Email + password daalo → <strong>Sign In</strong></li>
+</ol>
+<p><strong>Demo credentials:</strong></p>
+<table><thead><tr><th>Role</th><th>Email</th><th>Password</th></tr></thead><tbody><tr><td>Superadmin</td><td><code>teacher@apnatest.in</code></td><td><code>secret123</code></td></tr><tr><td>Trial teacher</td><td><code>trial@apnatest.in</code></td><td><code>secret123</code></td></tr></tbody></table>
+<hr>
+<h2>3. Dashboard (Teacher)</h2>
+<p>Login ke baad dashboard dikhta hai:</p>
+<ul>
+<li><strong>Sidebar tabs:</strong> Dashboard · Landing Pages · Courses · Content (Test Portal, Free Material) · Batches · People · Chats · Campaigns · Analytics · Student Progress · Coupons · Orders</li>
+<li><strong>My Student Store card</strong> — store link (<code>/store</code>) copy/open karo, students ko bhejo</li>
+<li><strong>Overview cards:</strong> Landing Pages, Published Courses, Coupons, Campaigns</li>
+<li><strong>Analytics cards:</strong> New Leads, Page Views, Students, Courses, Revenue (last 7/15/30 days)</li>
+<li><strong>🌱 Seed Demo Data</strong> — ek click mein demo course, test, coupon, landing page, material aur lead (missing cheezein banati hai, duplicate nahi)</li>
+</ul>
+<p><strong>Mobile:</strong> sidebar hamburger menu ke andar hota hai (screen ≤768px).</p>
+<hr>
+<h2>4. Landing Pages</h2>
+<p>Public lead-generation pages — Classplus DIY ka core feature.</p>
+<h3>4.1 Create</h3>
+<ol>
+<li>Sidebar → <strong>Landing Pages</strong> → <strong>Create New Page</strong></li>
+<li>Template chuno:</li>
+</ol>
+<ul>
+<li><strong>Blank Page</strong> — khud sections banao</li>
+<li><strong>Course Landing</strong> (9 sections) — course promotion ke liye; course select karo to hero/pricing auto-fill</li>
+<li><strong>Lead Magnet</strong> (7 sections) — free material + FAQ se leads</li>
+<li><strong>Test Series Landing</strong> (7 sections) — exam/test promo</li>
+</ul>
+<ol>
+<li>Editor mein:</li>
+</ol>
+<ul>
+<li><strong>Section Library</strong> (left) — click karke section add karo; drag (⠿) se reorder</li>
+<li><strong>Canvas</strong> (center) — sections ka live thumbnail</li>
+<li><strong>Props / Theme</strong> (right) — selected section ke text/options; colors, font, corner radius</li>
+</ul>
+<ol>
+<li><strong>Preview</strong> — iframe mein final page</li>
+<li><strong>Save</strong> (draft) → <strong>Publish</strong> → public URL milta hai: <code>/lp-preview/&lt;slug&gt;</code></li>
+</ol>
+<h3>4.2 Sections</h3>
+<p>Hero, Banner Strip, Features, Video, Pricing, Testimonials, FAQ, Free Material, Footer — sab editable. Free Material section public page par published material ki live list dikhata hai.</p>
+<h3>4.3 Student kya dekhta hai</h3>
+<p>Public page par lead form hota hai (naam + phone). Submit → lead <strong>People</strong> page mein aa jata hai (owner ke saath). Page khulte hi <strong>page-view analytics</strong> track hota hai.</p>
+<hr>
+<h2>5. Courses &amp; Content</h2>
+<h3>5.1 Course banayein</h3>
+<ol>
+<li>Sidebar → <strong>Courses</strong> → <strong>Create New Course</strong></li>
+<li>Title, Price (INR), Description → Create</li>
+</ol>
+<h3>5.2 Content add karein</h3>
+<ol>
+<li>Course card → <strong>Manage Content</strong></li>
+<li><strong>Add Folder</strong> (e.g., "Chapter 1") aur <strong>Add Content</strong> (video/pdf/audio/link) — title, URL, type, description</li>
+<li>Drag se reorder, folder ke andar daalo</li>
+</ol>
+<h3>5.3 Student ko access dein</h3>
+<ul>
+<li>Course card → <strong>🔗 share icon</strong> → <strong>Generate Link</strong> → student name optional → copy</li>
+<li>Student <code>/learn/&lt;token&gt;</code> pe course dekhta hai, <strong>Mark done</strong> se progress hota hai (teacher <code>Student Progress</code> page pe dekhta hai)</li>
+<li>Link <strong>capability URL</strong> hai — student login ki zaroorat nahi</li>
+</ul>
+<h3>5.4 Student experience</h3>
+<ul>
+<li>Hero (teacher name, course title, price, "For &lt;student&gt;")</li>
+<li>Lessons folder-wise, type icons, <strong>Open</strong> button</li>
+<li>Progress bar + % + "X/Y done"</li>
+<li>Progress localStorage + Firestore dono mein sync (cross-device)</li>
+</ul>
+<hr>
+<h2>6. Batches</h2>
+<p>Students ko groups mein rakhna (offline/online batches).</p>
+<ol>
+<li>Sidebar → <strong>Batches</strong> → <strong>Create New Batch</strong></li>
+<li>Course select, batch name, start/end date → Create</li>
+<li><strong>Manage Students</strong> → phone se add:</li>
+</ol>
+<ul>
+<li>existing student ho to link ho jata hai</li>
+<li>naya ho to auto-create ho jata hai (source: batch)</li>
+<li>duplicate same batch mein block</li>
+</ul>
+<ol>
+<li>Remove → student batch se hatta hai (contact People mein rehta hai)</li>
+<li>Batch list mein live student count dikhta hai</li>
+</ol>
+<hr>
+<h2>7. People (Leads &amp; Students)</h2>
+<p>Do tabs: <strong>Leads</strong> aur <strong>Students</strong>.</p>
+<h3>7.1 Leads</h3>
+<ul>
+<li>Store ya landing page se aaye contacts (owner ke saath)</li>
+<li><strong>Convert</strong> → student ban jata hai</li>
+<li><strong>Auto onboarding:</strong> agar lead mein course hai to convert par <strong>📚 learning link + 💬 chat link</strong> dono milte hain (dialog auto-open)</li>
+<li><strong>Access link</strong> icon — manually bhi learning link bana sakte ho</li>
+<li>Delete lead</li>
+</ul>
+<h3>7.2 Students</h3>
+<ul>
+<li>Add Student (naam + phone)</li>
+<li>Access link (course ho to)</li>
+<li>Delete</li>
+</ul>
+<h3>7.3 Chat link</h3>
+<p>Student chat link <code>/chat/&lt;token&gt;</code> — student teacher se seedha baat karta hai, teacher ki taraf <strong>Chats</strong> page mein conversation aa jata hai.</p>
+<hr>
+<h2>8. Chats</h2>
+<ul>
+<li>Left: <strong>Recent</strong> conversations + <strong>Students</strong> list</li>
+<li>Contact select → thread khulta hai; naya chat shuru karte hi <strong>share link</strong> milta hai (copy/open)</li>
+<li>Student replies 3-second polling se turant dikhte hain</li>
+<li>Unread badge (thread na khula ho to)</li>
+<li>Student side <code>/chat/&lt;token&gt;</code>: teacher ka naam, thread, reply box — bina login</li>
+</ul>
+<hr>
+<h2>9. Campaigns</h2>
+<p>Audience-based messaging (mock send — Spark plan mein real SMS/WhatsApp gateway nahi).</p>
+<ol>
+<li>Sidebar → <strong>Campaigns</strong> → <strong>Create Campaign</strong></li>
+<li>Name, Channel (SMS/Email/WhatsApp), Audience:</li>
+</ol>
+<ul>
+<li>All (Students + Leads)</li>
+<li>Leads only</li>
+<li>Students only</li>
+<li>Course students (course select)</li>
+<li>Batch students (batch select)</li>
+</ul>
+<ol>
+<li>Message likho → Create → <strong>Publish</strong></li>
+<li>Publish par recipients resolve hote hain (phone se dedupe), <code>sentCount</code>, <code>publishedAt</code>, recipients snapshot save</li>
+<li>Cards par status, sent count, audience label, published date dikhta hai</li>
+</ol>
+<p><strong>Note:</strong> Ye demo/mock send hai — real delivery gateway ke liye Blaze plan + Cloud Functions chahiye.</p>
+<hr>
+<h2>10. Test Portal</h2>
+<h3>10.1 Test banayein</h3>
+<ol>
+<li>Sidebar → <strong>Content → Test Portal</strong> → <strong>Create Test</strong></li>
+<li>Title, description, duration, re-attempt mode (View Solution during test)</li>
+</ol>
+<h3>10.2 Questions</h3>
+<ul>
+<li><strong>Add Question</strong> — types:</li>
+<li><strong>MCQ</strong> (single correct)</li>
+<li><strong>True / False</strong></li>
+<li><strong>Objective</strong> (short answer, accepted answers comma-separated)</li>
+<li><strong>Subjective</strong> (long answer — teacher grading)</li>
+<li><strong>Comprehension</strong> (passage + sub-questions) — passage container (marks 0), sub-questions "Passage (Comprehension)" select se attach</li>
+<li>Sections (optional grouping), drag reorder</li>
+<li>Bilingual: English + हिंदी tabs (Hindi fallback English)</li>
+<li><strong>Bulk Import</strong> — docx format text paste karke parse/import</li>
+</ul>
+<h3>10.3 Publish &amp; public test</h3>
+<ul>
+<li><strong>Publish</strong> → public link <code>/test/&lt;id&gt;</code> copy karo, students ko bhejo</li>
+<li>Public player: sections, question palette (4-state), per-question timer, calculator, marked-for-review, summary, submit</li>
+<li>Scoring: MCQ/TrueFalse/Objective automatic; Subjective teacher "Results &amp; Grading" tab mein marks deta hai</li>
+<li>Comprehension: passage box sub-question ke saath; passage count/scoring mein nahi</li>
+</ul>
+<hr>
+<h2>11. Free Material</h2>
+<ol>
+<li>Sidebar → <strong>Content → Free Material</strong> → <strong>Add Material</strong></li>
+<li>Title, type (PDF/YouTube/Video), URL, description → Save</li>
+<li><strong>Publish</strong> karo — public store aur landing page (Free Material section) mein dikhega</li>
+<li>Public free material page: <code>/free/&lt;teacherId&gt;</code></li>
+</ol>
+<hr>
+<h2>12. Coupons</h2>
+<ol>
+<li>Sidebar → <strong>Coupons</strong> → <strong>Create Coupon</strong></li>
+<li>Code (e.g., <code>WELCOME20</code>), discount type (<strong>Percent</strong> / <strong>Flat</strong>), value, course (ya All courses), expiry (optional) → Create</li>
+<li>List mein status, expiry, <strong>Used count</strong>; Enable/Disable, Delete</li>
+<li>Student store enroll dialog mein <strong>coupon code + Apply</strong> → discounted price turanta dikhta hai (₹499 → ₹399 jaisa)</li>
+<li>Coupon <code>active</code> hone par public-readable hota hai (store validation ke liye)</li>
+</ol>
+<hr>
+<h2>13. Orders &amp; Payments</h2>
+<h3>13.1 Student side (store)</h3>
+<ol>
+<li>Store → course card → <strong>Enroll →</strong></li>
+<li>Naam, phone, coupon (optional) → <strong>Enroll</strong></li>
+<li>Agar course paid hai → <strong>order</strong> banega aur <strong>Checkout</strong> dialog khulega</li>
+<li>Checkout dialog:</li>
+</ol>
+<ul>
+<li><strong>Real Razorpay Checkout.js</strong> — jab <code>runConfig.RAZORPAY_KEY</code> mein real key ho</li>
+<li><strong>Test Mode mock</strong> — jab key placeholder (<code>rzp_test_XXXX...</code>) ho → Simulate Pay / Simulate Fail</li>
+</ul>
+<ol>
+<li>Payment complete → order <code>paid</code> + paid lead (People mein) + enrolled</li>
+</ol>
+<h3>13.2 Teacher side</h3>
+<ul>
+<li>Sidebar → <strong>Orders</strong>: Revenue (paid), Paid Orders, Pending + order cards (student, amount, discount, coupon, paymentId)</li>
+<li>Dashboard <strong>Revenue</strong> card + Analytics daily revenue chart</li>
+</ul>
+<p><strong>Note:</strong> Spark plan mein webhook/backend verification nahi — real keys ke saath teacher manually verify karega.</p>
+<hr>
+<h2>14. Analytics</h2>
+<ul>
+<li>Sidebar → <strong>Analytics</strong> (<code>/analytics</code>)</li>
+<li>Summary: Total Leads, Page Views, Landing Pages, Courses, Campaigns, Conversion Rate</li>
+<li>Range: 7 / 30 / 90 din — daily series (zero-filled)</li>
+<li>Charts: Daily Leads, Daily Page Views, Revenue</li>
+<li><strong>Top Landing Pages</strong> by leads</li>
+<li>Page views public landing page khulte hi track hote hain (<code>events</code> collection)</li>
+<li>Dashboard analytics cards: leads, views (range + % change), students, courses, revenue</li>
+</ul>
+<hr>
+<h2>15. Student Progress</h2>
+<ul>
+<li>Sidebar → <strong>Student Progress</strong> (<code>/progress</code>)</li>
+<li>Summary: Shared Links, Average Completion, Completed (100%)</li>
+<li>Har link: course, student/general, <code>X/Y lessons</code>, progress bar, %, Open preview</li>
+<li>Data <code>courseLinks.progress</code> se — student ki learning page par "Mark done" se banta hai</li>
+</ul>
+<hr>
+<h2>16. Admin — Users &amp; Trials</h2>
+<p>Sirf <strong>admin/superadmin</strong> ke paas:</p>
+<ul>
+<li>Sidebar → <strong>Admin (Users &amp; Trials)</strong></li>
+<li>Users table: naam, email, role, plan, trial days left, actions</li>
+<li>Role change, plan change, trial management</li>
+<li>Superadmin <code>config/roles.superAdminUid</code> se identify hota hai</li>
+</ul>
+<hr>
+<h2>17. Student Journey (end-to-end)</h2>
+<ol>
+<li>Teacher store link bhejta hai: <code>/store</code></li>
+<li>Student courses/tests/free material dekhta hai</li>
+<li>Course par <strong>Enroll</strong> → naam/phone (+ coupon) → checkout (paid ho to)</li>
+<li>Teacher <strong>People → Convert</strong> karta hai → <strong>onboarding links</strong> milte hain</li>
+<li>Teacher links bhejta hai: 📚 <code>/learn/&lt;token&gt;</code> + 💬 <code>/chat/&lt;token&gt;</code></li>
+<li>Student course padhta hai, <strong>Mark done</strong> karta hai, progress teacher ko dikhta hai</li>
+<li>Student chat link se teacher se baat karta hai</li>
+<li>Teacher campaigns/tests se engagement badhata hai</li>
+</ol>
+<hr>
+<h2>18. Public URLs — Quick Reference</h2>
+<table><thead><tr><th>Feature</th><th>URL pattern</th><th>Login</th></tr></thead><tbody><tr><td>Login</td><td><code>/login</code></td><td>—</td></tr><tr><td>Public store</td><td><code>/store</code></td><td>Nahi</td></tr><tr><td>Course landing</td><td><code>/lp-preview/&lt;slug&gt;</code></td><td>Nahi</td></tr><tr><td>Public test</td><td><code>/test/&lt;id&gt;</code></td><td>Nahi</td></tr><tr><td>Free material</td><td><code>/free/&lt;teacherId&gt;</code></td><td>Nahi</td></tr><tr><td>Course learning</td><td><code>/learn/&lt;token&gt;</code></td><td>Nahi (capability link)</td></tr><tr><td>Student chat</td><td><code>/chat/&lt;token&gt;</code></td><td>Nahi (capability link)</td></tr><tr><td>Teacher dashboard</td><td><code>/</code></td><td>Haan</td></tr><tr><td>Admin</td><td><code>/admin</code></td><td>Haan (admin/superadmin)</td></tr></tbody></table>
+<hr>
+<h2>19. Troubleshooting &amp; FAQ</h2>
+<table><thead><tr><th>Problem</th><th>Solution</th></tr></thead><tbody><tr><td>Page blank / old version dikha</td><td>Fresh tab + <code>?cb=&lt;timestamp&gt;</code> use karo (hosting cache)</td></tr><tr><td>Coupon apply nahi ho raha</td><td>Code exact (case-insensitive) daalo; expiry check karo; course match karo</td></tr><tr><td>Link kholte hi "valid nahi"</td><td>Link expire/regenerate ho gayi — teacher se naya link maango</td></tr><tr><td>Payment nahi ho raha</td><td><code>runConfig.RAZORPAY_KEY</code> check karo; abhi Test Mode hai (simulated)</td></tr><tr><td>Student chat nahi mil raha</td><td>Teacher chat page se share link copy karo</td></tr><tr><td>Sidebar nahi dikh raha (mobile)</td><td>Hamburger icon kholkar dekho</td></tr><tr><td>Landing page mein sections nahi</td><td>Publish karo; template khali to Blank choose karo</td></tr></tbody></table>
+<hr>
+<h2>20. Do's &amp; Don'ts</h2>
+<p><strong>Do:</strong></p>
+<ul>
+<li>Pehle <strong>Seed Demo Data</strong> se samjho, phir real data daalo</li>
+<li>Har student ke liye alag learning/chat link banao (personalized)</li>
+<li>Landing page publish karne se pehle <strong>Preview</strong> zaroor dekho</li>
+<li>Test publish se pehle 2-3 questions add karke scoring verify karo</li>
+<li>Coupon expiry set karo taaki offers time-bound rahen</li>
+</ul>
+<p><strong>Don't:</strong></p>
+<ul>
+<li>Links public/social media pe paste mat karo (capability URLs hain)</li>
+<li>Trial expiry ko hard lockout mat samjho — soft banner hai</li>
+<li>Real payment keys kabhi public repo/chat mein daal mat</li>
+<li>Student ko login credentials ki zaroorat nahi — links hi kaam karti hain</li>
+</ul>
+<hr>
+<h2>21. Known Limitations (training mein batana zaroori)</h2>
+<table><thead><tr><th>Limitation</th><th>Reason</th></tr></thead><tbody><tr><td>Payments abhi Test Mode (simulated)</td><td>real Razorpay keys set nahi</td></tr><tr><td>Real SMS/WhatsApp/Email gateway nahi</td><td>Spark plan — campaigns mock send</td></tr><tr><td>Cloud Functions/webhook nahi</td><td>Spark plan — payments manually verify</td></tr><tr><td>Trial expiry soft banner</td><td>product decision (option C)</td></tr><tr><td>Bulk import mein comprehension nahi</td><td>docx parser limitation</td></tr><tr><td>Student login nahi</td><td>capability links use hoti hain</td></tr><tr><td>Chat realtime = 3s polling</td><td>no Cloud Functions/listeners</td></tr></tbody></table>
+<hr>
+<p><em>Manual version: 2026-11-13 | Apna Class Plus — Training &amp; Audit pack</em></p>
+</body>
+</html>

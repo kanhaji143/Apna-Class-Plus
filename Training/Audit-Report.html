@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<title>Apna Class Plus — Complete Audit Report</title>
+<style>
+@page { size: A4; margin: 14mm 12mm; }
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Noto Sans Devanagari', system-ui, sans-serif; color: #1c1c28; line-height: 1.55; margin: 0; font-size: 12px; }
+h1 { font-size: 26px; color: #4a3fd6; border-bottom: 3px solid #6C5CE7; padding-bottom: 8px; margin: 0 0 16px; }
+h2 { font-size: 18px; color: #4a3fd6; margin: 22px 0 8px; border-bottom: 1px solid #e3e1f5; padding-bottom: 4px; }
+h3 { font-size: 14px; color: #33334d; margin: 14px 0 6px; }
+h4 { font-size: 12.5px; color: #33334d; margin: 10px 0 4px; }
+p { margin: 6px 0; }
+table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11px; }
+th, td { border: 1px solid #d8d5ee; padding: 6px 8px; text-align: left; vertical-align: top; }
+th { background: #f1efff; color: #3b2fbf; font-weight: 700; }
+tr:nth-child(even) td { background: #faf9ff; }
+ul, ol { margin: 6px 0 6px 20px; padding: 0; }
+li { margin: 3px 0; }
+code { background: #f1efff; padding: 1px 4px; border-radius: 4px; font-family: Consolas, monospace; font-size: 11px; }
+blockquote { border-left: 4px solid #6C5CE7; margin: 12px 0; padding: 8px 12px; background: #f7f6ff; color: #444; }
+hr { border: 0; border-top: 1px solid #e3e1f5; margin: 18px 0; }
+a { color: #4a3fd6; text-decoration: none; }
+h2, h3, tr { page-break-after: avoid; }
+</style>
+</head>
+<body>
+<h1>Apna Class Plus — Complete Audit Report</h1>
+<blockquote>Audit date: 2026-11-13 | Live URL: https://apna-class-plus.web.app | Project: <code>apna-class-plus</code> (Firebase Spark)</blockquote>
+<blockquote>Scope: live app end-to-end, code review (client/server), security rules, data model, test coverage.</blockquote>
+<hr>
+<h2>1. Executive Summary</h2>
+<p>Apna Class Plus ek <strong>feature-complete</strong> coaching/institute platform hai jo Classplus DIY ke architecture ko follow karta hai. Firebase Spark plan pe live hai — Auth (email/password) + Firestore + Hosting. Client React 18 + TypeScript + Vite hai; local mode ke liye Node/Express + SQLite bhi maintain hai.</p>
+<p><strong>Verdict:</strong> Demo/training ke liye <strong>production-ready</strong>. Real payments ke liye Razorpay test/real keys aur (optional) webhook verification chahiye. Security rules owner-scoped hain; kuch public-read surfaces (landing pages, store, tests, capability links, active coupons) by design hain.</p>
+<p><strong>Audit method:</strong></p>
+<ul>
+<li>Live E2E browser testing (har feature, real credentials)</li>
+<li>Firestore rules review</li>
+<li>Console error sweep (20 pages)</li>
+<li>Code review: <code>fbRouter.ts</code> endpoint→Firestore mapping, API client FB routing</li>
+<li>TestCases.md (Modules 1–36) + Evidence/Phase-13-Execution.md</li>
+</ul>
+<hr>
+<h2>2. Environment &amp; Credentials</h2>
+<table><thead><tr><th>Item</th><th>Value</th></tr></thead><tbody><tr><td>Live URL</td><td>https://apna-class-plus.web.app</td></tr><tr><td>Firebase project</td><td>apna-class-plus</td></tr><tr><td>Firestore region</td><td>asia-south1</td></tr><tr><td>Hosting plan</td><td>Spark (no Blaze)</td></tr><tr><td>Auth</td><td>Email/Password</td></tr><tr><td>Superadmin</td><td>teacher@apnatest.in / secret123</td></tr><tr><td>Trial teacher</td><td>trial@apnatest.in / secret123</td></tr><tr><td>Local dev</td><td>server :4000 + client :5173 (FIREBASE_MODE=false)</td></tr><tr><td>Deploy</td><td>tsc → vite build → runtimeConfig (BOM-free) → firebase-tools deploy</td></tr></tbody></table>
+<hr>
+<h2>3. Feature Audit Matrix</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Status</th><th>Evidence / Notes</th></tr></thead><tbody><tr><td>1</td><td>Auth (email/password), roles</td><td>✅ Working</td><td>superadmin/trial logins verified; role gates (Admin page)</td></tr><tr><td>2</td><td>7-day trial + soft banner</td><td>✅ Working</td><td>banner on dashboard; expiry logic present; no hard lockout</td></tr><tr><td>3</td><td>Dashboard (cards, store link, seed)</td><td>✅ Working</td><td>counts real; Seed Demo Data verified</td></tr><tr><td>4</td><td>Sidebar tabs + mobile drawer</td><td>✅ Working</td><td>12 tabs; hamburger ≤768px; navigation verified</td></tr><tr><td>5</td><td>Landing Pages (4 templates)</td><td>✅ Working</td><td>create/publish/public render/lead form verified</td></tr><tr><td>6</td><td>Landing editor (sections/theme/props)</td><td>✅ Working</td><td>9 section types; drag reorder; preview; save/publish</td></tr><tr><td>7</td><td>Landing analytics (page views)</td><td>✅ Working</td><td>events tracked; analytics counts verified</td></tr><tr><td>8</td><td>Courses + content/folders</td><td>✅ Working</td><td>create/content manager verified</td></tr><tr><td>9</td><td>Course access links (<code>/learn/:token</code>)</td><td>✅ Working</td><td>personalized, capability URL, no login</td></tr><tr><td>10</td><td>Course progress tracking</td><td>✅ Working</td><td>mark done; localStorage + Firestore; % verified</td></tr><tr><td>11</td><td>Teacher progress dashboard</td><td>✅ Working</td><td>per-link completion verified</td></tr><tr><td>12</td><td>Batches + students</td><td>✅ Working</td><td>create/add by phone/remove/count verified</td></tr><tr><td>13</td><td>People (leads/students)</td><td>✅ Working</td><td>convert/add/delete/search verified</td></tr><tr><td>14</td><td>Onboarding links on convert</td><td>✅ Working</td><td>learning + chat auto-generated; dialog verified</td></tr><tr><td>15</td><td>Chat (teacher ↔ student)</td><td>✅ Working</td><td>share link; 3s polling; unread badge; persistence</td></tr><tr><td>16</td><td>Campaigns</td><td>✅ Working</td><td>audience builder; publish (mock); usage</td></tr><tr><td>17</td><td>Tests (4 types + comprehension)</td><td>✅ Working</td><td>MCQ/TF/objective/subjective/comprehension; scoring</td></tr><tr><td>18</td><td>Test portal (sections, bulk import)</td><td>✅ Working</td><td>bulk import verified; comprehension grouping</td></tr><tr><td>19</td><td>Public test player</td><td>✅ Working</td><td>palette, timer, calculator, summary, review</td></tr><tr><td>20</td><td>Free Material</td><td>✅ Working</td><td>publish → store/landing/public page</td></tr><tr><td>21</td><td>Public Store</td><td>✅ Working</td><td>courses/tests/material tabs; enroll</td></tr><tr><td>22</td><td>Coupons</td><td>✅ Working</td><td>CRUD; store apply; usage count; dashboard count</td></tr><tr><td>23</td><td>Orders &amp; Payments</td><td>✅ Working (Test Mode)</td><td>order → checkout dialog → paid → lead; /orders page</td></tr><tr><td>24</td><td>Analytics (overview + dashboard)</td><td>✅ Working</td><td>leads/views/revenue; ranges; top pages</td></tr><tr><td>25</td><td>Admin (users &amp; trials)</td><td>✅ Working</td><td>user table; role/plan/trial actions</td></tr><tr><td>26</td><td>Student experience (store→learn→chat)</td><td>✅ Working</td><td>end-to-end verified</td></tr><tr><td>27</td><td>README</td><td>✅ Done</td><td>setup/deploy/credentials/limitations</td></tr><tr><td>28</td><td>Training pack (this folder)</td><td>✅ Done</td><td>manual + audit + PDFs</td></tr></tbody></table>
+<hr>
+<h2>4. Test Coverage Summary</h2>
+<p><code>TestCases.md</code> mein <strong>36 modules</strong> hain (har phase ke requirements se generate). Key modules:</p>
+<table><thead><tr><th>Module</th><th>Coverage</th></tr></thead><tbody><tr><td>1–16</td><td>Local app phases (scaffold → free material)</td></tr><tr><td>17–21</td><td>Firebase live: core, roles/trial, store, courses, people</td></tr><tr><td>22</td><td>Batches</td></tr><tr><td>23</td><td>Analytics</td></tr><tr><td>24</td><td>Campaigns</td></tr><tr><td>25</td><td>Chat</td></tr><tr><td>26</td><td>Course viewer</td></tr><tr><td>27</td><td>Landing templates</td></tr><tr><td>28</td><td>Progress tracking</td></tr><tr><td>29</td><td>Progress dashboard + sidebar</td></tr><tr><td>30</td><td>Comprehension</td></tr><tr><td>31–32</td><td>Auto access link + onboarding links</td></tr><tr><td>33</td><td>Coupons</td></tr><tr><td>34</td><td>Final QA / README / seed</td></tr><tr><td>35</td><td>Mobile responsive</td></tr><tr><td>36</td><td>Payments</td></tr></tbody></table>
+<p>Har module mein steps, expected outcome aur PASS/FAIL status documented hai.</p>
+<hr>
+<h2>5. Issues Found &amp; Fixed During Audit</h2>
+<table><thead><tr><th>Issue</th><th>Severity</th><th>Fix</th></tr></thead><tbody><tr><td>Landing Pages list crash (Firestore Timestamp render → React #31)</td><td>High</td><td>Route returns ISO string; page uses fmtDate</td></tr><tr><td>Builder publish/save broken (page GET missing <code>_id</code>; wrong route path)</td><td>High</td><td><code>_id</code> returned; <code>/v1/diy/section/form</code> standalone route</td></tr><tr><td>Public landing route never matched (<code>seg[1]</code> vs <code>seg[0]</code>)</td><td>High</td><td>Path index fixed; rules-safe published filter</td></tr><tr><td>Lead owner missing for public landing leads</td><td>Medium</td><td>Slug se owner resolve</td></tr><tr><td>Sidebar empty in FB mode (tabs fallback <code>[]</code>)</td><td>Medium</td><td><code>/v1/diy/configuration/tabs</code> returns full tab set</td></tr><tr><td>Order complete route path wrong (<code>seg[3]</code> vs <code>seg[4]</code>)</td><td>High</td><td>Path fixed; order now marks paid</td></tr><tr><td><code>pubPost</code> generic typing (build fail)</td><td>Low</td><td>Generic pubPost</td></tr><tr><td>Batch student remove bypassed FB router</td><td>Medium</td><td><code>del()</code> query-param route</td></tr><tr><td>Hosting cache serving stale chunks</td><td>Low</td><td>Deploy notes: fresh tab + <code>?cb=&lt;ts&gt;</code></td></tr></tbody></table>
+<hr>
+<h2>6. Known Limitations &amp; Risks</h2>
+<table><thead><tr><th>Limitation</th><th>Impact</th><th>Mitigation</th></tr></thead><tbody><tr><td>Payments Test Mode (no real keys)</td><td>Real charges nahi ho rahe</td><td>Keys set karo → real checkout</td></tr><tr><td>No webhook/backend verification</td><td>Payment verify manually</td><td>Blaze + Cloud Functions / manual check</td></tr><tr><td>Campaigns mock send</td><td>No real SMS/WhatsApp</td><td>Blaze + gateway integration</td></tr><tr><td>Trial soft banner (no lockout)</td><td>Teachers continue after expiry</td><td>Product decision (option C)</td></tr><tr><td>Bulk import lacks comprehension</td><td>Passage import manual</td><td>UI se add karo</td></tr><tr><td>Capability URLs (learn/chat)</td><td>Link holder = student identity</td><td>Links private rakho</td></tr><tr><td>Active coupons publicly readable</td><td>Codes enumerable</td><td>Demo trade-off; rotate codes</td></tr><tr><td>No student login</td><td>Identity via link token</td><td>Acceptable for demo</td></tr><tr><td>Chat polling (3s)</td><td>Not true realtime</td><td>Firestore listeners possible later</td></tr><tr><td>No composite Firestore indexes</td><td>Query constraints</td><td>Filter-only + client-side sort</td></tr></tbody></table>
+<hr>
+<h2>7. Security Audit</h2>
+<h3>7.1 Rules summary (firestore.rules)</h3>
+<table><thead><tr><th>Collection</th><th>Public</th><th>Owner</th></tr></thead><tbody><tr><td>pages</td><td>published read</td><td>create/update/delete</td></tr><tr><td>leads</td><td>create</td><td>read/update/delete</td></tr><tr><td>tests</td><td>published read (+questions/sections/attempts)</td><td>owner write</td></tr><tr><td>freeMaterials</td><td>published read</td><td>owner write</td></tr><tr><td>students</td><td>—</td><td>owner read/write</td></tr><tr><td>batches / batchStudents</td><td>—</td><td>owner read/write</td></tr><tr><td>chats</td><td>get (capability token)</td><td>list/update/delete; limited public update</td></tr><tr><td>courseLinks</td><td>get (capability token)</td><td>list/create; progress-only public update</td></tr><tr><td>coupons</td><td>active read</td><td>owner create/update/delete</td></tr><tr><td>orders</td><td>create (public store)</td><td>owner read/update/delete</td></tr><tr><td>events</td><td>create (page view)</td><td>owner read/delete</td></tr><tr><td>campaigns</td><td>—</td><td>owner read/write</td></tr><tr><td>users</td><td>get (self/superadmin)</td><td>self write; superadmin update</td></tr></tbody></table>
+<h3>7.2 Findings</h3>
+<ul>
+<li><strong>Owner scoping consistent</strong> — saare queries <code>ownerUid</code> filter use karte hain (Firestore rules inference).</li>
+<li><strong>Capability URLs</strong> (<code>/learn/:token</code>, <code>/chat/:token</code>) — random 24-char tokens, unguessable; but link holder full access to that student's thread/course. <strong>Recommendation:</strong> share privately; rotate on suspicion.</li>
+<li><strong>Active coupons public</strong> — code enumeration possible; acceptable for discount codes.</li>
+<li><strong>Public test attempts</strong> — anyone with test link can submit attempts (by design); no PII beyond name/phone entered by student.</li>
+<li><strong>Orders create public</strong> — amount client-provided; <strong>risk:</strong> tampered amount. <strong>Recommendation:</strong> real payments mein server-side amount verification (Cloud Functions/Blaze) + webhook signature.</li>
+<li><strong>No PII encryption</strong> — phone numbers Firestore mein plain hain (demo). Production mein consider encryption/compliance.</li>
+</ul>
+<h3>7.3 Recommendations</h3>
+<ol>
+<li>Real payments: server-side order creation + webhook verification (Blaze).</li>
+<li>Rate limiting / abuse protection on public endpoints (attempts, leads).</li>
+<li>Link rotation UI (revoke a learn/chat link).</li>
+<li>Audit logs for admin actions.</li>
+<li>Production: move secrets (API keys) out of client bundle.</li>
+</ol>
+<hr>
+<h2>8. Performance &amp; Scale</h2>
+<ul>
+<li>Firestore queries: filter-only (no composite indexes) + client-side sorting — demo scale ke liye theek; bade scale par composite indexes + pagination.</li>
+<li>Chat polling 3s — chhote teams ke liye fine.</li>
+<li>Images/assets: Google Fonts only; no heavy assets.</li>
+<li>Hosting: CDN-backed static build.</li>
+<li>No Cloud Functions — sab client-side; Spark cost zero.</li>
+</ul>
+<hr>
+<h2>9. Architecture Audit</h2>
+<table><thead><tr><th>Component</th><th>Assessment</th></tr></thead><tbody><tr><td><code>api/client.ts</code> FB routing</td><td>Clean single switch (<code>FB_MODE</code>); pages unchanged</td></tr><tr><td><code>fbRouter.ts</code> endpoint→Firestore</td><td>Well-mapped; numeric IDs via counters; transactions for IDs</td></tr><tr><td>Firestore data model</td><td>Collections normalized enough; denormalized counts (batches/campaigns) acceptable</td></tr><tr><td>Rules</td><td>Correct owner scoping; public surfaces intentional</td></tr><tr><td>Client state</td><td>Redux (auth/builder) + local state; adequate</td></tr><tr><td>Local server</td><td>Reference implementation; not used live</td></tr><tr><td>Testing</td><td>36 test modules + evidence; manual E2E (no automated suite)</td></tr><tr><td>Docs</td><td>RFP, TestCases, Evidence, README, Training pack</td></tr></tbody></table>
+<p><strong>Recommendation:</strong> automated E2E (Playwright) for regression; CI deploy preview.</p>
+<hr>
+<h2>10. Roadmap / Recommendations</h2>
+<table><thead><tr><th>Priority</th><th>Item</th></tr></thead><tbody><tr><td>P0</td><td>Real Razorpay keys + server-side verification (Blaze)</td></tr><tr><td>P0</td><td>Payments webhook / order reconciliation</td></tr><tr><td>P1</td><td>Real SMS/WhatsApp gateway (campaigns)</td></tr><tr><td>P1</td><td>Link revocation + audit logs</td></tr><tr><td>P2</td><td>Automated E2E suite</td></tr><tr><td>P2</td><td>Composite indexes + pagination for scale</td></tr><tr><td>P2</td><td>Student login (optional) / OTP</td></tr><tr><td>P3</td><td>Offline support (PWA)</td></tr></tbody></table>
+<hr>
+<h2>11. Conclusion</h2>
+<p>Live app <strong>stable aur feature-complete</strong> hai training/demo ke liye. Payments Test Mode mein hain — real keys ke saath checkout enable hota hai. Security model owner-scoped hai; capability links aur public surfaces documented hain. Saare major flows E2E verify kiye gaye hain (0 console errors, 20-page sweep).</p>
+<hr>
+<p><em>Audit version: 2026-11-13 | Prepared from live testing + code review</em></p>
+</body>
+</html>

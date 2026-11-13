@@ -150,3 +150,10 @@ Baaki teachers 7-day trial lete hain.
 
 Har phase ke execution results, test outputs aur verification proof `Evidence/Phase-13-Execution.md`
 aur `TestCases.md` mein hain.
+
+## Training & Audit Pack
+
+`Training/` folder mein complete training manual (PDF + Markdown) aur audit report hai:
+- `Training-Manual.pdf` — admin/teacher/student workflows, step-by-step training guide
+- `Audit-Report.pdf` — feature audit matrix, security review, issues, roadmap
+- Sources (`.md`), print-ready HTML, aur `build-pdfs.mjs` (regenerate PDFs)
