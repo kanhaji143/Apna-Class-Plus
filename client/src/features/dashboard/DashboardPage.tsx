@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import {
-  Box, Card, CardContent, Grid, Typography, Skeleton, MenuItem, Select, Stack, Chip, Alert,
+  Box, Card, CardContent, Grid, Typography, Skeleton, MenuItem, Select, Stack, Chip, Alert, Button,
 } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { get } from '../../api/client';
@@ -24,6 +24,19 @@ export default function DashboardPage() {
   const [day, setDay] = useState(7);
   const [analytics, setAnalytics] = useState<AnalyticsCard[]>([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const storeUrl = `${window.location.origin}/store`;
+  const copyStore = async () => {
+    try {
+      await navigator.clipboard.writeText(storeUrl);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = storeUrl; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     get<DashboardStats>('/v1/diy/landingPage/dashboard')
@@ -62,6 +75,28 @@ export default function DashboardPage() {
           </Alert>
         );
       })()}
+      <Card elevation={3} sx={{ mb: 3, background: 'linear-gradient(135deg,#6C5CE7 0%,#8E7CF8 100%)', color: '#fff' }}>
+        <CardContent>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+            <Box>
+              <Typography variant="h6" fontWeight={900}>🛍️ My Student Store</Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                Apne students ko ye link bhejo — wo bina login ke published tests aur free material dekh sakte hain.
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 0.5, fontFamily: 'monospace', wordBreak: 'break-all' }}>{storeUrl}</Typography>
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <Button variant="contained" onClick={copyStore} sx={{ bgcolor: '#fff', color: '#6C5CE7', fontWeight: 800, '&:hover': { bgcolor: '#f1efff' } }}>
+                {copied ? '✓ Copied!' : 'Copy Link'}
+              </Button>
+              <Button variant="outlined" href="/store" target="_blank" sx={{ color: '#fff', borderColor: '#fff', fontWeight: 800 }}>
+                Open
+              </Button>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
+
       <Typography color="text.secondary" sx={{ mb: 3 }}>
         Aaj ka overview â€” original DIY dashboard stats pattern (landingPage/dashboard API se)
       </Typography>

@@ -74,7 +74,8 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
   // ---------- landing pages ----------
   if (seg[2] === 'landingPages') {
     if (method === 'GET' && seg.length === 3) {
-      const pages = await qGet<any>('pages', { wheres: [['ownerUid', '==', ownerUid]], orderField: 'id', orderDir: 'desc', limit: 50 });
+      const pages = await qGet<any>('pages', { wheres: [['ownerUid', '==', ownerUid]] });
+      pages.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
       return { data: pages.map((p: any) => ({ _id: p.id, id: p.id, title: p.title, slug: p.slug, status: p.status, createdAt: p.createdAt })) };
     }
     if (method === 'POST' && seg.length === 3) {
@@ -128,36 +129,49 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
 
   // ---------- free materials ----------
   if (path.startsWith('/v3/free-materials')) {
-    if (method === 'GET' && seg.length === 3) {
-      return qGet<any>('freeMaterials', { wheres: [['ownerUid', '==', ownerUid]], orderField: 'sort_order', orderDir: 'asc' });
+    if (method === 'GET' && seg.length === 2) {
+      const items = await qGet<any>('freeMaterials', { wheres: [['ownerUid', '==', ownerUid]] });
+      items.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+      return items;
     }
-    if (method === 'GET' && seg[3] === 'public') {
-      const items = await qGet<any>('freeMaterials', { wheres: [['status', '==', 'published']], orderField: 'sort_order', orderDir: 'asc' });
+    if (method === 'GET' && seg[2] === 'public') {
+      const items = await qGet<any>('freeMaterials', { wheres: [['status', '==', 'published']] });
+      items.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
       return { teacherName: 'Teacher', items };
     }
-    if (method === 'POST' && seg.length === 3) {
-      const max = await qGet<any>('freeMaterials', { wheres: [['ownerUid', '==', ownerUid]], orderField: 'sort_order', orderDir: 'desc', limit: 1 });
+    if (method === 'POST' && seg.length === 2) {
+      const mine = await qGet<any>('freeMaterials', { wheres: [['ownerUid', '==', ownerUid]] });
+      mine.sort((a: any, b: any) => (b.sort_order || 0) - (a.sort_order || 0));
+      const max = mine.slice(0, 1);
       const id = await nextId(dbv, 'freeMaterials');
       await setDoc(doc(dbv, 'freeMaterials', String(id)), {
         id, ownerUid, ...body, sort_order: (max[0]?.sort_order || 0) + 1, createdAt: tsNow(),
       });
       return { id, ...body };
     }
-    if (method === 'PUT' && seg.length === 4) { await updateDoc(doc(dbv, 'freeMaterials', seg[3]), body); return { updated: true }; }
-    if (method === 'DELETE' && seg.length === 4) { await deleteDoc(doc(dbv, 'freeMaterials', seg[3])); return { deleted: true }; }
+    if (method === 'PUT' && seg.length === 3) { await updateDoc(doc(dbv, 'freeMaterials', seg[2]), body); return { updated: true }; }
+    if (method === 'DELETE' && seg.length === 3) { await deleteDoc(doc(dbv, 'freeMaterials', seg[2])); return { deleted: true }; }
   }
 
   if (seg[1] === 'lp' && seg[2] === 'api' && seg[3] === 'free-materials' && method === 'GET') {
-    const items = await qGet<any>('freeMaterials', { wheres: [['status', '==', 'published']], orderField: 'sort_order', orderDir: 'asc' });
+    const items = await qGet<any>('freeMaterials', { wheres: [['status', '==', 'published']] });
+    items.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
     const first = items[0];
-    const teacherName = first ? (await getDoc(doc(dbv, 'users', first.ownerUid)))?.data()?.name || 'Teacher' : 'Teacher';
+    let teacherName = 'Apna Class Plus';
+    if (first) {
+      try {
+        const u = await getDoc(doc(dbv, 'users', first.ownerUid));
+        if (u.exists() && u.data()?.name) teacherName = u.data().name;
+      } catch { /* public visitor — brand name */ }
+    }
     return { teacherName, items };
   }
 
   // ---------- tests ----------
   if (path.startsWith('/v3/tests') || path.startsWith('/v3/attempts')) {
     if (method === 'GET' && seg[1] === 'tests' && seg.length === 2) {
-      const tests = await qGet<any>('tests', { wheres: [['ownerUid', '==', ownerUid]], orderField: 'id', orderDir: 'desc' });
+      const tests = await qGet<any>('tests', { wheres: [['ownerUid', '==', ownerUid]] });
+      tests.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
       return tests.map((t: any) => ({
         ...t,
         question_count: t.question_count ?? t._qc ?? 0,
@@ -381,6 +395,32 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
       await updateDoc(uref, { trialEnd: newEnd, plan: 'trial' });
       return { trialEnd: newEnd };
     }
+  }
+
+  // ---------- student store (public) ----------
+  if (seg[0] === 'store' && method === 'GET') {
+    // Composite-index se bachne ke liye: sirf status filter, sorting client-side
+    const tests = await qGet<any>('tests', { wheres: [['status', '==', 'published']] });
+    const materials = await qGet<any>('freeMaterials', { wheres: [['status', '==', 'published']] });
+    tests.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+    materials.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+    // question counts per test (demo-scale N+1, theek hai)
+    const withCounts = [];
+    for (const t of tests) {
+      let questionCount = 0;
+      try { questionCount = (await getDocs(collection(dbv, `tests/${t.id}/questions`))).size; } catch { questionCount = 0; }
+      withCounts.push({ id: t.id, title: t.title, description: t.description || null, durationMin: t.durationMin || 0, questionCount });
+    }
+    // public visitor users/{uid} nahi padh sakta — isliye getDoc optional (try/catch)
+    let teacherName = 'Apna Class Plus';
+    const ownerUid = tests[0]?.ownerUid || materials[0]?.ownerUid;
+    if (ownerUid) {
+      try {
+        const usnap = await getDoc(doc(dbv, 'users', ownerUid));
+        if (usnap.exists() && usnap.data().name) teacherName = usnap.data().name;
+      } catch { /* unauthenticated visitor — default brand name */ }
+    }
+    return { teacherName, tests: withCounts, materials };
   }
 
   // ---------- baaki (courses/batches/chat/campaigns/analytics/people) — FB mode core nahi ----------

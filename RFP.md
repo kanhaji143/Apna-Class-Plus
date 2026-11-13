@@ -67,3 +67,19 @@
 ### Notes
 - Payment gateway abhi nahi (Phase 5 skipped) — expiry = soft warning only, no auto-charge.
 - Cloud Functions nahi (Spark) — role changes client-side with rules guard (get on config/roles).
+
+---
+
+## Phase 13d — Student Store Page (user requirements, chat)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. Public student store page jaise Classplus (web.classplusapp.com/store/home) — single-tenant version.
+2. Route: /store/:teacherId (public, no login).
+3. Tabs: Tests | Free Material (Courses tab baad mein — Phase 13b).
+4. Test cards: title, description, duration, question count, "Start Test" → /test/:id.
+5. Material cards: type icon (PDF/Video/YouTube), title, description, "Get" → external link.
+6. Hero header with teacher name + branding.
+7. Mobile-first, Nunito Sans + Noto Sans Devanagari fonts.
+8. Teacher apne dashboard se store link copy kar sake.

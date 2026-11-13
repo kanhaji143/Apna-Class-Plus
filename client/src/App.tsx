@@ -27,6 +27,7 @@ import TestTakePage from './features/tests/TestTakePage';
 import FreeMaterialPage from './features/freeMaterial/FreeMaterialPage';
 import PublicFreeMaterialsPage from './features/freeMaterial/PublicFreeMaterialsPage';
 import AdminPage from './features/admin/AdminPage';
+import StorePage from './features/store/StorePage';
 import { fbBootstrap } from './features/auth/authSlice';
 
 function Protected({ children }: { children: React.ReactNode }) {
@@ -59,6 +60,8 @@ export default function App() {
         <Route path="/lp-preview/:slug" element={<LpPreviewPage />} />
         <Route path="/test/:id" element={<TestTakePage />} />
         <Route path="/free/:teacherId" element={<PublicFreeMaterialsPage />} />
+        <Route path="/store" element={<StorePage />} />
+        <Route path="/store/:teacherId" element={<StorePage />} />
 
         {/* ---------- protected (teacher dashboard) ---------- */}
         <Route

@@ -355,3 +355,35 @@
 - **Steps:** Login as superadmin -> /admin.
 - **Expected:** All users listed with role/plan/trial; +7 days extend works.
 - **Status:** PASS (both users shown).
+
+## Module 19 - Student Store (Phase 13d)
+
+### TC-19.1 Public store loads
+- **Steps:** Open `/store` (logged out).
+- **Expected:** Branded hero + tabs Tests / Free Material.
+- **Status:** PASS.
+
+### TC-19.2 Published tests listed
+- **Steps:** Store -> Tests tab.
+- **Expected:** Published tests with title, description, duration, question count, FREE chip, Start Test button.
+- **Status:** PASS (Live Firebase Test, 30 min, 3 questions).
+
+### TC-19.3 Start Test navigation
+- **Steps:** Click Start Test on a store card.
+- **Expected:** Navigates to `/test/:id` with student start form.
+- **Status:** PASS.
+
+### TC-19.4 Free material listed
+- **Steps:** Store -> Free Material tab.
+- **Expected:** Published materials with type icon, title, FREE chip, Get link.
+- **Status:** PASS (Class 10 Science Notes PDF).
+
+### TC-19.5 Teacher store share link
+- **Steps:** Dashboard -> My Student Store -> Copy Link / Open; Sidebar -> My Store.
+- **Expected:** Store URL copied to clipboard (button shows "Copied!"); store opens in new tab.
+- **Status:** PASS.
+
+### TC-19.6 Free material CRUD (Firebase)
+- **Steps:** Free Material page -> Add Material -> Save; toggle Published/Draft; edit/delete.
+- **Expected:** Material saved to Firestore, listed in admin, reflected on public store.
+- **Status:** PASS (composite-index error fixed by client-side sorting).

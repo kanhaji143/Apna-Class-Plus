@@ -59,5 +59,33 @@
 
 ### Notes
 - Single-tenant (sab ek "Apna Class Plus" brand).
-- Trial expiry = soft warning only (no lockout) — option C.
+- Trial expiry = soft warning only (no lockout) - option C.
 - Super-admin UID stored in config/roles (bootstrap: first signup).
+
+---
+
+## Phase 13d - Student Store (public) + Free Material fixes
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/store
+
+### What was done
+- New public routes `/store` and `/store/:teacherId` -> `StorePage.tsx`: branded hero, tabs (Tests / Free Material), responsive cards, mobile-first.
+- fbRouter `GET /store`: published tests + freeMaterials, per-test question counts, teacher display name (auth-optional, brand fallback).
+- Dashboard "My Student Store" card with Copy Link / Open; sidebar "My Store (public)" link.
+- Free Material routes fixed: segment-length checks were wrong, so GET/POST/PUT/DELETE were falling through to placeholder in FB mode.
+- Removed composite-index dependencies: pages / tests / freeMaterials queries now filter in Firestore and sort client-side.
+- Public free-material teacher name falls back to "Apna Class Plus" for anonymous visitors.
+
+### Live E2E verified
+1. `/store` loads: "Apna Class Plus" hero, TESTS (1), FREE MATERIAL (1) - PASS
+2. Test card: Live Firebase Test - 30 min - 3 questions - FREE - Start Test - PASS
+3. Start Test -> `/test/1` start form - PASS
+4. Free Material tab: Class 10 Science Notes (PDF) - FREE - Get - PASS
+5. Dashboard card: Copy Link -> "Copied!"; Open button - PASS
+6. Add Material via UI -> saved; visible in admin list and public store - PASS
+
+### Notes
+- Courses tab deferred (Phase 13b - courses not yet in Firestore).
+- Store is single-tenant; `/store/:teacherId` accepted but ignored (brand-level store).
+- Font: Noto Sans Devanagari loaded alongside Nunito Sans for Hindi.
