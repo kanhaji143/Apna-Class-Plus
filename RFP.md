@@ -209,3 +209,16 @@
 5. Builder **Save** aur **Publish** UI se kaam kare (FB mode).
 6. Public landing page saare sections + lead form render kare; Free Material live published list se aaye.
 7. Rules: pages `status == published` public read (unchanged).
+
+---
+
+## Phase 13m - Progress Tracking (course viewer)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. LearnPage par har lesson ka "Mark done" toggle + "Done" state.
+2. Header mein progress bar + % + "X/Y done".
+3. Progress **localStorage** (device) + Firestore `courseLinks.progress` (cross-device) dono mein sync.
+4. Rules: public update sirf `progress` key allowed (baaki fields locked).
+5. Purane links ke liye bhi kaam kare (no migration).

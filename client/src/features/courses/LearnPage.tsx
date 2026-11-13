@@ -4,7 +4,8 @@ import {
   Box, Typography, Card, CardContent, Chip, Divider, Button, CircularProgress, Paper, Avatar,
 } from '@mui/material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { db, FB_MODE, doc, getDoc } from '../../firebase/fb';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { db, FB_MODE, doc, getDoc, updateDoc } from '../../firebase/fb';
 
 interface Item { id: number; title: string; type: string; url: string; description?: string; folderId: number | null; sortOrder: number; }
 interface Folder { id: number; name: string; parentId: number | null; sortOrder: number; }
@@ -20,6 +21,8 @@ export default function LearnPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [done, setDone] = useState<Record<string, boolean>>({});
+  const storageKey = `learn-progress-${token}`;
 
   useEffect(() => {
     if (!FB_MODE) { setErr('Course access live app mein available hai.'); setLoading(false); return; }
@@ -32,6 +35,11 @@ export default function LearnPage() {
           return;
         }
         setData(snap.data());
+        // progress: server + local merge (local wins for same lesson)
+        let local: Record<string, boolean> = {};
+        try { local = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { /* ignore */ }
+        const server = (snap.data()?.progress as Record<string, boolean>) || {};
+        setDone({ ...server, ...local });
       } catch {
         setErr('Course load nahi hua. Internet check karke retry karo.');
       } finally { setLoading(false); }
@@ -58,6 +66,19 @@ export default function LearnPage() {
   const rootItems = items.filter((i) => !i.folderId);
   const folderItems = (fid: number) => items.filter((i) => i.folderId === fid);
   const topFolders = folders.filter((f) => !f.parentId);
+  const doneCount = items.filter((i) => done[String(i.id)]).length;
+  const pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+
+  const toggleDone = async (id: number) => {
+    const next: Record<string, boolean> = { ...done };
+    if (next[String(id)]) delete next[String(id)];
+    else next[String(id)] = true;
+    setDone(next);
+    try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch { /* ignore */ }
+    try {
+      if (token) await updateDoc(doc(db(), 'courseLinks', token), { progress: next });
+    } catch { /* ignore — local progress bhi chalta hai */ }
+  };
 
   const renderItem = (it: Item) => (
     <Box key={it.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25 }}>
@@ -69,6 +90,15 @@ export default function LearnPage() {
         </Typography>
       </Box>
       <Chip size="small" label={it.type} variant="outlined" />
+      <Button
+        size="small"
+        variant={done[String(it.id)] ? 'contained' : 'outlined'}
+        color={done[String(it.id)] ? 'success' : 'primary'}
+        startIcon={<CheckCircleIcon />}
+        onClick={() => toggleDone(it.id)}
+      >
+        {done[String(it.id)] ? 'Done' : 'Mark done'}
+      </Button>
       {it.url && (
         <Button size="small" variant="contained" endIcon={<OpenInNewIcon />} onClick={() => window.open(it.url, '_blank')}>
           Open
@@ -95,6 +125,14 @@ export default function LearnPage() {
           <Typography variant="caption" sx={{ display: 'block', mt: 1.5, opacity: 0.8 }}>
             {items.length} lessons{data.price ? ` · ₹${data.price}` : ''}
           </Typography>
+          {items.length > 0 && (
+            <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ flexGrow: 1, bgcolor: 'rgba(255,255,255,0.25)', borderRadius: 1, height: 8, overflow: 'hidden' }}>
+                <Box sx={{ width: `${pct}%`, height: '100%', bgcolor: '#fff', transition: 'width .3s' }} />
+              </Box>
+              <Typography variant="caption" fontWeight={800}>{pct}% · {doneCount}/{items.length} done</Typography>
+            </Box>
+          )}
         </Box>
       </Box>
 

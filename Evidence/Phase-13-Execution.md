@@ -320,3 +320,28 @@
 ### Notes
 - Templates snapshot id se bante hain (naye page create hone par hi sections aate hain).
 - Next: trial enforcement / payments.
+
+---
+
+## Phase 13m - Progress Tracking (course viewer)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app/learn/etyt2a28wz3iwigfqxtle97x
+
+### What was done
+- LearnPage: har lesson par "Mark done" / "Done" toggle (CheckCircle icon).
+- Header: progress bar + `%` + `X/Y done`.
+- Progress localStorage (`learn-progress-<token>`) + Firestore `courseLinks.progress` map sync (best-effort).
+- Rules: `courseLinks` public `update` sirf `progress` key pe allowed; baaki fields owner-only.
+- Teacher regenerate link kare to progress reset (snapshot doc).
+
+### Live E2E verified
+1. Mark done -> 100% · 1/1 - PASS
+2. Reload (localStorage) - PASS
+3. Clear localStorage -> server progress still 100% - PASS
+4. Button "Done" state - PASS
+5. Fresh link 0% - PASS
+
+### Notes
+- Cross-device progress ke liye Firestore map; concurrent writes last-write-wins (demo).
+- Next: trial enforcement / payments.

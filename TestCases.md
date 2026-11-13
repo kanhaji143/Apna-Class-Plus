@@ -678,3 +678,30 @@
 - **Steps:** Edit page -> Save/Publish.
 - **Expected:** pageId resolved, section/form route matched.
 - **Status:** PASS (fixes `_id` + `/v1/diy/section/form` path).
+
+## Module 28 - Progress Tracking (Phase 13m)
+
+### TC-28.1 Mark lesson done
+- **Steps:** /learn/<token> -> "Mark done".
+- **Expected:** Button becomes "Done"; header 100% · 1/1 done.
+- **Status:** PASS.
+
+### TC-28.2 Local persistence
+- **Steps:** Reload page.
+- **Expected:** Progress retained (localStorage).
+- **Status:** PASS.
+
+### TC-28.3 Server sync (cross-device)
+- **Steps:** Clear localStorage for token -> reload.
+- **Expected:** Progress still shown from Firestore `courseLinks.progress`.
+- **Status:** PASS.
+
+### TC-28.4 Button state
+- **Steps:** Reload after completion.
+- **Expected:** "Done" (success) shown.
+- **Status:** PASS.
+
+### TC-28.5 Empty progress
+- **Steps:** Fresh link without any toggle.
+- **Expected:** 0% · 0/N done, bar empty.
+- **Status:** PASS.
