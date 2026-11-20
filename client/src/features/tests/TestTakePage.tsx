@@ -60,7 +60,8 @@ export default function TestTakePage() {
   const [showSummary, setShowSummary] = useState(false);
   const [calcOpen, setCalcOpen] = useState(false);
   const [solutions, setSolutions] = useState<Record<number, Solution>>({});
-  const [result, setResult] = useState<{ attemptId: number; score: number; total: number; review: Record<string, Review>; pendingGrading: boolean } | null>(null);
+  const [result, setResult] = useState<{ attemptId: number; score: number; total: number; review: Record<string, Review>; pendingGrading: boolean; rank?: number | null } | null>(null);
+  const [leaderboard, setLeaderboard] = useState<any[] | null>(null);
   const [rated, setRated] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -118,6 +119,13 @@ export default function TestTakePage() {
     setRated(stars);
     await pubCall('post', `/public/test/${id}/rate`, { attemptId: result.attemptId, stars }).catch(() => {});
   };
+
+  useEffect(() => {
+    if (!result) return;
+    pubCall('get', `/public/test/${id}/leaderboard`)
+      .then((d: any) => setLeaderboard(d.top || []))
+      .catch(() => setLeaderboard([]));
+  }, [result, id]);
 
   const viewSolution = async (qid: number) => {
     if (solutions[qid]) { setSolutions((s) => { const n = { ...s }; delete n[qid]; return n; }); return; }
@@ -186,6 +194,9 @@ export default function TestTakePage() {
               <Typography variant="h2" fontWeight={900}>{pct >= 50 ? '🎉' : '💪'}</Typography>
               <Typography variant="h4" fontWeight={900} sx={{ my: 1 }}>{result.score} / {result.total}</Typography>
               <Chip size="medium" label={`${pct}%`} color={pct >= 50 ? 'success' : 'warning'} />
+              {result.rank != null && (
+                <Chip label={`आपका रैंक: #${result.rank}`} color="primary" sx={{ mt: 1 }} />
+              )}
               {result.pendingGrading && (
                 <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
                   📝 Subjective answers teacher grading ke baad final score update hoga
@@ -212,8 +223,20 @@ export default function TestTakePage() {
             ))}
           </Box>
 
-          <Typography variant="h6" fontWeight={800} sx={{ mt: 2, mb: 1 }}>Answer Review</Typography>
-          {answerable.map((q, i) => {
+          {leaderboard && leaderboard.length > 0 && (
+            <Box sx={{ mt: 3, textAlign: 'left' }}>
+              <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>🏆 लीडरबोर्ड</Typography>
+              {leaderboard.slice(0, 10).map((r: any) => (
+                <Box key={r.id} sx={{ display: 'flex', gap: 2, py: 0.75, borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <Typography fontWeight={800} sx={{ width: 36 }}>#{r.rank}</Typography>
+                  <Typography sx={{ flexGrow: 1 }}>{r.studentName}</Typography>
+                  <Typography fontWeight={800}>{r.score}/{r.total}</Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+
+          <Typography variant="h6" fontWeight={800} sx={{ mt: 2, mb: 1 }}>Answer Review</Typography>          {answerable.map((q, i) => {
             const rv = result.review[q.id];
             const sol = solutions[q.id];
             return (

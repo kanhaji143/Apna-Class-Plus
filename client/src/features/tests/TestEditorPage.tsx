@@ -62,6 +62,7 @@ export default function TestEditorPage() {
   const [bulkPreview, setBulkPreview] = useState<any[] | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [qLang, setQLang] = useState(0); // 0=English, 1=Hindi (dialog tabs)
+  const [leaderboard, setLeaderboard] = useState<any[] | null>(null);
 
   const load = () => {
     get<{ test: Test; sections: Section[]; questions: Question[]; attempts: Attempt[] }>(`/v3/tests/${id}/full`)
@@ -69,7 +70,14 @@ export default function TestEditorPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   };
-  useEffect(load, [id]);
+  useEffect(() => { load(); }, [id]);
+
+  useEffect(() => {
+    if (tab !== 1) return;
+    get<{ top: any[] }>(`/public/test/${id}/leaderboard`)
+      .then((d) => setLeaderboard(d.top || []))
+      .catch(() => setLeaderboard([]));
+  }, [tab, id]);
 
   const addQuestion = async () => {
     if (!form.question.trim()) return;
@@ -306,6 +314,18 @@ export default function TestEditorPage() {
           {tab === 1 && (
             <Card elevation={2}>
               <CardContent>
+                {leaderboard && leaderboard.length > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 0.5 }}>🏆 Leaderboard (Top 10)</Typography>
+                    {leaderboard.slice(0, 10).map((r: any) => (
+                      <Box key={r.id} sx={{ display: 'flex', gap: 2, py: 0.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                        <Typography fontWeight={800} sx={{ width: 36 }}>#{r.rank}</Typography>
+                        <Typography sx={{ flexGrow: 1 }}>{r.studentName}</Typography>
+                        <Typography fontWeight={800}>{r.score}/{r.total}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
                 <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 1 }}>Student Results ({attempts.length})</Typography>
                 {attempts.length === 0 && <Typography color="text.secondary">Abhi koi attempt nahi hua.</Typography>}
                 {attempts.map((a) => (

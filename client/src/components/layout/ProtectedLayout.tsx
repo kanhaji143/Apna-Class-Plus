@@ -75,6 +75,9 @@ export default function ProtectedLayout() {
           <ListItemButton onClick={() => { setMobileOpen(false); window.open('/store', '_blank'); }} sx={{ borderRadius: 2, mx: 1 }}>
             <ListItemText primary="🛍️ My Store (public)" primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }} />
           </ListItemButton>
+          <ListItemButton onClick={() => { setMobileOpen(false); window.open('/tools/bmi', '_blank'); }} sx={{ borderRadius: 2, mx: 1 }}>
+            <ListItemText primary="🧮 BMI Tool (free)" primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }} />
+          </ListItemButton>
           {(user.role === 'admin' || user.role === 'superadmin') && (
             <ListItemButton onClick={() => go('/admin')} sx={{ borderRadius: 2, mx: 1 }}>
               <ListItemText primary="Admin (Users & Trials)" primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }} />

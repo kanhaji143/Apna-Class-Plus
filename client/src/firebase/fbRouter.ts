@@ -102,6 +102,7 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
       tab('Student Progress', 'progress', 10),
       tab('Coupons', 'coupons', 11),
       tab('Orders', 'orders', 12),
+      tab('Faculty', 'faculty', 13),
     ];
   }
 
@@ -120,6 +121,21 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
         createdAt: l.createdAt || '',
       };
     });
+  }
+
+  // ---------- lesson rating (public, courseLinks.ratings) ----------
+  if (seg[0] === 'v2' && seg[1] === 'course-links' && seg[2] === 'rate' && method === 'POST') {
+    const token = String(body?.token || '');
+    const itemId = Number(body?.itemId || 0);
+    const stars = Math.max(1, Math.min(5, Number(body?.stars || 0)));
+    if (!token || !itemId || !stars) throw new Error('token, itemId, stars required');
+    const snap = await getDoc(doc(dbv, 'courseLinks', token));
+    if (!snap.exists()) throw new Error('Link not found');
+    const l: any = snap.data();
+    const ratings: Record<string, number> = l.ratings || {};
+    ratings[String(itemId)] = stars;
+    await updateDoc(doc(dbv, 'courseLinks', token), { ratings });
+    return { ok: true, itemId, stars };
   }
 
   // ---------- orders (payments) ----------
@@ -492,13 +508,23 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
         const test = tsnap.data();
         const sections = await qGet<any>(`tests/${seg[2]}/sections`, { orderField: 'sort_order', orderDir: 'asc' });
         const questions = await qGet<any>(`tests/${seg[2]}/questions`, { orderField: 'sort_order', orderDir: 'asc' });
-        const attempts = await qGet<any>(`tests/${seg[2]}/attempts`, { orderField: 'id', orderDir: 'desc', limit: 100 });
+        const rawAttempts = await qGet<any>(`tests/${seg[2]}/attempts`, { orderField: 'id', orderDir: 'desc', limit: 100 });
+        const attempts = rawAttempts.map((a: any) => ({
+          ...a,
+          answers: (() => { try { return JSON.parse(a.answers_json || '{}'); } catch { return {}; } })(),
+          manual: (() => { try { return JSON.parse(a.manual_json || '{}'); } catch { return {}; } })(),
+        }));
         return { test, sections, questions, attempts };
       }
       if (method === 'GET' && seg[3] === 'attempts') {
-        const attempts = await qGet<any>(`tests/${seg[2]}/attempts`, { orderField: 'id', orderDir: 'desc' });
+        const rawAttempts2 = await qGet<any>(`tests/${seg[2]}/attempts`, { orderField: 'id', orderDir: 'desc' });
+        const attempts2 = rawAttempts2.map((a: any) => ({
+          ...a,
+          answers: (() => { try { return JSON.parse(a.answers_json || '{}'); } catch { return {}; } })(),
+          manual: (() => { try { return JSON.parse(a.manual_json || '{}'); } catch { return {}; } })(),
+        }));
         const questions = await qGet<any>(`tests/${seg[2]}/questions`, { orderField: 'sort_order', orderDir: 'asc' });
-        return { attempts, questions };
+        return { attempts: attempts2, questions };
       }
       if (method === 'POST' && seg[3] === 'publish') {
         const qs = await getDocs(collection(dbv, `tests/${seg[2]}/questions`));
@@ -629,10 +655,28 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
           manual_json: '{}', graded: hasSubjective ? 0 : 1, rated: 0,
           score: autoScore, total, submitted_at: new Date().toISOString(),
         });
-        return { attemptId: id, score: autoScore, total, review, pendingGrading: hasSubjective };
+        // rank — इस score से ऊँचे वाले attempts की गिनती
+        let rank: number | null = null;
+        try {
+          const all = await qGet<any>(`tests/${tid}/attempts`, { orderField: 'id', orderDir: 'desc' });
+          const better = all.filter((a: any) => a.id !== id && Number(a.score || 0) > autoScore).length;
+          rank = better + 1;
+        } catch { rank = null; }
+        return { attemptId: id, score: autoScore, total, review, pendingGrading: hasSubjective, rank };
       } catch (e: any) {
         throw new Error('SUBMIT-FAIL: ' + (e && e.message ? e.message : String(e)));
       }
+    }
+    if (method === 'GET' && seg.length === 4 && seg[3] === 'leaderboard') {
+      const tsnap = await getDoc(doc(dbv, 'tests', tid));
+      if (!tsnap.exists() || tsnap.data()?.status !== 'published') throw new Error('Test not available');
+      const attempts = await qGet<any>(`tests/${tid}/attempts`, { orderField: 'id', orderDir: 'desc' });
+      const ranked = attempts.slice().sort((a: any, b: any) => (Number(b.score) || 0) - (Number(a.score) || 0));
+      const top = ranked.slice(0, 20).map((a: any, i: number) => ({
+        rank: i + 1, id: a.id, studentName: a.student_name || 'Anonymous',
+        score: Number(a.score || 0), total: a.total, submitted_at: a.submitted_at,
+      }));
+      return { top, totalParticipants: ranked.length };
     }
     if (method === 'POST' && seg.length === 5 && seg[3] === 'rate') {
       const aref = doc(dbv, `tests/${tid}/attempts`, String(body.attemptId));
@@ -843,7 +887,33 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
       id: c.id, title: c.title, description: c.description || null,
       price: Number(c.price || 0), currency: c.currency || 'INR', ownerUid: c.ownerUid,
     }));
-    return { teacherName, tests: withCounts, materials, courses: courseCards };
+    let faculty: any[] = [];
+    if (ownerUid) {
+      try { faculty = await qGet<any>('faculty', { wheres: [['ownerUid', '==', ownerUid]] }); } catch { faculty = []; }
+      faculty.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+    }
+    return { teacherName, tests: withCounts, materials, courses: courseCards, faculty, dailyQuiz: withCounts[0] || null };
+  }
+
+  // ---------- faculty (teacher profiles) ----------
+  if (seg[0] === 'v2' && seg[1] === 'faculty') {
+    if (method === 'GET' && seg.length === 2) {
+      const list = await qGet<any>('faculty', { wheres: [['ownerUid', '==', ownerUid]] });
+      list.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+      return list;
+    }
+    if (method === 'POST' && seg.length === 2) {
+      const id = await nextId(dbv, 'faculty');
+      await setDoc(doc(dbv, 'faculty', String(id)), {
+        id, ownerUid, name: body?.name || '', subject: body?.subject || '',
+        bio: body?.bio || '', experience: body?.experience || '', createdAt: tsNow(),
+      });
+      return { id };
+    }
+    if (method === 'DELETE' && seg.length === 3) {
+      await deleteDoc(doc(dbv, 'faculty', seg[2]));
+      return { deleted: true };
+    }
   }
 
   // ---------- courses (admin) ----------

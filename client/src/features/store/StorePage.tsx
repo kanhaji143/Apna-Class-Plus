@@ -29,13 +29,18 @@ const pubPost = async <T = any>(path: string, body: any): Promise<T> => {
 
 interface StoreCourse { id: number; title: string; description: string | null; price: number; currency: string; ownerUid?: string; }
 interface StoreTest { id: number; title: string; description: string | null; durationMin: number; questionCount: number; }
-interface StoreMaterial { id: number; type: string; title: string; url: string | null; description: string | null; }
+interface StoreMaterial { id: number; type: string; title: string; url: string | null; description: string | null; category?: string; }
+interface StoreFaculty { id: number; name: string; subject: string; bio: string; experience: string; }
 
 export default function StorePage() {
   const [teacherName, setTeacherName] = useState('Apna Class Plus');
   const [courses, setCourses] = useState<StoreCourse[]>([]);
   const [tests, setTests] = useState<StoreTest[]>([]);
   const [materials, setMaterials] = useState<StoreMaterial[]>([]);
+  const [faculty, setFaculty] = useState<StoreFaculty[]>([]);
+  const [dailyQuiz, setDailyQuiz] = useState<StoreTest | null>(null);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('');
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState(0);
   const navigate = useNavigate();
@@ -56,8 +61,18 @@ export default function StorePage() {
       setCourses(d.courses || []);
       setTests(d.tests || []);
       setMaterials(d.materials || []);
+      setFaculty(d.faculty || []);
+      setDailyQuiz(d.dailyQuiz || null);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
+
+  const q = search.trim().toLowerCase();
+  const match = (s?: string) => !q || (s || '').toLowerCase().includes(q);
+  const filteredCourses = courses.filter((c) => match(c.title) || match(c.description || ''));
+  const filteredTests = tests.filter((t) => match(t.title) || match(t.description || ''));
+  const categories = Array.from(new Set(materials.map((m) => m.category).filter(Boolean))) as string[];
+  const filteredMaterials = materials.filter((m) => match(m.title) || match(m.description || '') || match(m.category || ''));
+  const shownMaterials = category ? filteredMaterials.filter((m) => m.category === category) : filteredMaterials;
 
   const openEnroll = (c: StoreCourse) => {
     setEnrollCourse(c);
@@ -152,14 +167,24 @@ export default function StorePage() {
         </Avatar>
         <Typography variant="h5" fontWeight={900}>{teacherName}</Typography>
         <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>Learn. Practice. Grow. 🚀</Typography>
+        <Button size="small" variant="outlined" href="/tools/bmi" sx={{ mt: 1.5, color: '#fff', borderColor: '#fff', fontWeight: 800 }}>
+          🧮 BMI Calculator
+        </Button>
       </Box>
 
-      {/* Tabs */}
+      {/* Search + Tabs */}
       <Paper elevation={0} sx={{ position: 'sticky', top: 0, zIndex: 5, borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ px: 2, pt: 1.5 }}>
+          <TextField
+            size="small" fullWidth placeholder="🔍 Courses, tests, material खोजें…"
+            value={search} onChange={(e) => setSearch(e.target.value)}
+          />
+        </Box>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="fullWidth">
           <Tab label={`📚 Courses (${courses.length})`} />
           <Tab label={`📝 Tests (${tests.length})`} />
           <Tab label={`🎁 Free Material (${materials.length})`} />
+          <Tab label={`👨‍🏫 Faculty (${faculty.length})`} />
         </Tabs>
       </Paper>
 
@@ -168,11 +193,22 @@ export default function StorePage() {
           <>{[1, 2, 3].map((i) => <Skeleton key={i} variant="rectangular" height={110} sx={{ mb: 2, borderRadius: 3 }} />)}</>
         ) : tab === 0 ? (
           <>
+            {dailyQuiz && (
+              <Card elevation={3} sx={{ mb: 2, borderRadius: 3, background: 'linear-gradient(135deg,#6C5CE7,#8E7CF8)', color: '#fff' }}>
+                <CardContent>
+                  <Typography fontWeight={900}>⚡ आज का क्विज़</Typography>
+                  <Typography sx={{ opacity: 0.95, mb: 1 }}>{dailyQuiz.title} · {dailyQuiz.questionCount} प्रश्न</Typography>
+                  <Button size="small" variant="contained" onClick={() => navigate(`/test/${dailyQuiz.id}`)} sx={{ bgcolor: '#fff', color: '#6C5CE7', fontWeight: 800 }}>
+                    Start →
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
             <Typography variant="h6" fontWeight={800} sx={{ mb: 2 }}>📚 Courses</Typography>
-            {courses.length === 0 && (
+            {filteredCourses.length === 0 && (
               <Card><CardContent><Typography color="text.secondary" textAlign="center" py={3}>Abhi koi course publish nahi hai.</Typography></CardContent></Card>
             )}
-            {courses.map((c) => (
+            {filteredCourses.map((c) => (
               <Card key={c.id} elevation={2} sx={{ mb: 2, borderRadius: 3 }}>
                 <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                   <Box sx={{ flexGrow: 1, minWidth: 200 }}>
@@ -193,10 +229,10 @@ export default function StorePage() {
         ) : tab === 1 ? (
           <>
             <Typography variant="h6" fontWeight={800} sx={{ mb: 2 }}>📝 Practice Tests</Typography>
-            {tests.length === 0 && (
+            {filteredTests.length === 0 && (
               <Card><CardContent><Typography color="text.secondary" textAlign="center" py={3}>Abhi koi test published nahi.</Typography></CardContent></Card>
             )}
-            {tests.map((t) => (
+            {filteredTests.map((t) => (
               <Card key={t.id} elevation={2} sx={{ mb: 2, borderRadius: 3 }}>
                 <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                   <Box sx={{ flexGrow: 1, minWidth: 200 }}>
@@ -215,13 +251,21 @@ export default function StorePage() {
               </Card>
             ))}
           </>
-        ) : (
+        ) : tab === 2 ? (
           <>
             <Typography variant="h6" fontWeight={800} sx={{ mb: 2 }}>🎁 Free Study Material</Typography>
-            {materials.length === 0 && (
+            {categories.length > 0 && (
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                <Chip size="small" label="Sab" variant={category === '' ? 'filled' : 'outlined'} onClick={() => setCategory('')} />
+                {categories.map((c) => (
+                  <Chip key={c} size="small" label={c} variant={category === c ? 'filled' : 'outlined'} onClick={() => setCategory(c)} />
+                ))}
+              </Box>
+            )}
+            {shownMaterials.length === 0 && (
               <Card><CardContent><Typography color="text.secondary" textAlign="center">Abhi koi material published nahi.</Typography></CardContent></Card>
             )}
-            {materials.map((m) => (
+            {shownMaterials.map((m) => (
               <Card key={m.id} elevation={2} sx={{ mb: 2, borderRadius: 3 }}>
                 <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                   <Box sx={{ fontSize: 32 }}>
@@ -230,7 +274,10 @@ export default function StorePage() {
                   <Box sx={{ flexGrow: 1, minWidth: 200 }}>
                     <Typography fontWeight={800} fontSize={16}>{m.title}</Typography>
                     {m.description && <Typography variant="body2" color="text.secondary">{m.description}</Typography>}
-                    <Chip size="small" color="success" label="FREE" sx={{ mt: 1 }} />
+                    <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                      <Chip size="small" color="success" label="FREE" />
+                      {m.category && <Chip size="small" variant="outlined" label={m.category} />}
+                    </Box>
                   </Box>
                   {m.url && (
                     <Button variant="contained" color="primary" href={m.url} target="_blank" sx={{ fontWeight: 800, borderRadius: 2, px: 3 }}>
@@ -240,6 +287,30 @@ export default function StorePage() {
                 </CardContent>
               </Card>
             ))}
+          </>
+        ) : (
+          <>
+            <Typography variant="h6" fontWeight={800} sx={{ mb: 2 }}>👨‍🏫 Faculty</Typography>
+            {faculty.length === 0 && (
+              <Card><CardContent><Typography color="text.secondary" textAlign="center" py={3}>Abhi koi faculty profile nahi hai.</Typography></CardContent></Card>
+            )}
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 2 }}>
+              {faculty.map((f) => (
+                <Card key={f.id} elevation={2} sx={{ borderRadius: 3 }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                      <Avatar sx={{ bgcolor: 'primary.main', fontWeight: 900 }}>{f.name?.[0] || '?'}</Avatar>
+                      <Box>
+                        <Typography fontWeight={800}>{f.name}</Typography>
+                        <Typography variant="caption" color="primary">{f.subject}</Typography>
+                      </Box>
+                    </Box>
+                    {f.experience && <Typography variant="caption" color="text.secondary" display="block">{f.experience}</Typography>}
+                    {f.bio && <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{f.bio}</Typography>}
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
           </>
         )}
       </Box>

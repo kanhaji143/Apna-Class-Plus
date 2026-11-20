@@ -25,6 +25,8 @@ import CampaignsListPage from './features/campaigns/CampaignsListPage';
 import AnalyticsPage from './features/analytics/AnalyticsPage';
 import ProgressPage from './features/progress/ProgressPage';
 import CouponsPage from './features/coupons/CouponsPage';
+import FacultyPage from './features/faculty/FacultyPage';
+import BmiPage from './features/tools/BmiPage';
 import OrdersPage from './features/orders/OrdersPage';
 import TestPortalPage from './features/tests/TestPortalPage';
 import TestEditorPage from './features/tests/TestEditorPage';
@@ -69,6 +71,7 @@ export default function App() {
         <Route path="/store/:teacherId" element={<StorePage />} />
         <Route path="/chat/:token" element={<PublicChatPage />} />
         <Route path="/learn/:token" element={<LearnPage />} />
+        <Route path="/tools/bmi" element={<BmiPage />} />
 
         {/* ---------- protected (teacher dashboard) ---------- */}
         <Route
@@ -95,6 +98,7 @@ export default function App() {
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="progress" element={<ProgressPage />} />
           <Route path="coupons" element={<CouponsPage />} />
+          <Route path="faculty" element={<FacultyPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="content/test-portal" element={<TestPortalPage />} />
           <Route path="content/test-portal/:id" element={<TestEditorPage />} />

@@ -6,6 +6,7 @@ import {
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { db, FB_MODE, doc, getDoc, updateDoc } from '../../firebase/fb';
+import { post } from '../../api/client';
 
 interface Item { id: number; title: string; type: string; url: string; description?: string; folderId: number | null; sortOrder: number; }
 interface Folder { id: number; name: string; parentId: number | null; sortOrder: number; }
@@ -22,6 +23,7 @@ export default function LearnPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState<Record<string, boolean>>({});
+  const [ratings, setRatings] = useState<Record<string, number>>({});
   const storageKey = `learn-progress-${token}`;
 
   useEffect(() => {
@@ -40,6 +42,7 @@ export default function LearnPage() {
         try { local = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { /* ignore */ }
         const server = (snap.data()?.progress as Record<string, boolean>) || {};
         setDone({ ...server, ...local });
+        setRatings((snap.data()?.ratings as Record<string, number>) || {});
       } catch {
         setErr('Course load nahi hua. Internet check karke retry karo.');
       } finally { setLoading(false); }
@@ -69,6 +72,15 @@ export default function LearnPage() {
   const doneCount = items.filter((i) => done[String(i.id)]).length;
   const pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
 
+  const rate = async (id: number, stars: number) => {
+    setRatings((r) => ({ ...r, [String(id)]: stars }));
+    try { await post('/v2/course-links/rate', { token, itemId: id, stars }); } catch { /* ignore */ }
+  };
+
+  const avgRating = items.length
+    ? (items.reduce((s, i) => s + (ratings[String(i.id)] || 0), 0) / items.length).toFixed(1)
+    : '0.0';
+
   const toggleDone = async (id: number) => {
     const next: Record<string, boolean> = { ...done };
     if (next[String(id)]) delete next[String(id)];
@@ -90,6 +102,16 @@ export default function LearnPage() {
         </Typography>
       </Box>
       <Chip size="small" label={it.type} variant="outlined" />
+      <Box sx={{ display: 'flex', gap: 0.25 }} title="रेटिंग दो">
+        {[1, 2, 3, 4, 5].map((s) => (
+          <Typography
+            key={s} onClick={() => rate(it.id, s)}
+            sx={{ cursor: 'pointer', fontSize: 16, lineHeight: 1, color: (ratings[String(it.id)] || 0) >= s ? 'warning.main' : 'grey.300' }}
+          >
+            ★
+          </Typography>
+        ))}
+      </Box>
       <Button
         size="small"
         variant={done[String(it.id)] ? 'contained' : 'outlined'}
@@ -130,7 +152,7 @@ export default function LearnPage() {
               <Box sx={{ flexGrow: 1, bgcolor: 'rgba(255,255,255,0.25)', borderRadius: 1, height: 8, overflow: 'hidden' }}>
                 <Box sx={{ width: `${pct}%`, height: '100%', bgcolor: '#fff', transition: 'width .3s' }} />
               </Box>
-              <Typography variant="caption" fontWeight={800}>{pct}% · {doneCount}/{items.length} done</Typography>
+              <Typography variant="caption" fontWeight={800}>{pct}% · {doneCount}/{items.length} done · ★ {avgRating}</Typography>
             </Box>
           )}
         </Box>

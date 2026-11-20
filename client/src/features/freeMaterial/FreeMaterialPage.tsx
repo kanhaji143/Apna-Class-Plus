@@ -10,7 +10,9 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import { get, post, put, del } from '../../api/client';
 
-interface Material { id: number; type: string; title: string; url: string | null; description: string | null; status: string; }
+interface Material { id: number; type: string; title: string; url: string | null; description: string | null; status: string; category?: string; }
+
+const CATEGORIES = ['Current Affairs', 'JEE', 'NEET', 'SSC', 'Railway', 'Banking', 'Defence', 'Class 10', 'Class 12'];
 
 const TYPES = [
   { value: 'pdf', label: '📄 PDF' },
@@ -24,7 +26,8 @@ export default function FreeMaterialPage() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ type: 'pdf', title: '', url: '', description: '', status: 'published' });
+  const [form, setForm] = useState({ type: 'pdf', title: '', url: '', description: '', status: 'published', category: '' });
+  const [filterCat, setFilterCat] = useState('');
 
   const load = () => {
     get<Material[]>('/v3/free-materials').then(setItems).catch(() => {}).finally(() => setLoading(false));
@@ -38,7 +41,7 @@ export default function FreeMaterialPage() {
       if (editingId) await put(`/v3/free-materials/${editingId}`, form);
       else await post('/v3/free-materials', form);
       setOpen(false); setEditingId(null);
-      setForm({ type: 'pdf', title: '', url: '', description: '', status: 'published' });
+      setForm({ type: 'pdf', title: '', url: '', description: '', status: 'published', category: '' });
       load();
     } finally { setCreating(false); }
   };
@@ -56,7 +59,7 @@ export default function FreeMaterialPage() {
 
   const edit = (m: Material) => {
     setEditingId(m.id);
-    setForm({ type: m.type, title: m.title, url: m.url || '', description: m.description || '', status: m.status });
+    setForm({ type: m.type, title: m.title, url: m.url || '', description: m.description || '', status: m.status, category: m.category || '' });
     setOpen(true);
   };
 
@@ -84,17 +87,25 @@ export default function FreeMaterialPage() {
         Free PDFs/videos jo koi bhi student access kar sakta hai — lead magnet ke liye. Published items landing pages ke "Free Material" section mein live dikhte hain.
       </Typography>
 
+      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+        <Chip size="small" label="Sab" variant={filterCat === '' ? 'filled' : 'outlined'} onClick={() => setFilterCat('')} />
+        {CATEGORIES.filter((c) => items.some((m) => m.category === c)).map((c) => (
+          <Chip key={c} size="small" label={c} variant={filterCat === c ? 'filled' : 'outlined'} onClick={() => setFilterCat(c)} />
+        ))}
+      </Box>
+
       {loading ? (
         <Typography color="text.secondary">Loading…</Typography>
       ) : items.length === 0 ? (
         <Card elevation={2}><CardContent><Typography color="text.secondary">Koi free material nahi. Add karo!</Typography></CardContent></Card>
       ) : (
-        items.map((m) => (
+        (filterCat ? items.filter((m) => m.category === filterCat) : items).map((m) => (
           <Card key={m.id} elevation={2} sx={{ mb: 1.5 }}>
             <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', py: 1.5 }}>
               <Box sx={{ flexGrow: 1, minWidth: 200 }}>
                 <Typography variant="body1" fontWeight={700}>{TYPES.find((t) => t.value === m.type)?.label ?? '📎'} {m.title}</Typography>
                 {m.url && <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>{m.url}</Typography>}
+                {m.category && <Chip size="small" variant="outlined" label={m.category} sx={{ mt: 0.5 }} />}
               </Box>
               <Chip size="small" label={m.status === 'published' ? '🟢 Published' : '⚪ Draft'}
                 variant="outlined" color={m.status === 'published' ? 'success' : 'default'} clickable onClick={() => toggleStatus(m)} />
@@ -117,6 +128,10 @@ export default function FreeMaterialPage() {
           <TextField label="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} fullWidth autoFocus />
           <TextField label="URL (pdf/video link)" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} fullWidth />
           <TextField label="Description (optional)" multiline rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} fullWidth />
+          <TextField label="Category (optional)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} fullWidth placeholder="Current Affairs / JEE / NEET / SSC…" />
+          <Typography variant="caption" color="text.secondary">
+            Popular: {CATEGORIES.slice(0, 5).join(' · ')}
+          </Typography>
           <FormControl fullWidth>
             <InputLabel>Status</InputLabel>
             <Select label="Status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>

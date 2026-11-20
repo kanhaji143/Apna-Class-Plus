@@ -878,6 +878,48 @@
 - **Expected:** Pages list render, date formatted; React error #31 gone.
 - **Status:** PASS (Timestamp→ISO in route + fmtDate in page).
 
+## Module 37 - Free Extras Pack (Phase 13v)
+
+### TC-37.1 Store global search
+- **Steps:** /store -> type "science".
+- **Expected:** courses/tests/materials filter; empty → no results.
+- **Status:** PASS.
+
+### TC-37.2 Daily quiz highlight
+- **Steps:** /store.
+- **Expected:** "आज का क्विज़" card with latest published test.
+- **Status:** PASS (Demo Sample Test).
+
+### TC-37.3 Free material category
+- **Steps:** /content/free-material -> category set -> /store.
+- **Expected:** category chip + store filter chip.
+- **Status:** PASS (Class 10).
+
+### TC-37.4 Faculty profiles
+- **Steps:** /faculty -> add profile -> /store Faculty tab.
+- **Expected:** public profile visible.
+- **Status:** PASS (Anil Sharma).
+
+### TC-37.5 BMI calculator
+- **Steps:** /tools/bmi -> inputs -> Calculate.
+- **Expected:** BMI, body fat, healthy weight, BMR.
+- **Status:** PASS (BMI 22.9 Normal).
+
+### TC-37.6 Lesson rating
+- **Steps:** /learn/<token> -> click 5 stars.
+- **Expected:** avg ★ 5.0; persisted.
+- **Status:** PASS.
+
+### TC-37.7 Test leaderboard (student)
+- **Steps:** Submit test.
+- **Expected:** "आपका रैंक: #N" + top 10 leaderboard.
+- **Status:** PASS (#1).
+
+### TC-37.8 Test leaderboard (teacher)
+- **Steps:** /content/test-portal/:id -> Results tab.
+- **Expected:** Top 10 list + student results.
+- **Status:** PASS.
+
 ## Module 35 - Mobile Responsive (Phase 13t)
 
 ### TC-35.1 Mobile drawer

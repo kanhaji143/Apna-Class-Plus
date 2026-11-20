@@ -240,6 +240,22 @@
 
 ---
 
+## Phase 13v - Free Extras Pack (AppX parity)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. **Leaderboard / Rank / Top scorers** — per test, top 20, student rank after submit.
+2. **Global search** — store courses/tests/material (client-side).
+3. **Faculty profiles** — teacher manage `/faculty`, public store "Faculty" tab.
+4. **Exam-wise notes** — free material `category` field + store category chips.
+5. **Lesson ratings** — LearnPage star rating (1–5) + average, synced to `courseLinks.ratings`.
+6. **Daily Quiz highlight** — store shows "आज का क्विज़" (latest published test).
+7. **BMI & Body Fat calculator** — public tool `/tools/bmi`.
+8. Rules: `faculty` public read; `courseLinks` public update allows `progress` + `ratings`.
+
+---
+
 ## Phase 13o - Comprehension (passage + sub-questions)
 
 **Date:** 2026-11-13

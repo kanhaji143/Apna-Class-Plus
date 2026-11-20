@@ -103,8 +103,14 @@ service cloud.firestore {
       allow get: if true;                // capability link (shared course access)
       allow list: if isOwner(resource.data);
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update: if isOwner(resource.data) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['progress']); // public lesson completion
+      allow update: if isOwner(resource.data) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['progress', 'ratings']); // public lesson completion/rating
       allow delete: if isOwner(resource.data);
+    }
+
+    match /faculty/{fid} {
+      allow read: if true;               // public teacher profile
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isOwner(resource.data);
     }
 
     match /coupons/{cid} {

@@ -501,6 +501,35 @@
 
 ---
 
+## Phase 13v - Free Extras Pack (AppX parity)
+
+**Date:** 2026-11-13
+**Live URL:** https://apna-class-plus.web.app
+
+### What was done
+- Store: global search, category chips (materials), "आज का क्विज़" card, Faculty tab.
+- Free Material: `category` field + filter chips (Current Affairs/JEE/NEET/SSC etc.).
+- Faculty page `/faculty` + public store tab.
+- BMI & Body Fat calculator `/tools/bmi` (public, no login).
+- LearnPage: per-lesson star rating (1–5) + average, synced to `courseLinks.ratings`.
+- Tests: leaderboard + rank (submit response + `/public/test/:id/leaderboard`), teacher Results tab leaderboard.
+- Rules: `faculty` public read; `courseLinks` public update allows `progress` + `ratings`.
+
+### Live E2E verified
+1. Store search (science / empty) - PASS
+2. Daily quiz card - PASS
+3. Free material category chip + filter - PASS
+4. Faculty profile create + public tab - PASS
+5. BMI calculator (BMI 22.9 Normal, BMR 1659) - PASS
+6. Lesson rating (★ 5.0) - PASS
+7. Test leaderboard + rank (student + teacher) - PASS
+
+### Notes
+- Blog/Shorts/Feed, Survey, Push (FCM), Test Pass subscription, Referral, Daily Quiz page, EBooks/Audio — planned next.
+- Paid features (live class, DRM, OMR, Doubtnut, EMI, UPI QR, affiliate) — infra/keys required.
+
+---
+
 ## Phase 13t - Mobile Responsive Polish
 
 **Date:** 2026-11-13
