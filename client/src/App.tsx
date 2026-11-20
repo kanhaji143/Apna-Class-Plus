@@ -27,6 +27,10 @@ import ProgressPage from './features/progress/ProgressPage';
 import CouponsPage from './features/coupons/CouponsPage';
 import FacultyPage from './features/faculty/FacultyPage';
 import BmiPage from './features/tools/BmiPage';
+import ReferralsPage from './features/referrals/ReferralsPage';
+import BlogNewsPage from './features/blog/BlogNewsPage';
+import SurveyPage from './features/surveys/SurveyPage';
+import PublicSurveyPage from './features/surveys/PublicSurveyPage';
 import OrdersPage from './features/orders/OrdersPage';
 import TestPortalPage from './features/tests/TestPortalPage';
 import TestEditorPage from './features/tests/TestEditorPage';
@@ -72,6 +76,7 @@ export default function App() {
         <Route path="/chat/:token" element={<PublicChatPage />} />
         <Route path="/learn/:token" element={<LearnPage />} />
         <Route path="/tools/bmi" element={<BmiPage />} />
+        <Route path="/survey/:id" element={<PublicSurveyPage />} />
 
         {/* ---------- protected (teacher dashboard) ---------- */}
         <Route
@@ -99,6 +104,9 @@ export default function App() {
           <Route path="progress" element={<ProgressPage />} />
           <Route path="coupons" element={<CouponsPage />} />
           <Route path="faculty" element={<FacultyPage />} />
+          <Route path="referrals" element={<ReferralsPage />} />
+          <Route path="blog" element={<BlogNewsPage />} />
+          <Route path="surveys" element={<SurveyPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="content/test-portal" element={<TestPortalPage />} />
           <Route path="content/test-portal/:id" element={<TestEditorPage />} />

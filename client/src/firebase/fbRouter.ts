@@ -103,6 +103,9 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
       tab('Coupons', 'coupons', 11),
       tab('Orders', 'orders', 12),
       tab('Faculty', 'faculty', 13),
+      tab('Referrals', 'referrals', 14),
+      tab('Blog & News', 'blog', 15),
+      tab('Surveys', 'surveys', 16),
     ];
   }
 
@@ -341,6 +344,128 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     }
 
     return out;
+  }
+
+  // ---------- referrals (discount + tracking) ----------
+  if (seg[0] === 'v1' && seg[1] === 'diy' && seg[2] === 'referrals') {
+    if (method === 'GET' && seg.length === 3) {
+      const list = await qGet<any>('referrals', { wheres: [['ownerUid', '==', ownerUid]] });
+      list.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+      const leads = await qGet<any>('leads', { wheres: [['ownerUid', '==', ownerUid]] });
+      return list.map((c: any) => ({
+        _id: c.id, code: c.code, discountType: c.discountType, value: c.value,
+        status: c.status, expiry: c.expiry || null, createdAt: c.createdAt,
+        usedCount: leads.filter((l: any) => String(l.referralCode || '').toLowerCase() === String(c.code || '').toLowerCase()).length,
+        referrerName: c.referrerName || '',
+      }));
+    }
+    if (method === 'POST' && seg.length === 3) {
+      const code = String(body?.code || '').trim().toUpperCase();
+      if (!code) throw new Error('code required');
+      const id = await nextId(dbv, 'referrals');
+      await setDoc(doc(dbv, 'referrals', String(id)), {
+        id, ownerUid, code, discountType: body?.discountType === 'flat' ? 'flat' : 'percent',
+        value: Number(body?.value || 0), referrerName: body?.referrerName || '',
+        status: 'active', expiry: body?.expiry || null, createdAt: tsNow(),
+      });
+      return { _id: id, code, status: 'active' };
+    }
+    if (method === 'POST' && seg[3] === 'apply') {
+      const code = String(body?.code || '').trim().toUpperCase();
+      if (!code) throw new Error('code required');
+      const snaps = await getDocs(query(collection(dbv, 'referrals'), where('code', '==', code), where('status', '==', 'active')));
+      const c: any = snaps.docs[0]?.data();
+      if (!c) throw new Error('Invalid referral code');
+      const price = Number(body?.price || 0);
+      const discount = c.discountType === 'flat' ? Math.min(price, Number(c.value || 0)) : Math.round((price * Number(c.value || 0)) / 100);
+      return { valid: true, code: c.code, discountType: c.discountType, value: Number(c.value || 0), discount, finalPrice: Math.max(0, price - discount), referrerName: c.referrerName || '' };
+    }
+    if (method === 'PUT' && seg.length === 4) {
+      const upd: any = {};
+      if (body?.status !== undefined) upd.status = body.status === 'disabled' ? 'disabled' : 'active';
+      if (body?.value !== undefined) upd.value = Number(body.value);
+      await updateDoc(doc(dbv, 'referrals', seg[3]), upd);
+      return { updated: true };
+    }
+    if (method === 'DELETE' && seg.length === 4) {
+      await deleteDoc(doc(dbv, 'referrals', seg[3]));
+      return { deleted: true };
+    }
+  }
+
+  // ---------- posts (blog / news / shorts) ----------
+  if (seg[0] === 'v1' && seg[1] === 'diy' && seg[2] === 'posts') {
+    if (method === 'GET' && seg.length === 3) {
+      const list = await qGet<any>('posts', { wheres: [['ownerUid', '==', ownerUid]] });
+      list.sort((a: any, b: any) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      return list.map((p: any) => ({ _id: p.id, title: p.title, body: p.body, type: p.type, status: p.status, createdAt: p.createdAt }));
+    }
+    if (method === 'POST' && seg.length === 3) {
+      const id = await nextId(dbv, 'posts');
+      await setDoc(doc(dbv, 'posts', String(id)), {
+        id, ownerUid, title: body?.title || 'Untitled', body: body?.body || '', type: body?.type || 'blog',
+        status: body?.status === 'draft' ? 'draft' : 'published', createdAt: tsNow(),
+      });
+      return { _id: id, title: body?.title, status: body?.status === 'draft' ? 'draft' : 'published' };
+    }
+    if (method === 'DELETE' && seg.length === 4) {
+      await deleteDoc(doc(dbv, 'posts', seg[3]));
+      return { deleted: true };
+    }
+  }
+  // public posts (store)
+  if (seg[0] === 'store' && seg[1] === 'posts' && method === 'GET') {
+    const list = await qGet<any>('posts', { wheres: [['status', '==', 'published']] });
+    list.sort((a: any, b: any) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    return list.map((p: any) => ({ _id: p.id, title: p.title, body: p.body, type: p.type, createdAt: p.createdAt }));
+  }
+
+  // ---------- surveys ----------
+  if (seg[0] === 'v1' && seg[1] === 'diy' && seg[2] === 'surveys') {
+    if (method === 'GET' && seg.length === 3) {
+      const list = await qGet<any>('surveys', { wheres: [['ownerUid', '==', ownerUid]] });
+      list.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+      const responses = await qGet<any>('surveyResponses', { wheres: [['ownerUid', '==', ownerUid]] });
+      return list.map((s: any) => ({
+        _id: s.id, title: s.title, question: s.question, options: s.options || [],
+        status: s.status, createdAt: s.createdAt,
+        responseCount: responses.filter((r: any) => Number(r.surveyId) === Number(s.id)).length,
+      }));
+    }
+    if (method === 'POST' && seg.length === 3) {
+      const id = await nextId(dbv, 'surveys');
+      await setDoc(doc(dbv, 'surveys', String(id)), {
+        id, ownerUid, title: body?.title || 'Untitled Survey', question: body?.question || '',
+        options: Array.isArray(body?.options) ? body.options : [], status: 'active', createdAt: tsNow(),
+      });
+      return { _id: id, title: body?.title, status: 'active' };
+    }
+    if (method === 'GET' && seg[4] === 'responses' && seg.length === 5) {
+      const list = await qGet<any>('surveyResponses', { wheres: [['surveyId', '==', Number(seg[3])], ['ownerUid', '==', ownerUid]] });
+      return list;
+    }
+    if (method === 'DELETE' && seg.length === 4) {
+      await deleteDoc(doc(dbv, 'surveys', seg[3]));
+      return { deleted: true };
+    }
+  }
+  // public survey
+  if (seg[0] === 'public' && seg[1] === 'survey' && method === 'GET' && seg.length === 3) {
+    const snap = await getDoc(doc(dbv, 'surveys', seg[2]));
+    if (!snap.exists() || snap.data()?.status !== 'active') throw new Error('Survey not available');
+    const s: any = snap.data();
+    return { _id: s.id, title: s.title, question: s.question, options: s.options || [] };
+  }
+  if (seg[0] === 'public' && seg[1] === 'survey' && seg[3] === 'respond' && method === 'POST') {
+    const snap = await getDoc(doc(dbv, 'surveys', seg[2]));
+    if (!snap.exists()) throw new Error('Survey not found');
+    const s: any = snap.data();
+    const id = await nextId(dbv, 'surveyResponses');
+    await setDoc(doc(dbv, 'surveyResponses', String(id)), {
+      id, ownerUid: s.ownerUid, surveyId: Number(seg[2]), answer: body?.answer || '',
+      studentName: body?.studentName || 'Anonymous', createdAt: tsNow(),
+    });
+    return { ok: true };
   }
 
   // ---------- landing pages ----------
@@ -892,7 +1017,9 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
       try { faculty = await qGet<any>('faculty', { wheres: [['ownerUid', '==', ownerUid]] }); } catch { faculty = []; }
       faculty.sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
     }
-    return { teacherName, tests: withCounts, materials, courses: courseCards, faculty, dailyQuiz: withCounts[0] || null };
+    const posts = await qGet<any>('posts', { wheres: [['status', '==', 'published']] });
+    posts.sort((a: any, b: any) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    return { teacherName, tests: withCounts, materials, courses: courseCards, faculty, dailyQuiz: withCounts[0] || null, posts };
   }
 
   // ---------- faculty (teacher profiles) ----------

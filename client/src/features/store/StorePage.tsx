@@ -31,6 +31,7 @@ interface StoreCourse { id: number; title: string; description: string | null; p
 interface StoreTest { id: number; title: string; description: string | null; durationMin: number; questionCount: number; }
 interface StoreMaterial { id: number; type: string; title: string; url: string | null; description: string | null; category?: string; }
 interface StoreFaculty { id: number; name: string; subject: string; bio: string; experience: string; }
+interface StorePost { id: number; title: string; body: string; type: string; createdAt?: any; }
 
 export default function StorePage() {
   const [teacherName, setTeacherName] = useState('Apna Class Plus');
@@ -38,6 +39,7 @@ export default function StorePage() {
   const [tests, setTests] = useState<StoreTest[]>([]);
   const [materials, setMaterials] = useState<StoreMaterial[]>([]);
   const [faculty, setFaculty] = useState<StoreFaculty[]>([]);
+  const [posts, setPosts] = useState<StorePost[]>([]);
   const [dailyQuiz, setDailyQuiz] = useState<StoreTest | null>(null);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
@@ -63,6 +65,7 @@ export default function StorePage() {
       setMaterials(d.materials || []);
       setFaculty(d.faculty || []);
       setDailyQuiz(d.dailyQuiz || null);
+      setPosts(d.posts || []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
@@ -185,6 +188,7 @@ export default function StorePage() {
           <Tab label={`📝 Tests (${tests.length})`} />
           <Tab label={`🎁 Free Material (${materials.length})`} />
           <Tab label={`👨‍🏫 Faculty (${faculty.length})`} />
+          <Tab label={`📰 Blog & News (${posts.length})`} />
         </Tabs>
       </Paper>
 
@@ -288,7 +292,7 @@ export default function StorePage() {
               </Card>
             ))}
           </>
-        ) : (
+        ) : tab === 3 ? (
           <>
             <Typography variant="h6" fontWeight={800} sx={{ mb: 2 }}>👨‍🏫 Faculty</Typography>
             {faculty.length === 0 && (
@@ -311,6 +315,23 @@ export default function StorePage() {
                 </Card>
               ))}
             </Box>
+          </>
+        ) : (
+          <>
+            <Typography variant="h6" fontWeight={800} sx={{ mb: 2 }}>📰 Blog & News</Typography>
+            {posts.length === 0 && (
+              <Card><CardContent><Typography color="text.secondary" textAlign="center" py={3}>Abhi koi post nahi hai.</Typography></CardContent></Card>
+            )}
+            {posts.map((p) => (
+              <Card key={p.id} elevation={2} sx={{ mb: 2, borderRadius: 3 }}>
+                <CardContent>
+                  <Typography fontWeight={800} fontSize={17}>{p.type === 'short' ? '🎬' : p.type === 'news' ? '📰' : '📝'} {p.title}</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, whiteSpace: 'pre-wrap' }}>
+                    {p.body?.slice(0, 300)}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))}
           </>
         )}
       </Box>

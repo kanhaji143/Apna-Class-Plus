@@ -523,6 +523,7 @@
 5. BMI calculator (BMI 22.9 Normal, BMR 1659) - PASS
 6. Lesson rating (★ 5.0) - PASS
 7. Test leaderboard + rank (student + teacher) - PASS
+8. Survey create + public submit + results (bugfix: responses route seg[4]) - PASS
 
 ### Notes
 - Blog/Shorts/Feed, Survey, Push (FCM), Test Pass subscription, Referral, Daily Quiz page, EBooks/Audio — planned next.

@@ -119,6 +119,29 @@ service cloud.firestore {
       allow update, delete: if isOwner(resource.data);
     }
 
+    match /referrals/{rid} {
+      allow read: if isOwner(resource.data) || resource.data.status == 'active';
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    match /posts/{pid} {
+      allow read: if isOwner(resource.data) || resource.data.status == 'published';
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    match /surveys/{sid} {
+      allow read: if isOwner(resource.data) || resource.data.status == 'active';
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    match /surveyResponses/{rid} {
+      allow create: if true;   // public survey response
+      allow read: if isOwner(resource.data);
+    }
+
     match /orders/{oid} {
       allow read, update, delete: if isOwner(resource.data);
       allow create: if true;   // public store order
