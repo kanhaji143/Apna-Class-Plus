@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<title>Apna Class Plus — Complete Feature Checklist</title>
+<style>
+@page { size: A4; margin: 14mm 12mm; }
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Nirmala UI', 'Noto Sans Devanagari', system-ui, sans-serif; color: #1c1c28; line-height: 1.55; margin: 0; font-size: 12px; }
+h1 { font-size: 26px; color: #4a3fd6; border-bottom: 3px solid #6C5CE7; padding-bottom: 8px; margin: 0 0 16px; }
+h2 { font-size: 18px; color: #4a3fd6; margin: 22px 0 8px; border-bottom: 1px solid #e3e1f5; padding-bottom: 4px; }
+h3 { font-size: 14px; color: #33334d; margin: 14px 0 6px; }
+h4 { font-size: 12.5px; color: #33334d; margin: 10px 0 4px; }
+p { margin: 6px 0; }
+table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11px; }
+th, td { border: 1px solid #d8d5ee; padding: 6px 8px; text-align: left; vertical-align: top; }
+th { background: #f1efff; color: #3b2fbf; font-weight: 700; }
+tr:nth-child(even) td { background: #faf9ff; }
+ul, ol { margin: 6px 0 6px 20px; padding: 0; }
+li { margin: 3px 0; }
+code { background: #f1efff; padding: 1px 4px; border-radius: 4px; font-family: Consolas, monospace; font-size: 11px; }
+blockquote { border-left: 4px solid #6C5CE7; margin: 12px 0; padding: 8px 12px; background: #f7f6ff; color: #444; }
+hr { border: 0; border-top: 1px solid #e3e1f5; margin: 18px 0; }
+a { color: #4a3fd6; text-decoration: none; }
+h2, h3, tr { page-break-after: avoid; }
+</style>
+</head>
+<body>
+<h1>Apna Class Plus — Complete Feature Checklist (Hinglish)</h1>
+<blockquote>Sabhi features ek jagah — "kaise check karein" + expected result + live URL.</blockquote>
+<blockquote>Live app: https://apna-class-plus.web.app | Credentials: teacher@apnatest.in / secret123 (superadmin), trial@apnatest.in / secret123 (trial teacher)</blockquote>
+<hr>
+<h2>0. Tayyari (Demo/Test ke liye)</h2>
+<ol>
+<li>Browser (fresh tab) kholo → https://apna-class-plus.web.app/login</li>
+<li>Email <code>teacher@apnatest.in</code> / Password <code>secret123</code> → <strong>Sign In</strong></li>
+<li>Dashboard load hoga — sidebar mein tabs dikhenge</li>
+<li><strong>🌱 Seed Demo Data</strong> button click karo (missing demo course/test/coupon/page/material/lead ban jayenge)</li>
+<li>Student screen ke liye alag incognito/phone tab rakho (bina login)</li>
+</ol>
+<hr>
+<h2>1. Auth &amp; Roles</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>1.1</td><td>Login</td><td>/login → email+password</td><td>Dashboard khule</td></tr><tr><td>1.2</td><td>Superadmin badge</td><td>top-right "Demo Teacher Live · superadmin"</td><td>role dikhe</td></tr><tr><td>1.3</td><td>Trial teacher</td><td>trial@apnatest.in se login</td><td>"Trial: N din baaki" banner</td></tr><tr><td>1.4</td><td>Admin page (admin only)</td><td>Sidebar "Admin (Users &amp; Trials)"</td><td>users table + role/plan actions</td></tr><tr><td>1.5</td><td>Protected route redirect</td><td>/people bina login</td><td>/login redirect</td></tr></tbody></table>
+<hr>
+<h2>2. Dashboard</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>2.1</td><td>Overview cards</td><td>Dashboard</td><td>Landing Pages, Published Courses, Coupons, Campaigns</td></tr><tr><td>2.2</td><td>Analytics cards</td><td>Dashboard (Last 7 Days)</td><td>New Leads, Page Views, Students, Courses, Revenue</td></tr><tr><td>2.3</td><td>My Student Store card</td><td>Dashboard</td><td>store link + Copy Link + Open</td></tr><tr><td>2.4</td><td>Seed Demo Data</td><td>button click</td><td>"Seeded: ..." alert</td></tr><tr><td>2.5</td><td>Trial banner</td><td>trial account se login</td><td>soft warning (no lockout)</td></tr></tbody></table>
+<hr>
+<h2>3. Sidebar &amp; Navigation (Mobile + Desktop)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>3.1</td><td>Desktop sidebar</td><td>wide screen</td><td>permanent drawer, 12 tabs</td></tr><tr><td>3.2</td><td>Mobile drawer</td><td>F12 → device toolbar (≤768px)</td><td>hamburger icon; tap → drawer open</td></tr><tr><td>3.3</td><td>Submenu (Content)</td><td>Content tab</td><td>Test Portal · Free Material chips</td></tr><tr><td>3.4</td><td>Navigation</td><td>any tab</td><td>route changes, URL update</td></tr></tbody></table>
+<hr>
+<h2>4. Public Student Store (<code>/store</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>4.1</td><td>Hero + tabs</td><td>/store</td><td>teacher name, Courses/Tests/Free Material tabs</td></tr><tr><td>4.2</td><td>Course card</td><td>Courses tab</td><td>title, price, description, "Enroll →"</td></tr><tr><td>4.3</td><td>Global search</td><td>search box</td><td>courses/tests/materials filter</td></tr><tr><td>4.4</td><td>Daily quiz</td><td>store</td><td>"⚡ आज का क्विज़" card with Start →</td></tr><tr><td>4.5</td><td>Faculty tab</td><td>store</td><td>faculty profiles</td></tr><tr><td>4.6</td><td>Blog &amp; News tab</td><td>store</td><td>posts visible</td></tr><tr><td>4.7</td><td>Enroll dialog</td><td>Enroll →</td><td>naam + phone + coupon field + Apply</td></tr><tr><td>4.8</td><td>Coupon apply</td><td>code DIWALI20 → Apply</td><td>"20% off. Price: ₹499 → ₹399"</td></tr><tr><td>4.9</td><td>Invalid coupon</td><td>WRONGCODE → Apply</td><td>"Invalid coupon"</td></tr><tr><td>4.10</td><td>Enroll submit</td><td>Enroll</td><td>"Enrolled! 🎉"</td></tr><tr><td>4.11</td><td>Free material tab</td><td>Free Material tab</td><td>published PDFs/videos + Get</td></tr></tbody></table>
+<hr>
+<h2>5. Courses (<code>/courses</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>5.1</td><td>Create course</td><td>Create New Course</td><td>title, price, description</td></tr><tr><td>5.2</td><td>List</td><td>/courses</td><td>cards with status (active/archived)</td></tr><tr><td>5.3</td><td>Manage content</td><td>Manage Content</td><td>folders + lessons, drag reorder</td></tr><tr><td>5.4</td><td>Add folder</td><td>Add Folder</td><td>folder created</td></tr><tr><td>5.5</td><td>Add content</td><td>Add Content</td><td>video/pdf/audio/link</td></tr><tr><td>5.6</td><td>Share access link</td><td>🔗 icon → Generate Link</td><td><code>/learn/&lt;token&gt;</code> link</td></tr><tr><td>5.7</td><td>Archive</td><td>delete icon</td><td>status archived (not in store)</td></tr></tbody></table>
+<hr>
+<h2>6. Batches (<code>/batches</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>6.1</td><td>Create batch</td><td>Create New Batch</td><td>course + name + dates</td></tr><tr><td>6.2</td><td>List + count</td><td>/batches</td><td>"X students"</td></tr><tr><td>6.3</td><td>Manage students</td><td>Manage Students</td><td>phone se add (existing link / new create)</td></tr><tr><td>6.4</td><td>Duplicate guard</td><td>same phone twice</td><td>blocked</td></tr><tr><td>6.5</td><td>Remove student</td><td>delete icon → confirm</td><td>removed; count update</td></tr><tr><td>6.6</td><td>Date format</td><td>list</td><td>dd/mm/yyyy</td></tr></tbody></table>
+<hr>
+<h2>7. People (<code>/people</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>7.1</td><td>Leads list</td><td>Leads tab</td><td>name, phone, source, date</td></tr><tr><td>7.2</td><td>Students list</td><td>Students tab</td><td>name, phone, source</td></tr><tr><td>7.3</td><td>Add student</td><td>Add Student → Save</td><td>new student</td></tr><tr><td>7.4</td><td>Convert lead</td><td>Convert (course wala lead)</td><td>student banta hai + <strong>Onboarding dialog</strong> (📚 learning + 💬 chat links)</td></tr><tr><td>7.5</td><td>Auto access link</td><td>convert ke baad</td><td><code>/learn/&lt;token&gt;</code> + <code>/chat/&lt;token&gt;</code></td></tr><tr><td>7.6</td><td>Search</td><td>search box</td><td>name/phone filter</td></tr><tr><td>7.7</td><td>Delete</td><td>delete icon</td><td>removed</td></tr><tr><td>7.8</td><td>Access link icon</td><td>🔗 on enrolled contact</td><td>dialog with prefilled name</td></tr></tbody></table>
+<hr>
+<h2>8. Chats (<code>/chat</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>8.1</td><td>Contacts list</td><td>/chat</td><td>students + leads (dedupe)</td></tr><tr><td>8.2</td><td>Start chat</td><td>contact click</td><td>thread khule, share link dikhe</td></tr><tr><td>8.3</td><td>Send message</td><td>type + send</td><td>bubble right, conversation list update</td></tr><tr><td>8.4</td><td>Share link</td><td>copy/open</td><td><code>/chat/&lt;token&gt;</code></td></tr><tr><td>8.5</td><td>Public chat</td><td>student link (no login)</td><td>teacher name header, thread, reply</td></tr><tr><td>8.6</td><td>Two-way</td><td>student reply → teacher</td><td>~3-6s mein dikhe</td></tr><tr><td>8.7</td><td>Unread badge</td><td>student message while other contact open</td><td>chip "1" → clear on open</td></tr><tr><td>8.8</td><td>Persistence</td><td>reload</td><td>sab persist</td></tr></tbody></table>
+<hr>
+<h2>9. Campaigns (<code>/campaigns</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>9.1</td><td>Empty state</td><td>/campaigns (new)</td><td>"Koi campaign nahi"</td></tr><tr><td>9.2</td><td>Create draft</td><td>Create Campaign</td><td>audience dropdowns (course/batch by name)</td></tr><tr><td>9.3</td><td>Publish</td><td>Publish → confirm</td><td>"N recipients ko bheja (mock)", status published</td></tr><tr><td>9.4</td><td>Audience types</td><td>All / Leads / Students / Course / Batch</td><td>correct recipient count (dedupe)</td></tr><tr><td>9.5</td><td>Delete</td><td>delete icon</td><td>removed</td></tr><tr><td>9.6</td><td>Dashboard count</td><td>Dashboard</td><td>real count</td></tr></tbody></table>
+<hr>
+<h2>10. Coupons (<code>/coupons</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>10.1</td><td>Create</td><td>Create Coupon</td><td>code, type, value, course, expiry</td></tr><tr><td>10.2</td><td>List + used count</td><td>/coupons</td><td>Used Nx</td></tr><tr><td>10.3</td><td>Enable/Disable</td><td>Disable button</td><td>status disabled</td></tr><tr><td>10.4</td><td>Delete</td><td>delete</td><td>removed</td></tr><tr><td>10.5</td><td>Store apply</td><td>store enroll → code → Apply</td><td>"X% off. Price: ₹Y → ₹Z"</td></tr><tr><td>10.6</td><td>Invalid code</td><td>WRONGCODE</td><td>"Invalid coupon"</td></tr><tr><td>10.7</td><td>Dashboard count</td><td>Dashboard</td><td>real count</td></tr></tbody></table>
+<hr>
+<h2>11. Referrals (<code>/referrals</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>11.1</td><td>Create</td><td>Create Referral</td><td>code, discount, referrer, reward</td></tr><tr><td>11.2</td><td>Reward display</td><td>card</td><td>"Reward: ₹X/use · Total ₹Y"</td></tr><tr><td>11.3</td><td>Store apply (unified)</td><td>enroll → referral code → Apply</td><td>discount applied</td></tr><tr><td>11.4</td><td>Toggle/delete</td><td>buttons</td><td>works</td></tr></tbody></table>
+<hr>
+<h2>12. Blog &amp; News (<code>/blog</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>12.1</td><td>Create post</td><td>New Post</td><td>title, type (blog/news/short), body, status</td></tr><tr><td>12.2</td><td>Publish</td><td>Publish</td><td>status published</td></tr><tr><td>12.3</td><td>Public store</td><td>/store → Blog &amp; News tab</td><td>post visible</td></tr><tr><td>12.4</td><td>Delete</td><td>delete icon</td><td>removed</td></tr></tbody></table>
+<hr>
+<h2>13. Surveys (<code>/surveys</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>13.1</td><td>Create survey</td><td>New Survey</td><td>title, question, options (comma), status</td></tr><tr><td>13.2</td><td>Public page</td><td>/survey/:id (no login)</td><td>question + radio options + name + submit</td></tr><tr><td>13.3</td><td>Submit</td><td>submit</td><td>"Dhanyavaad!"</td></tr><tr><td>13.4</td><td>View results</td><td>View Results</td><td>counts per option + total</td></tr><tr><td>13.5</td><td>Copy link</td><td>Copy Link</td><td>clipboard</td></tr></tbody></table>
+<hr>
+<h2>14. Faculty (<code>/faculty</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>14.1</td><td>Add faculty</td><td>Add Faculty</td><td>name, subject, experience, bio</td></tr><tr><td>14.2</td><td>Public store</td><td>/store → Faculty tab</td><td>profile card</td></tr><tr><td>14.3</td><td>Delete</td><td>delete icon</td><td>removed</td></tr></tbody></table>
+<hr>
+<h2>15. Free Material (<code>/content/free-material</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>15.1</td><td>Add material</td><td>Add Material</td><td>title, type, url, description, status, category</td></tr><tr><td>15.2</td><td>Toggle status</td><td>chip click</td><td>published/draft</td></tr><tr><td>15.3</td><td>Edit</td><td>Edit</td><td>form prefilled</td></tr><tr><td>15.4</td><td>Delete</td><td>delete</td><td>removed</td></tr><tr><td>15.5</td><td>Public store</td><td>/store → Free Material</td><td>published items + Get</td></tr><tr><td>15.6</td><td>Landing page</td><td>FREE_MATERIAL section</td><td>live published list</td></tr><tr><td>15.7</td><td>Category filter</td><td>store Free Material tab</td><td>chips (Sab + categories)</td></tr></tbody></table>
+<hr>
+<h2>16. Test Portal (<code>/content/test-portal</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>16.1</td><td>Create test</td><td>Create Test</td><td>title, description, duration, re-attempt mode</td></tr><tr><td>16.2</td><td>Add question</td><td>Add Question</td><td>MCQ/TrueFalse/Objective/Subjective/Comprehension</td></tr><tr><td>16.3</td><td>Bilingual</td><td>Hindi tab + Copy English→Hindi</td><td>Hindi field fallback</td></tr><tr><td>16.4</td><td>Sections</td><td>Add Section</td><td>section chips</td></tr><tr><td>16.5</td><td>Bulk import</td><td>Bulk Import → paste → parse → import</td><td>N questions inserted</td></tr><tr><td>16.6</td><td>Comprehension</td><td>type Comprehension → passage + sub-question via Passage select</td><td>grouping + numbering</td></tr><tr><td>16.7</td><td>Delete question</td><td>delete icon</td><td>removed (passage ungroups children)</td></tr><tr><td>16.8</td><td>Publish</td><td>Publish</td><td>status published; public link</td></tr><tr><td>16.9</td><td>Copy public link</td><td>Copy Public Link</td><td>clipboard</td></tr><tr><td>16.10</td><td>Results tab</td><td>Results &amp; Grading</td><td>attempts + subjective grading</td></tr><tr><td>16.11</td><td>Leaderboard</td><td>Results tab</td><td>Top 10 + scores</td></tr><tr><td>16.12</td><td>Rate test</td><td>student rates</td><td>stars saved</td></tr></tbody></table>
+<hr>
+<h2>17. Public Test (<code>/test/:id</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>17.1</td><td>Start screen</td><td>/test/:id</td><td>title, duration, count, name/phone</td></tr><tr><td>17.2</td><td>Test taking</td><td>Start Test</td><td>question, palette (4 states), timer</td></tr><tr><td>17.3</td><td>Question types</td><td>MCQ/TF/Objective/Subjective</td><td>inputs work</td></tr><tr><td>17.4</td><td>Comprehension</td><td>passage box (Show/Hide)</td><td>context above sub-question</td></tr><tr><td>17.5</td><td>Mark for review</td><td>flag icon</td><td>yellow state</td></tr><tr><td>17.6</td><td>Re-attempt mode</td><td>ON → View Solution</td><td>solution during test</td></tr><tr><td>17.7</td><td>Calculator</td><td>🧮 icon</td><td>on-screen calculator</td></tr><tr><td>17.8</td><td>Summary/Submit</td><td>button</td><td>unanswered warning + submit</td></tr><tr><td>17.9</td><td>Result</td><td>submit</td><td>score/total, %, counters, review</td></tr><tr><td>17.10</td><td>Rank</td><td>result</td><td>"आपका रैंक: #N"</td></tr><tr><td>17.11</td><td>Leaderboard</td><td>result</td><td>Top 10 list</td></tr><tr><td>17.12</td><td>View Solution</td><td>button</td><td>explanation + answer</td></tr><tr><td>17.13</td><td>Rate test</td><td>stars</td><td>saved</td></tr></tbody></table>
+<hr>
+<h2>18. Landing Pages (<code>/landing-pages/list</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>18.1</td><td>List</td><td>/landing-pages/list</td><td>cards + status + date</td></tr><tr><td>18.2</td><td>Create</td><td>Create New Page</td><td>4 templates with sections count</td></tr><tr><td>18.3</td><td>Course wizard</td><td>Create Course Page</td><td>course select → editor with customized hero/pricing</td></tr><tr><td>18.4</td><td>Editor</td><td>edit page</td><td>section library, canvas, props/theme, drag reorder</td></tr><tr><td>18.5</td><td>Add section</td><td>+ section</td><td>added</td></tr><tr><td>18.6</td><td>Remove section</td><td>delete icon</td><td>removed</td></tr><tr><td>18.7</td><td>Preview</td><td>Preview</td><td>iframe modal</td></tr><tr><td>18.8</td><td>Save</td><td>Save</td><td>"✅ Saved (draft)" (title persisted)</td></tr><tr><td>18.9</td><td>Publish</td><td>Publish</td><td>toast + "Published at: /lp-preview/&lt;slug&gt;"</td></tr><tr><td>18.10</td><td>Public page</td><td>/lp-preview/&lt;slug&gt;</td><td>all sections + lead form</td></tr><tr><td>18.11</td><td>Lead capture</td><td>form submit</td><td>lead in People (owner)</td></tr><tr><td>18.12</td><td>Page view tracking</td><td>open public</td><td>analytics +1</td></tr></tbody></table>
+<hr>
+<h2>19. Analytics (<code>/analytics</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>19.1</td><td>Summary cards</td><td>/analytics</td><td>leads, views, pages, courses, campaigns, conversion</td></tr><tr><td>19.2</td><td>Range filter</td><td>7/30/90 days</td><td>buckets + zero-filled</td></tr><tr><td>19.3</td><td>Daily charts</td><td>charts</td><td>leads + views</td></tr><tr><td>19.4</td><td>Top landing pages</td><td>list</td><td>page title + lead count</td></tr><tr><td>19.5</td><td>Dashboard cards</td><td>Dashboard</td><td>New Leads, Page Views, Students, Courses, Revenue (7d)</td></tr></tbody></table>
+<hr>
+<h2>20. Orders &amp; Payments (<code>/orders</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>20.1</td><td>Store checkout</td><td>store enroll paid course</td><td>order create + PaymentDialog</td></tr><tr><td>20.2</td><td>Mock checkout</td><td>Simulate Pay</td><td>order paid + lead</td></tr><tr><td>20.3</td><td>Orders page</td><td>/orders</td><td>Revenue, Paid, Pending, cards</td></tr><tr><td>20.4</td><td>Dashboard revenue</td><td>Dashboard</td><td>revenue card</td></tr></tbody></table>
+<hr>
+<h2>21. Student Progress (<code>/progress</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>21.1</td><td>List</td><td>/progress</td><td>shared links + completion</td></tr><tr><td>21.2</td><td>Summary cards</td><td>header</td><td>links, avg %, completed</td></tr><tr><td>21.3</td><td>Open preview</td><td>Open button</td><td>student view</td></tr><tr><td>21.4</td><td>Empty state</td><td>no links</td><td>hint card</td></tr></tbody></table>
+<hr>
+<h2>22. Admin (<code>/admin</code>)</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>22.1</td><td>Users table</td><td>/admin</td><td>name, email, role, plan, trial</td></tr><tr><td>22.2</td><td>Role change</td><td>select role</td><td>updated</td></tr><tr><td>22.3</td><td>Plan change</td><td>select plan</td><td>updated</td></tr><tr><td>22.4</td><td>Trial info</td><td>trial teacher</td><td>days left</td></tr></tbody></table>
+<hr>
+<h2>23. Mobile Responsive</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>23.1</td><td>Hamburger drawer</td><td>≤768px</td><td>sidebar hidden → hamburger → drawer</td></tr><tr><td>23.2</td><td>Compact AppBar</td><td>mobile</td><td>small logout, shrink chip</td></tr><tr><td>23.3</td><td>Dialogs</td><td>mobile</td><td>margin 8px, full width</td></tr><tr><td>23.4</td><td>Rows wrap</td><td>editor/manager/learn/player</td><td>no horizontal scroll</td></tr><tr><td>23.5</td><td>Phone inputs</td><td>store/people/batches</td><td>type="tel"</td></tr><tr><td>23.6</td><td>Desktop regression</td><td>desktop</td><td>permanent drawer, all pages OK</td></tr></tbody></table>
+<hr>
+<h2>24. Public / Student-Side URLs</h2>
+<table><thead><tr><th>#</th><th>URL</th><th>Feature</th></tr></thead><tbody><tr><td>24.1</td><td><code>/store</code></td><td>public store</td></tr><tr><td>24.2</td><td><code>/store/:teacherId</code></td><td>teacher store</td></tr><tr><td>24.3</td><td><code>/lp-preview/&lt;slug&gt;</code></td><td>landing page</td></tr><tr><td>24.4</td><td><code>/test/:id</code></td><td>public test</td></tr><tr><td>24.5</td><td><code>/free/:teacherId</code></td><td>free material</td></tr><tr><td>24.6</td><td><code>/learn/&lt;token&gt;</code></td><td>course viewer + progress + rating</td></tr><tr><td>24.7</td><td><code>/chat/&lt;token&gt;</code></td><td>student chat</td></tr><tr><td>24.8</td><td><code>/survey/:id</code></td><td>public survey</td></tr><tr><td>24.9</td><td><code>/tools/bmi</code></td><td>BMI calculator</td></tr></tbody></table>
+<hr>
+<h2>25. Seed Demo Data</h2>
+<table><thead><tr><th>#</th><th>Feature</th><th>Kaise check karein</th><th>Expected</th></tr></thead><tbody><tr><td>25.1</td><td>Seed button</td><td>Dashboard → 🌱 Seed Demo Data</td><td>"Seeded: ..."</td></tr><tr><td>25.2</td><td>Idempotent</td><td>dobara click</td><td>"pehle se mojood hai"</td></tr><tr><td>25.3</td><td>Creates</td><td>course, test, coupon, page, material, lead</td><td>verified</td></tr></tbody></table>
+<hr>
+<h2>26. Known Limitations (training mein batana)</h2>
+<ul>
+<li>Payments Test Mode (real keys nahi)</li>
+<li>Real SMS/WhatsApp gateway nahi (mock send)</li>
+<li>Cloud Functions/webhook nahi (Spark)</li>
+<li>Trial soft banner (no hard lockout)</li>
+<li>Bulk import mein comprehension nahi</li>
+<li>Student login nahi (capability links)</li>
+<li>Chat realtime = 3s polling</li>
+</ul>
+<hr>
+<p><em>Complete Feature Checklist — version 2026-11-13 | Apna Class Plus</em></p>
+</body>
+</html>

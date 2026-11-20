@@ -156,6 +156,7 @@ aur `TestCases.md` mein hain.
 `Training/` folder mein complete training manual (PDF + Markdown) aur audit report hai:
 - `Training-Manual.pdf` — admin/teacher/student workflows, step-by-step training guide
 - `Audit-Report.pdf` — feature audit matrix, security review, issues, roadmap
+- `Complete-Feature-Checklist.pdf` — sabhi 26 modules ka feature-by-feature "kaise check karein" checklist
 - Sources (`.md`), print-ready HTML, aur `build-pdfs.mjs` (regenerate PDFs)
 
 ## Project History Book

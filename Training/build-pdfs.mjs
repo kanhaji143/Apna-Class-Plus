@@ -118,6 +118,7 @@ ${body}
 const jobs = [
   { md: 'Training-Manual.md', title: 'Apna Class Plus — Training Manual' },
   { md: 'Audit-Report.md', title: 'Apna Class Plus — Complete Audit Report' },
+  { md: 'Complete-Feature-Checklist.md', title: 'Apna Class Plus — Complete Feature Checklist' },
   { md: '../Book/Project-Chat-History.md', title: 'Apna Class Plus — Project Chat History Book' },
 ];
 
