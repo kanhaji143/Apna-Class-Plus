@@ -920,6 +920,73 @@
 - **Expected:** Top 10 list + student results.
 - **Status:** PASS.
 
+## Module 38 - Free Engagement Extras (Phase 13w)
+
+### TC-38.1 Referral code + reward
+- **Steps:** /referrals -> create REWARD10 (10%, reward ₹50).
+- **Expected:** Card shows "Reward: ₹50/use · Total ₹0"; Used 0x.
+- **Status:** PASS.
+
+### TC-38.2 Blog/News
+- **Steps:** /blog -> create post -> /store.
+- **Expected:** Post appears in store "Blog & News" tab.
+- **Status:** PASS (Exam Tips: Last Minute Revision).
+
+### TC-38.3 Survey create + public submit + results
+- **Steps:** /surveys -> create; /survey/:id submit; View Results.
+- **Expected:** Results show counts (Excellent 2 (100%)).
+- **Status:** PASS.
+
+### TC-38.4 Store search
+- **Steps:** /store -> type "science" / "zzzzz".
+- **Expected:** filter works; empty shows no results.
+- **Status:** PASS.
+
+### TC-38.5 Daily quiz highlight
+- **Steps:** /store.
+- **Expected:** "आज का क्विज़" card with latest published test.
+- **Status:** PASS.
+
+### TC-38.6 Exam-wise notes
+- **Steps:** /content/free-material -> category; /store.
+- **Expected:** category chip + store filter chips.
+- **Status:** PASS (Class 10).
+
+### TC-38.7 Faculty profiles
+- **Steps:** /faculty -> add Anil Sharma -> /store Faculty tab.
+- **Expected:** public profile visible.
+- **Status:** PASS.
+
+### TC-38.8 BMI calculator
+- **Steps:** /tools/bmi -> 175 cm, 70 kg, 28 yrs.
+- **Expected:** BMI 22.9 Normal, BMR 1659, body fat 17.7%.
+- **Status:** PASS.
+
+### TC-38.9 Lesson rating
+- **Steps:** /learn/<token> -> click 5 stars.
+- **Expected:** avg ★ 5.0.
+- **Status:** PASS.
+
+### TC-38.10 Test leaderboard + rank
+- **Steps:** Submit test.
+- **Expected:** "आपका रैंक: #1" + Top 10; teacher Results tab leaderboard.
+- **Status:** PASS.
+
+### TC-38.11 Referral apply (unified code)
+- **Steps:** /store enroll -> code FRIEND20 -> Apply.
+- **Expected:** "15% off. Price: ₹499 → ₹424".
+- **Status:** PASS.
+
+### TC-38.12 PWA
+- **Steps:** /store -> check manifest + service worker.
+- **Expected:** manifest name "Apna Class Plus", SW active.
+- **Status:** PASS.
+
+### TC-38.13 Survey responses route fix
+- **Steps:** /surveys -> View Results.
+- **Expected:** responses listed (Excellent 2 (100%)).
+- **Status:** PASS.
+
 ## Module 35 - Mobile Responsive (Phase 13t)
 
 ### TC-35.1 Mobile drawer

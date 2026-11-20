@@ -24,7 +24,10 @@ export default function LearnPage() {
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState<Record<string, boolean>>({});
   const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [watched, setWatched] = useState<Record<string, number>>({});
+  const [activeLesson, setActiveLesson] = useState<number | null>(null);
   const storageKey = `learn-progress-${token}`;
+  const watchKey = `learn-watchtime-${token}`;
 
   useEffect(() => {
     if (!FB_MODE) { setErr('Course access live app mein available hai.'); setLoading(false); return; }
@@ -43,6 +46,12 @@ export default function LearnPage() {
         const server = (snap.data()?.progress as Record<string, boolean>) || {};
         setDone({ ...server, ...local });
         setRatings((snap.data()?.ratings as Record<string, number>) || {});
+        let localW: Record<string, number> = {};
+        try { localW = JSON.parse(localStorage.getItem(watchKey) || '{}'); } catch { /* ignore */ }
+        const serverW = (snap.data()?.watchTime as Record<string, number>) || {};
+        const mergedW: Record<string, number> = { ...serverW };
+        Object.keys(localW).forEach((k) => { mergedW[k] = Math.max(mergedW[k] || 0, localW[k] || 0); });
+        setWatched(mergedW);
       } catch {
         setErr('Course load nahi hua. Internet check karke retry karo.');
       } finally { setLoading(false); }
@@ -71,6 +80,34 @@ export default function LearnPage() {
   const topFolders = folders.filter((f) => !f.parentId);
   const doneCount = items.filter((i) => done[String(i.id)]).length;
   const pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+  const totalWatch = Object.values(watched).reduce((s, n) => s + (Number(n) || 0), 0);
+
+  // watch-time timer
+  useEffect(() => {
+    if (activeLesson == null) return;
+    const t = setInterval(() => {
+      setWatched((prev) => {
+        const next = { ...prev, [String(activeLesson)]: (Number(prev[String(activeLesson)]) || 0) + 1 };
+        try { localStorage.setItem(watchKey, JSON.stringify(next)); } catch { /* ignore */ }
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [activeLesson, watchKey]);
+
+  // debounced sync to server
+  useEffect(() => {
+    if (!token) return;
+    const t = setTimeout(() => {
+      updateDoc(doc(db(), 'courseLinks', token), { watchTime: watched }).catch(() => { /* ignore */ });
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [watched, token]);
+
+  const toggleWatch = (id: number) => {
+    if (activeLesson === id) setActiveLesson(null);
+    else setActiveLesson(id);
+  };
 
   const rate = async (id: number, stars: number) => {
     setRatings((r) => ({ ...r, [String(id)]: stars }));
@@ -113,6 +150,13 @@ export default function LearnPage() {
         ))}
       </Box>
       <Button
+        size="small" variant={activeLesson === it.id ? 'contained' : 'outlined'} color="info"
+        onClick={() => toggleWatch(it.id)}
+      >
+        {activeLesson === it.id ? '⏸ Pause' : '▶ Watch'}
+      </Button>
+      <Typography variant="caption" color="text.secondary">⏱ {watched[String(it.id)] || 0}s</Typography>
+      <Button
         size="small"
         variant={done[String(it.id)] ? 'contained' : 'outlined'}
         color={done[String(it.id)] ? 'success' : 'primary'}
@@ -152,7 +196,7 @@ export default function LearnPage() {
               <Box sx={{ flexGrow: 1, bgcolor: 'rgba(255,255,255,0.25)', borderRadius: 1, height: 8, overflow: 'hidden' }}>
                 <Box sx={{ width: `${pct}%`, height: '100%', bgcolor: '#fff', transition: 'width .3s' }} />
               </Box>
-              <Typography variant="caption" fontWeight={800}>{pct}% · {doneCount}/{items.length} done · ★ {avgRating}</Typography>
+              <Typography variant="caption" fontWeight={800}>{pct}% · {doneCount}/{items.length} done · ★ {avgRating} · ⏱ {totalWatch}s</Typography>
             </Box>
           )}
         </Box>

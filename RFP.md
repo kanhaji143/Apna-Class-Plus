@@ -311,6 +311,26 @@
 
 ---
 
+## Phase 13w - Free Engagement Extras (AppX parity)
+
+**Date:** 2026-11-13
+
+### Requirements
+1. **Referral codes** with reward per use + usage tracking (Referrals page).
+2. **Blog/News/Shorts** (teacher manage, public store tab).
+3. **Surveys** (teacher create, public response, results view).
+4. **Global search** on store (courses/tests/material).
+5. **Daily Quiz highlight** on store.
+6. **Faculty profiles** (teacher manage, public store tab).
+7. **Exam-wise notes** (category field + store filter chips).
+8. **Lesson ratings** (1–5 stars, avg, synced to courseLinks.ratings).
+9. **Leaderboard + rank** in test results (student + teacher).
+10. **BMI & Body Fat calculator** (public tool).
+11. **PWA** (manifest + service worker + registration).
+12. Unified coupon/referral apply (try coupon then referral).
+
+---
+
 ## Phase 13s - Final QA, README & Demo Seed
 
 **Date:** 2026-11-13

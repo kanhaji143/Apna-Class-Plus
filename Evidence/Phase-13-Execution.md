@@ -531,6 +531,32 @@
 
 ---
 
+## Phase 13w - Free Engagement Extras (referral rewards, watch-time, PWA)
+
+**Date:** 2026-11-13
+
+### What was done
+- Referral rewards: `rewardAmount` field + card shows "Reward: ₹X/use · Total ₹Y".
+- Unified code apply: `/v1/diy/coupons/apply` tries coupon then referral (kind field).
+- Store enroll: single "Coupon code" field applies both; lead stores couponCode/referralCode.
+- LearnPage watch-time: per-lesson ⏱ timer (Start/Pause), total watch time, persisted to `courseLinks.watchTime` + localStorage; rules allow public update of `watchTime`.
+- PWA: `manifest.json` + `sw.js` (offline shell) + registration in main.tsx; link in index.html.
+- Referral create route stores `rewardAmount`.
+
+### Live E2E verified
+1. Referral create with reward ₹50 - PASS
+2. Card shows "Reward: ₹50/use · Total ₹0" - PASS
+3. Referral apply in store -> 15% off (₹424) - PASS
+4. Watch-time timer + total - PASS
+5. PWA manifest + service worker active - PASS
+
+### Notes
+- Watch-time persists to server; cross-device merge on load.
+- PWA caches shell only; API/Firestore network-first.
+- Next: paid features (keys/infra).
+
+---
+
 ## Phase 13t - Mobile Responsive Polish
 
 **Date:** 2026-11-13

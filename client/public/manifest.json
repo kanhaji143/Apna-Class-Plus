@@ -1,0 +1,14 @@
+{
+  "name": "Apna Class Plus",
+  "short_name": "ApnaClass",
+  "description": "Coaching/institute management + student learning platform",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F7F8FC",
+  "theme_color": "#6C5CE7",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

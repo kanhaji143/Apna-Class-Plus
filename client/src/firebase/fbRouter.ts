@@ -211,24 +211,27 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
     if (method === 'POST' && seg[3] === 'apply') {
       const code = String(body?.code || '').trim().toUpperCase();
       if (!code) throw new Error('code required');
-      const snaps = await getDocs(query(
-        collection(dbv, 'coupons'),
-        where('code', '==', code),
-        where('status', '==', 'active'),
-      ));
-      const c: any = snaps.docs[0]?.data();
-      if (!c) throw new Error('Invalid coupon');
-      if (c.expiry && new Date(c.expiry) < new Date()) throw new Error('Coupon expired');
-      const cid = Number(body?.courseId || 0);
-      if (c.courseId && cid && Number(c.courseId) !== cid) throw new Error('Coupon is for a different course');
-      const price = Number(body?.price || 0);
-      const discount = c.discountType === 'flat'
-        ? Math.min(price, Number(c.value || 0))
-        : Math.round((price * Number(c.value || 0)) / 100);
-      return {
-        valid: true, code: c.code, discountType: c.discountType, value: Number(c.value || 0),
-        discount, finalPrice: Math.max(0, price - discount),
-      };
+      // 1. coupon try
+      const cSnaps = await getDocs(query(collection(dbv, 'coupons'), where('code', '==', code), where('status', '==', 'active')));
+      const c: any = cSnaps.docs[0]?.data();
+      if (c) {
+        if (c.expiry && new Date(c.expiry) < new Date()) throw new Error('Coupon expired');
+        const cid = Number(body?.courseId || 0);
+        if (c.courseId && cid && Number(c.courseId) !== cid) throw new Error('Coupon is for a different course');
+        const price = Number(body?.price || 0);
+        const discount = c.discountType === 'flat' ? Math.min(price, Number(c.value || 0)) : Math.round((price * Number(c.value || 0)) / 100);
+        return { valid: true, kind: 'coupon', code: c.code, discountType: c.discountType, value: Number(c.value || 0), discount, finalPrice: Math.max(0, price - discount) };
+      }
+      // 2. referral try
+      const rSnaps = await getDocs(query(collection(dbv, 'referrals'), where('code', '==', code), where('status', '==', 'active')));
+      const r: any = rSnaps.docs[0]?.data();
+      if (r) {
+        if (r.expiry && new Date(r.expiry) < new Date()) throw new Error('Referral expired');
+        const price = Number(body?.price || 0);
+        const discount = r.discountType === 'flat' ? Math.min(price, Number(r.value || 0)) : Math.round((price * Number(r.value || 0)) / 100);
+        return { valid: true, kind: 'referral', code: r.code, discountType: r.discountType, value: Number(r.value || 0), discount, finalPrice: Math.max(0, price - discount), referrerName: r.referrerName || '' };
+      }
+      throw new Error('Invalid code');
     }
     if (method === 'PUT' && seg.length === 4) {
       const upd: any = {};
@@ -357,6 +360,7 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
         status: c.status, expiry: c.expiry || null, createdAt: c.createdAt,
         usedCount: leads.filter((l: any) => String(l.referralCode || '').toLowerCase() === String(c.code || '').toLowerCase()).length,
         referrerName: c.referrerName || '',
+        rewardAmount: Number(c.rewardAmount || 0),
       }));
     }
     if (method === 'POST' && seg.length === 3) {
@@ -366,6 +370,7 @@ export async function route(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: str
       await setDoc(doc(dbv, 'referrals', String(id)), {
         id, ownerUid, code, discountType: body?.discountType === 'flat' ? 'flat' : 'percent',
         value: Number(body?.value || 0), referrerName: body?.referrerName || '',
+        rewardAmount: Number(body?.rewardAmount || 0),
         status: 'active', expiry: body?.expiry || null, createdAt: tsNow(),
       });
       return { _id: id, code, status: 'active' };

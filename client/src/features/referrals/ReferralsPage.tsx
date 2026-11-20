@@ -9,7 +9,7 @@ import { get, post, put, del } from '../../api/client';
 
 interface Referral {
   _id: number; code: string; discountType: 'percent' | 'flat'; value: number;
-  status: string; expiry: string | null; usedCount: number; referrerName?: string; createdAt?: string;
+  status: string; expiry: string | null; usedCount: number; referrerName?: string; rewardAmount?: number; createdAt?: string;
 }
 
 const fmtDate = (v?: string | null) => {
@@ -23,7 +23,7 @@ export default function ReferralsPage() {
   const [items, setItems] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ code: '', discountType: 'percent', value: '10', referrerName: '', expiry: '' });
+  const [form, setForm] = useState({ code: '', discountType: 'percent', value: '10', referrerName: '', expiry: '', rewardAmount: '0' });
   const [busy, setBusy] = useState(false);
 
   const load = () => {
@@ -35,9 +35,9 @@ export default function ReferralsPage() {
     if (!form.code.trim() || !Number(form.value)) return;
     setBusy(true);
     try {
-      await post('/v1/diy/referrals', { code: form.code.trim(), discountType: form.discountType, value: Number(form.value), referrerName: form.referrerName || undefined, expiry: form.expiry || null });
+      await post('/v1/diy/referrals', { code: form.code.trim(), discountType: form.discountType, value: Number(form.value), referrerName: form.referrerName || undefined, rewardAmount: Number(form.rewardAmount || 0), expiry: form.expiry || null });
       setOpen(false);
-      setForm({ code: '', discountType: 'percent', value: '10', referrerName: '', expiry: '' });
+      setForm({ code: '', discountType: 'percent', value: '10', referrerName: '', expiry: '', rewardAmount: '0' });
       load();
     } finally { setBusy(false); }
   };
@@ -86,6 +86,7 @@ export default function ReferralsPage() {
                   </Box>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                     {fmtDiscount(c)} {c.referrerName ? `· Referrer: ${c.referrerName}` : ''}
+                    {c.rewardAmount ? ` · Reward: ₹${c.rewardAmount}/use · Total ₹${(c.rewardAmount || 0) * (c.usedCount || 0)}` : ''}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Chip size="small" variant="outlined" label={`Used ${c.usedCount}x`} />
@@ -119,6 +120,7 @@ export default function ReferralsPage() {
           </FormControl>
           <TextField label={form.discountType === 'flat' ? 'Discount (₹)' : 'Discount (%)'} type="number" value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} fullWidth />
           <TextField label="Referrer name (optional)" value={form.referrerName} onChange={(e) => setForm({ ...form, referrerName: e.target.value })} fullWidth />
+          <TextField label="Reward per use (₹, optional)" type="number" value={form.rewardAmount} onChange={(e) => setForm({ ...form, rewardAmount: e.target.value })} fullWidth />
           <TextField label="Expiry (optional)" type="date" value={form.expiry} onChange={(e) => setForm({ ...form, expiry: e.target.value })} fullWidth />
         </DialogContent>
         <DialogActions>
